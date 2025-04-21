@@ -13,12 +13,10 @@ export default function Login() {
       name,
       level: 1,
       xp: 0,
-      xpToNextLevel: 100,
+      xpToNextLevel: 300,
       hp: 100,
       attack: 10,
       defense: 5,
-      magicPower: 8,
-      magicResistance: 4,
       critChance: 5,
       attackSpeed: 1,
       gold: 50

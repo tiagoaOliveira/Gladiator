@@ -16,8 +16,6 @@ export default function Arena() {
     hp: 80,
     attack: 8,
     defense: 3,
-    magicPower: 2,
-    magicResistance: 2,
     critChance: 3,
     attackSpeed: 1,
     image: '/src/assets/images/goblin.jpg',

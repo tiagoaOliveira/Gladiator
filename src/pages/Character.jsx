@@ -40,8 +40,6 @@ export default function Character() {
       attack: newStats.attack,
       critChance: newStats.critChance,
       attackSpeed: newStats.attackSpeed,
-      magicPower: newStats.magicPower,
-      magicResistance: newStats.magicResistance,
       physicalDefense: newStats.physicalDefense,
     };
 
@@ -63,8 +61,6 @@ export default function Character() {
           <p>Ataque: {player.attack}</p>
           <p>Chance Crítica: {player.critChance?.toFixed(1)}%</p>
           <p>Velocidade de Ataque: {player.attackSpeed?.toFixed(2)}</p>
-          <p>Poder Mágico: {player.magicPower}</p>
-          <p>Resistência Mágica: {player.magicResistance}</p>
           <p>Defesa Física: {player.physicalDefense}</p>
 
           <div className="xp-bar">
@@ -73,8 +69,6 @@ export default function Character() {
           <p>
             XP: {player.xp} / {player.xpToNextLevel}
           </p>
-
-          <button onClick={handleLevelUp}>Aumentar Nível (Teste)</button>
         </div>
 
         <div>
@@ -82,6 +76,8 @@ export default function Character() {
         </div>
 
       </div>
+      <button className='button-teste' onClick={handleLevelUp}>Aumentar Nível (Teste)</button>
+
     </div>
   );
 }
