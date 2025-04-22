@@ -74,13 +74,11 @@ export default function Arena() {
         <div>
           <h2>{enemy.name}</h2>
           <p>Nível: {enemy.level}</p>
-          <p>HP: {enemy.hp}</p>
-          <p>Ataque: {enemy.attack}</p>
-          <p>Defesa: {enemy.defense}</p>
-          <p>Poder Mágico: {enemy.magicPower}</p>
-          <p>Resistência Mágica: {enemy.magicResistance}</p>
-          <p>Crítico: {enemy.critChance}%</p>
-          <p>Vel. de Ataque: {enemy.attackSpeed}</p>
+          <p>❤️HP: {enemy.hp}</p>
+          <p>🗡️Ataque: {enemy.attack}</p>
+          <p>🎯Defesa: {enemy.defense}</p>
+          <p>⚡Crítico: {enemy.critChance}%</p>
+          <p>🛡️Vel. de Ataque: {enemy.attackSpeed}</p>
         </div>
 
         <div className="enemy-image">

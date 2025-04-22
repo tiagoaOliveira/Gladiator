@@ -1,0 +1,32 @@
+.footer {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px; /* mesma largura da área de conteúdo */
+    background-color: #6d4c41;
+    padding: 10px;
+    border-top: 3px solid #3c2b21;
+    display: flex;
+    justify-content: space-around;
+    z-index: 1000;
+  }
+  
+  .nav-footer {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .nav-footer a,
+  .nav-footer button {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    font-family: Georgia, serif;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  

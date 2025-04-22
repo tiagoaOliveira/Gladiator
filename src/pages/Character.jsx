@@ -57,26 +57,34 @@ export default function Character() {
         <div className="character-stats">
           <h1>{player.name}</h1>
           <p>Nível: {player.level}</p>
-          <p>HP: {player.hp}</p>
-          <p>Ataque: {player.attack}</p>
-          <p>Chance Crítica: {player.critChance?.toFixed(1)}%</p>
-          <p>Velocidade de Ataque: {player.attackSpeed?.toFixed(2)}</p>
-          <p>Defesa Física: {player.physicalDefense}</p>
+          <p>❤️HP: {player.hp}</p>
+          <p>🗡️Ataque: {player.attack}</p>
+          <p>🎯Chance Crítica: {player.critChance?.toFixed(1)}%</p>
+          <p>⚡Velocidade de Ataque: {player.attackSpeed?.toFixed(2)}</p>
+          <p>🛡️Defesa Física: {player.physicalDefense}</p>
+        </div>
 
+        <div>
+          <img className='player-img' src="\src\assets\images\gladiator.jpg" alt="teste" />
           <div className="xp-bar">
             <div className="xp-fill" style={{ width: `${xpPercent}%` }}></div>
           </div>
           <p>
             XP: {player.xp} / {player.xpToNextLevel}
           </p>
+          <div className="hp-bar">
+            <div className="hp-fill" style={{ width: `${xpPercent}%` }}></div>
+          </div>
+          <p>
+            HP: {player.hp} / {player.hp}
+          </p>
         </div>
-
-        <div>
-          <img className='player-img' src="\src\assets\images\gladiator.jpg" alt="teste" />
-        </div>
-
       </div>
-      <button className='button-teste' onClick={handleLevelUp}>Aumentar Nível (Teste)</button>
+
+      <div className='button-teste'>
+        <button onClick={handleLevelUp}>Aumentar Nível (Teste)</button>
+      </div>
+
 
     </div>
   );
