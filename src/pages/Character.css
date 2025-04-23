@@ -1,60 +1,66 @@
-.container-player {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .character-container {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 2rem;
   background-color: #3c2b21;
   color: #fff;
   border-radius: 8px;
+  padding: 20px;
+}
+
+.character-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .character-stats {
-  margin: 0.7rem 0;
+  flex: 1;
+  min-width: 200px;
 }
 
-.xp-bar {
-  width: 100%;
-  height: 20px;
-  background-color: #444;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.xp-fill {
-  height: 100%;
-  background-color: gold;
-  transition: width 0.4s ease-in-out;
-}
-
-.hp-bar{
-  width: 100%;
-  height: 20px;
-  background-color: #444;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.hp-fill {
-  height: 100%;
-  background-color: crimson;
-  transition: width 0.4s ease-in-out;
+.character-visual {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .player-img {
-  width: 300px;
-  height: 300px;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 15px;
 }
 
+.progress-section {
+  width: 100%;
+}
 
-.button-teste {
-  padding: 2rem;
+.character-actions {
+  margin-top: 20px;
   text-align: center;
 }
 
+.action-button {
+  padding: 10px 20px;
+  background-color: #5a3b2b;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+}
 
-/* @keyframes ( flutuar levemente, pulsar, tremer)*/
+.action-button:hover {
+  background-color: #7d5135;
+}
+
+.hp-recovery-info {
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  color: #ff9999;
+  margin-top: 5px;
+}

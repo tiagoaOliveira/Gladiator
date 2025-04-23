@@ -3,3 +3,11 @@ body {
   background-color: #2e1e13;
   font-family: Georgia, serif;
 }
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: Georgia, serif;
+}

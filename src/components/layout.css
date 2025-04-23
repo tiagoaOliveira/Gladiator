@@ -1,13 +1,47 @@
 .container {
-    max-width: 700px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 20px;
-    /*background-color: #3c2b21;*/
-    border-left: 10px solid #6d4c41;
-    border-right: 10px solid #6d4c41;
-    min-height: 100vh;
-    color: white;
-    font-family: Georgia, serif;
-  }
-  
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 20px;
+  border-left: 10px solid #6d4c41;
+  border-right: 10px solid #6d4c41;
+  min-height: 100vh;
+  color: white;
+  font-family: Georgia, serif;
+  position: relative;
+  padding-top: 70px; /* Espaço para a navegação fixa no topo */
+}
+
+.navigation {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  background-color: #6d4c41;
+  padding: 15px;
+  border-bottom: 3px solid #3c2b21;
+  display: flex;
+  justify-content: space-around;
+  z-index: 1000;
+}
+
+.navigation a,
+.navigation button {
+  color: #fff;
+  text-decoration: none;
+  font-weight: bold;
+  font-family: Georgia, serif;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.navigation a:hover,
+.navigation button:hover {
+  text-decoration: underline;
+}
+
+.content {
+  padding-bottom: 20px;
+}

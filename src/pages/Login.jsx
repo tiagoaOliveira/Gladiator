@@ -1,40 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { savePlayer } from '../utils/storage';
+import { useGame } from '../context/GameContext';
+import './Login.css';
 
 export default function Login() {
   const [name, setName] = useState('');
   const navigate = useNavigate();
+  const { createPlayer, player } = useGame();
+
+  useEffect(() => {
+    // Se já estiver logado, redireciona para a página de personagem
+    if (player) {
+      navigate('/character');
+    }
+  }, [player, navigate]);
 
   const handleLogin = () => {
-    if (!name) return;
-
-    const newPlayer = {
-      name,
-      level: 1,
-      xp: 0,
-      xpToNextLevel: 300,
-      hp: 100,
-      attack: 10,
-      defense: 5,
-      critChance: 5,
-      attackSpeed: 1,
-      gold: 50
-    };
-
-    savePlayer(newPlayer);
+    if (!name.trim()) return;
+    
+    createPlayer(name);
     navigate('/character');
   };
 
   return (
     <div className="login-container">
       <h1>Bem-vindo à Arena!</h1>
-      <input
-        value={name}
-        onChange={e => setName(e.target.value)}
-        placeholder="Digite seu nome"
-      />
-      <button onClick={handleLogin}>Entrar</button>
+      <div className="login-form">
+        <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+          placeholder="Digite seu nome"
+          className="login-input"
+        />
+        <button onClick={handleLogin} className="login-button">Entrar</button>
+      </div>
     </div>
   );
 }
