@@ -8,8 +8,6 @@ export default function Character() {
 
   if (!player) return <p>Carregando...</p>;
 
-  const hpPercent = player.maxHp ? ((player.hp / player.maxHp) * 100).toFixed(1) : 100;
-
   return (
     <div className="character-container">
       <div className="character-content">
@@ -26,26 +24,14 @@ export default function Character() {
 
         <div className="character-visual">
           <img className="player-img" src="/src/assets/images/gladiator.jpg" alt="Gladiador" />
-          
-          <div className="progress-section">
-            <h3>Experiência</h3>
-            <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />
-            
-            <h3>Saúde</h3>
-            <ProgressBar current={player.hp} max={player.maxHp} type="hp" />
-            
-            {player.hp < player.maxHp && (
-              <p className="hp-recovery-info">
-                Recuperando 2% de HP por minuto ({Math.ceil(player.maxHp * 0.02)} HP)
-              </p>
-            )}
-          </div>
         </div>
       </div>
 
       <div className="character-actions">
         <button onClick={levelUp} className="action-button">Aumentar Nível (Teste)</button>
       </div>
+      
+
     </div>
   );
 }

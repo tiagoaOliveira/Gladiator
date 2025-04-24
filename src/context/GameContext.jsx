@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { generatePlayerStats } from '../utils/player';
 
 const GameContext = createContext();
@@ -10,9 +10,6 @@ export function GameProvider({ children }) {
     message: '',
     type: 'success'
   });
-  
-  // Para o sistema de recuperação de HP
-  const hpRecoveryTimerRef = useRef(null);
 
   // Carregar jogador do localStorage
   useEffect(() => {
@@ -23,19 +20,6 @@ export function GameProvider({ children }) {
       setPlayer({ ...storedPlayer, ...updatedStats });
     }
   }, []);
-
-  // Configurar o timer de recuperação de HP quando o jogador é carregado
-  useEffect(() => {
-    if (player && player.hp < player.maxHp) {
-      startHpRecovery();
-    }
-
-    return () => {
-      if (hpRecoveryTimerRef.current) {
-        clearInterval(hpRecoveryTimerRef.current);
-      }
-    };
-  }, [player]);
 
   const savePlayerToStorage = (playerData) => {
     // Garantimos que maxHp esteja sempre definido
@@ -97,39 +81,6 @@ export function GameProvider({ children }) {
     
     savePlayerToStorage(updatedPlayer);
     showNotification(`Nível ${nextLevel} alcançado!`, 'success');
-  };
-
-  const startHpRecovery = () => {
-    // Limpa qualquer timer existente
-    if (hpRecoveryTimerRef.current) {
-      clearInterval(hpRecoveryTimerRef.current);
-    }
-    
-    // Configura o novo timer (a cada minuto recupera 2% do HP máximo)
-    hpRecoveryTimerRef.current = setInterval(() => {
-      const currentPlayer = getPlayerFromStorage();
-      
-      if (!currentPlayer || currentPlayer.hp >= currentPlayer.maxHp) {
-        clearInterval(hpRecoveryTimerRef.current);
-        return;
-      }
-      
-      const recoveryAmount = Math.ceil(currentPlayer.maxHp * 0.02); // 2% do HP máximo
-      const newHp = Math.min(currentPlayer.maxHp, currentPlayer.hp + recoveryAmount);
-      
-      const updatedPlayer = {
-        ...currentPlayer,
-        hp: newHp
-      };
-      
-      savePlayerToStorage(updatedPlayer);
-      setPlayer(updatedPlayer);
-      
-      // Se a vida estiver completa, paramos o timer
-      if (newHp >= currentPlayer.maxHp) {
-        clearInterval(hpRecoveryTimerRef.current);
-      }
-    }, 60000); // 60000 ms = 1 minuto
   };
 
   const handleBattle = (enemy) => {
@@ -231,10 +182,6 @@ export function GameProvider({ children }) {
           title: 'Vitória!',
           message: `Você derrotou ${enemy.name} e ganhou ${enemy.rewardXP} XP!`
         };
-        // Inicia recuperação de HP se necessário
-        if (newHp < player.maxHp) {
-          startHpRecovery();
-        }
       }
       
       const rewardGold = Math.floor(enemy.level * 10 * (1 + Math.random() * 0.5));
@@ -258,9 +205,6 @@ export function GameProvider({ children }) {
   };
 
   const logout = () => {
-    if (hpRecoveryTimerRef.current) {
-      clearInterval(hpRecoveryTimerRef.current);
-    }
     localStorage.removeItem('player');
     setPlayer(null);
   };

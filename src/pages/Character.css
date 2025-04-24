@@ -3,6 +3,7 @@
   color: #fff;
   border-radius: 8px;
   padding: 20px;
+  position: relative;
 }
 
 .character-content {
@@ -34,13 +35,10 @@
   margin-bottom: 15px;
 }
 
-.progress-section {
-  width: 100%;
-}
-
 .character-actions {
   margin-top: 20px;
   text-align: center;
+  margin-bottom: 50px; /* Espaço para o rodapé */
 }
 
 .action-button {
@@ -57,10 +55,3 @@
   background-color: #7d5135;
 }
 
-.hp-recovery-info {
-  font-size: 0.9rem;
-  font-style: italic;
-  text-align: center;
-  color: #ff9999;
-  margin-top: 5px;
-}

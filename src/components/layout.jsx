@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import Notification from './Notification';
+import ProgressBar from './ProgressBar';
 import './Layout.css';
 
 export default function Layout({ children }) {
@@ -32,6 +33,13 @@ export default function Layout({ children }) {
       <main className="content">
         {children}
       </main>
+      
+      {/* Barra de XP no rodapé */}
+      {player && (
+        <div className="xp-footer">
+          <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />        
+        </div>
+      )}
     </div>
   );
 }
