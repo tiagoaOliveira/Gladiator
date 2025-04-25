@@ -2,6 +2,7 @@ import React from 'react';
 import { useGame } from '../context/GameContext';
 import ProgressBar from '../components/ProgressBar';
 import './Character.css';
+import character from '../assets/images/gladiator.jpg'
 
 export default function Character() {
   const { player, levelUp } = useGame();
@@ -23,7 +24,7 @@ export default function Character() {
         </div>
 
         <div className="character-visual">
-          <img className="player-img" src="/src/assets/images/gladiator.jpg" alt="Gladiador" />
+          <img className="player-img" src={character} alt="Gladiador" />
         </div>
       </div>
 

@@ -1,5 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { 
+  BrowserRouter as Router, 
+  Routes, 
+  Route, 
+  Navigate 
+} from 'react-router-dom';
 import { GameProvider } from './context/GameContext';
 import Layout from './components/layout';
 import Login from './pages/Login';
@@ -10,7 +15,7 @@ import Shop from './pages/Shop';
 function App() {
   return (
     <GameProvider>
-      <Router>
+      <Router future={{ v7_startTransition: true }}>
         <Routes>
           <Route path="/" element={<Layout><Login /></Layout>} />
           <Route path="/character" element={<Layout><Character /></Layout>} />

@@ -1,3 +1,5 @@
+import goblin from '../assets/images/goblin.jpg'
+
 export const enemies = [
   {
     id: 1,
@@ -8,7 +10,7 @@ export const enemies = [
     defense: 3,
     critChance: 3,
     attackSpeed: 1,
-    image: '/src/assets/images/goblin.jpg',
+    image: goblin,
     rewardXP: 150,
     rewardGoldMultiplier: 1
   },
@@ -21,7 +23,7 @@ export const enemies = [
     defense: 6,        // Dobro do Goblin
     critChance: 6,     // Dobro do Goblin
     attackSpeed: 2,    // Dobro do Goblin
-    image: '/src/assets/images/ogre.jpg', // Precisará deste arquivo
+    image: './assets/images/ogre.jpg', // Precisará deste arquivo
     rewardXP: 300,      // Dobro da recompensa
     rewardGoldMultiplier: 2 // Dobro da recompensa de ouro
   },
@@ -34,7 +36,7 @@ export const enemies = [
     defense: 12,       // 4x o Goblin
     critChance: 12,    // 4x o Goblin
     attackSpeed: 4,    // 4x o Goblin
-    image: '/src/assets/images/dragon.jpg', // Precisará deste arquivo
+    image: './assets/images/dragon.jpg', // Precisará deste arquivo
     rewardXP: 600,     // 4x a recompensa
     rewardGoldMultiplier: 4 // 4x a recompensa de ouro
   }

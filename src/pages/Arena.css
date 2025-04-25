@@ -5,14 +5,13 @@
 }
 
 .enemy-selector {
-  margin-bottom: 30px;
+  margin-bottom: 10px;
 }
 
 .enemy-list {
   display: flex;
   gap: 15px;
   overflow-x: auto;
-  padding-bottom: 10px;
 }
 
 .enemy-option {
@@ -42,7 +41,7 @@
   height: 100px;
   object-fit: cover;
   border-radius: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .enemy-option-info {
@@ -66,7 +65,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   padding: 15px;
   background-color: #2a1f16;
   border-radius: 8px;
@@ -85,14 +84,14 @@
 
 .enemy-image {
   width: 100%;
-  max-width: 300px;
+  max-width: 250px;
   height: auto;
   border-radius: 8px;
 }
 
 .enemy-rewards {
   background-color: #5a3b2b;
-  padding: 15px;
+  padding: 10px;
   border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
