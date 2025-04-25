@@ -1,237 +1,122 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { generatePlayerStats } from '../utils/player';
-
-const GameContext = createContext();
-
-export function GameProvider({ children }) {
-  const [player, setPlayer] = useState(null);
-  const [notification, setNotification] = useState({
-    show: false,
-    message: '',
-    type: 'success'
-  });
-
-  // Carregar jogador do localStorage
-  useEffect(() => {
-    const storedPlayer = getPlayerFromStorage();
-    if (storedPlayer) {
-      // Garantir que as estatísticas estejam atualizadas
-      const updatedStats = generatePlayerStats(storedPlayer.level || 1);
-      setPlayer({ ...storedPlayer, ...updatedStats });
-    }
-  }, []);
-
-  const savePlayerToStorage = (playerData) => {
-    // Garantimos que maxHp esteja sempre definido
-    const dataToSave = {
-      ...playerData,
-      maxHp: playerData.hp || playerData.maxHp || 100
-    };
+const handleBattle = (enemy) => {
+  if (!player) return { success: false, combatLog: [] };
+  
+  // Clone o inimigo e o jogador para o combate
+  const enemyClone = { ...enemy, currentHp: enemy.hp };
+  const playerClone = { ...player, currentHp: player.hp };
+  
+  // Log de combate
+  const combatLog = [];
+  let roundCount = 1;
+  
+  combatLog.push({ type: 'system', message: `Combate iniciado contra ${enemy.name}!` });
+  
+  // Loop de combate
+  while (playerClone.currentHp > 0 && enemyClone.currentHp > 0) {
+    combatLog.push({ type: 'system', message: `--- Rodada ${roundCount} ---` });
     
-    localStorage.setItem('player', JSON.stringify(dataToSave));
-    setPlayer(dataToSave);
-  };
-
-  const getPlayerFromStorage = () => {
-    const stored = JSON.parse(localStorage.getItem('player'));
-    if (stored) {
-      // Garantimos que maxHp esteja sempre definido para jogadores existentes
-      return {
-        ...stored,
-        maxHp: stored.maxHp || stored.hp || 100
-      };
-    }
-    return null;
-  };
-
-  const updatePlayer = (newData) => {
-    const updatedPlayer = { ...player, ...newData };
-    savePlayerToStorage(updatedPlayer);
-    return updatedPlayer;
-  };
-
-  const createPlayer = (name) => {
-    const baseStats = generatePlayerStats(1);
-    const newPlayer = {
-      name,
-      level: 1,
-      xp: 0,
-      gold: 50,
-      ...baseStats,
-      maxHp: baseStats.hp // Adicionando maxHp para referência
-    };
+    // Ataque do jogador
+    const playerDamage = Math.max(1, playerClone.attack - enemyClone.defense);
+    const playerCrit = Math.random() * 100 < playerClone.critChance;
+    const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 1.5) : playerDamage;
     
-    savePlayerToStorage(newPlayer);
-    return newPlayer;
-  };
-
-  const levelUp = () => {
-    if (!player) return;
+    enemyClone.currentHp -= finalPlayerDamage;
     
-    const nextLevel = player.level + 1;
-    const newStats = generatePlayerStats(nextLevel);
-    const updatedPlayer = {
-      ...player,
-      level: nextLevel,
-      xp: 0,
-      hp: newStats.hp, // Vida cheia ao subir de nível
-      maxHp: newStats.hp,
-      ...newStats
-    };
+    combatLog.push({ 
+      type: 'player', 
+      message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.` 
+    });
     
-    savePlayerToStorage(updatedPlayer);
-    showNotification(`Nível ${nextLevel} alcançado!`, 'success');
-  };
-
-  const handleBattle = (enemy) => {
-    if (!player) return { success: false, combatLog: [] };
-    
-    // Clone o inimigo e o jogador para o combate
-    const enemyClone = { ...enemy, currentHp: enemy.hp };
-    const playerClone = { ...player, currentHp: player.hp };
-    
-    // Log de combate
-    const combatLog = [];
-    let roundCount = 1;
-    
-    combatLog.push({ type: 'system', message: `Combate iniciado contra ${enemy.name}!` });
-    
-    // Loop de combate
-    while (playerClone.currentHp > 0 && enemyClone.currentHp > 0) {
-      combatLog.push({ type: 'system', message: `--- Rodada ${roundCount} ---` });
-      
-      // Ataque do jogador
-      const playerDamage = Math.max(1, playerClone.attack - enemyClone.defense);
-      const playerCrit = Math.random() * 100 < playerClone.critChance;
-      const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 1.5) : playerDamage;
-      
-      enemyClone.currentHp -= finalPlayerDamage;
-      
-      combatLog.push({ 
-        type: 'player', 
-        message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.` 
-      });
-      
-      // Verifica se o inimigo foi derrotado
-      if (enemyClone.currentHp <= 0) {
-        combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
-        break;
-      }
-      
-      // Ataque do inimigo
-      const enemyDamage = Math.max(1, enemyClone.attack - playerClone.physicalDefense);
-      const enemyCrit = Math.random() * 100 < enemyClone.critChance;
-      const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
-      
-      playerClone.currentHp -= finalEnemyDamage;
-      
-      combatLog.push({ 
-        type: 'enemy', 
-        message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.` 
-      });
-      
-      // Verifica se o jogador foi derrotado
-      if (playerClone.currentHp <= 0) {
-        combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
-        break;
-      }
-      
-      roundCount++;
+    // Verifica se o inimigo foi derrotado
+    if (enemyClone.currentHp <= 0) {
+      combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
+      break;
     }
     
-    // Resultado do combate
-    let result;
+    // Ataque do inimigo
+    const enemyDamage = Math.max(1, enemyClone.attack - playerClone.physicalDefense);
+    const enemyCrit = Math.random() * 100 < enemyClone.critChance;
+    const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
+    
+    playerClone.currentHp -= finalEnemyDamage;
+    
+    combatLog.push({ 
+      type: 'enemy', 
+      message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.` 
+    });
+    
+    // Verifica se o jogador foi derrotado
     if (playerClone.currentHp <= 0) {
-      // Jogador derrotado
-      result = {
-        type: 'defeat',
-        title: 'Derrota!',
-        message: `Você foi derrotado por ${enemy.name}.`
-      };
-      
-      // Atualiza o HP do jogador (mínimo 1)
-      updatePlayer({ hp: 1 });
-    } else {
-      // Jogador venceu
-      const newXP = player.xp + enemy.rewardXP;
-      let newLevel = player.level;
-      let newXpToNext = player.xpToNextLevel;
-      let remainingXP = newXP;
-      let leveledUp = false;
-      
-      while (remainingXP >= newXpToNext) {
-        remainingXP -= newXpToNext;
-        newLevel += 1;
-        newXpToNext = Math.floor(newXpToNext * 1.2);
-        leveledUp = true;
-      }
-      
-      // Se subiu de nível, recupera vida completa
-      let newHp = playerClone.currentHp;
-      if (leveledUp) {
-        const newStats = generatePlayerStats(newLevel);
-        newHp = newStats.hp;
-        result = {
-          type: 'victory',
-          title: 'Vitória! Subiu de Nível!',
-          message: `Você derrotou ${enemy.name} e subiu para o nível ${newLevel}!`
-        };
-      } else {
-        result = {
-          type: 'victory',
-          title: 'Vitória!',
-          message: `Você derrotou ${enemy.name} e ganhou ${enemy.rewardXP} XP!`
-        };
-      }
-      
-      const rewardGold = Math.floor(enemy.level * 10 * (1 + Math.random() * 0.5));
-      combatLog.push({ type: 'system', message: `Você ganhou ${rewardGold} de ouro!` });
-      
-      const updatedPlayer = updatePlayer({
-        hp: newHp,
-        maxHp: leveledUp ? newHp : player.maxHp,
-        xp: remainingXP,
-        level: newLevel,
-        xpToNextLevel: newXpToNext,
-        gold: player.gold + rewardGold
-      });
+      combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
+      break;
     }
     
-    return { 
-      success: playerClone.currentHp > 0, 
-      combatLog, 
-      result 
+    roundCount++;
+  }
+  
+  // Resultado do combate
+  let result;
+  if (playerClone.currentHp <= 0) {
+    // Jogador derrotado
+    result = {
+      type: 'defeat',
+      title: 'Derrota!',
+      message: `Você foi derrotado por ${enemy.name}.`
     };
+    
+    // Atualiza o HP do jogador (mínimo 1)
+    updatePlayer({ hp: 1 });
+  } else {
+    // Jogador venceu
+    const newXP = player.xp + enemy.rewardXP;
+    let newLevel = player.level;
+    let newXpToNext = player.xpToNextLevel;
+    let remainingXP = newXP;
+    let leveledUp = false;
+    
+    while (remainingXP >= newXpToNext) {
+      remainingXP -= newXpToNext;
+      newLevel += 1;
+      newXpToNext = Math.floor(newXpToNext * 1.2);
+      leveledUp = true;
+    }
+    
+    // Se subiu de nível, recupera vida completa
+    let newHp = playerClone.currentHp;
+    if (leveledUp) {
+      const newStats = generatePlayerStats(newLevel);
+      newHp = newStats.hp;
+      result = {
+        type: 'victory',
+        title: 'Vitória! Subiu de Nível!',
+        message: `Você derrotou ${enemy.name} e subiu para o nível ${newLevel}!`
+      };
+    } else {
+      result = {
+        type: 'victory',
+        title: 'Vitória!',
+        message: `Você derrotou ${enemy.name} e ganhou ${enemy.rewardXP} XP!`
+      };
+    }
+    
+    // Usa o multiplicador de recompensa de ouro se disponível
+    const goldMultiplier = enemy.rewardGoldMultiplier || 1;
+    const rewardGold = Math.floor(enemy.level * 10 * (1 + Math.random() * 0.5) * goldMultiplier);
+    combatLog.push({ type: 'system', message: `Você ganhou ${rewardGold} de ouro!` });
+    
+    const updatedPlayer = updatePlayer({
+      hp: newHp,
+      maxHp: leveledUp ? newHp : player.maxHp,
+      xp: remainingXP,
+      level: newLevel,
+      xpToNextLevel: newXpToNext,
+      gold: player.gold + rewardGold
+    });
+  }
+  
+  return { 
+    success: playerClone.currentHp > 0, 
+    combatLog, 
+    result 
   };
-
-  const logout = () => {
-    localStorage.removeItem('player');
-    setPlayer(null);
-  };
-
-  const showNotification = (message, type = 'info') => {
-    setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification(prev => ({ ...prev, show: false }));
-    }, 3000);
-  };
-
-  return (
-    <GameContext.Provider 
-      value={{ 
-        player, 
-        createPlayer, 
-        updatePlayer, 
-        levelUp, 
-        handleBattle, 
-        logout,
-        notification,
-        showNotification 
-      }}
-    >
-      {children}
-    </GameContext.Provider>
-  );
-}
-
-export const useGame = () => useContext(GameContext);
+};

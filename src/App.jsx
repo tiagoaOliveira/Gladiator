@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { GameProvider } from './context/GameContext';
-import Layout from './components/Layout';
+import Layout from './components/layout';
 import Login from './pages/Login';
 import Character from './pages/Character';
 import Arena from './pages/Arena';
