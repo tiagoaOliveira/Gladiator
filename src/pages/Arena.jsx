@@ -77,6 +77,8 @@ export default function Arena() {
         onClose={() => setShowCombatModal(false)} 
         combatLog={combatLog}
         result={combatResult}
+        enemyImage={selectedEnemy.image}
+        enemyName={selectedEnemy.name}
       />
     </div>
   );

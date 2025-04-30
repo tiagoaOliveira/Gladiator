@@ -34,10 +34,17 @@ export default function Layout({ children }) {
         {children}
       </main>
       
-      {/* Barra de XP no rodapé */}
+      {/* Barras de HP e XP no rodapé */}
       {player && (
-        <div className="xp-footer">
-          <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />        
+        <div className="game-footer">
+          <div className="health-bar-container">
+            <div className="bar-label">HP</div>
+            <ProgressBar current={player.hp} max={player.maxHp} type="hp" />
+          </div>
+          <div className="xp-bar-container">
+            <div className="bar-label">XP</div>
+            <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />
+          </div>
         </div>
       )}
     </div>

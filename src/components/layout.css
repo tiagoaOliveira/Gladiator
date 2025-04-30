@@ -1,5 +1,5 @@
 .container {
-  max-width: 800px;
+  max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
   padding: 20px;
@@ -10,7 +10,7 @@
   font-family: Georgia, serif;
   position: relative;
   padding-top: 70px; /* Espaço para a navegação fixa no topo */
-  padding-bottom: 60px; /* Espaço para o rodapé */
+  padding-bottom: 100px; /* Espaço para o rodapé com duas barras */
 }
 
 .navigation {
@@ -18,7 +18,7 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 800px;
+  width: 1100px;
   background-color: #6d4c41;
   padding: 15px;
   border-bottom: 3px solid #3c2b21;
@@ -47,15 +47,38 @@
   padding-bottom: 20px;
 }
 
-.xp-footer {
+.game-footer {
   position: fixed;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 800px;
-  padding: 0 20px;
+  width: 1080px;
+  padding: 5px 20px 15px 20px;
   z-index: 1000;
-  text-align: center;
+  background-color: rgba(60, 43, 33, 0.9);
+  border-top: 2px solid #6d4c41;
+}
+
+.health-bar-container {
+  margin-bottom: 8px;
+}
+
+.xp-bar-container {
+  margin-bottom: 5px;
+}
+
+.bar-label {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.bar-label:first-child {
+  color: crimson;
+}
+
+.bar-label:last-child {
+  color: gold;
 }
 
 .xp-text {
