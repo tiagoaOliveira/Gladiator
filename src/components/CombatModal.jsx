@@ -79,7 +79,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       } else {
         setBattleFinished(true);
       }
-    }, 1500);
+    }, 500);
     
     return () => clearTimeout(nextLogTimeout);
   }, [show, combatLog, currentLogIndex]);

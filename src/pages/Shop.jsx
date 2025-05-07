@@ -8,7 +8,7 @@ export default function Shop() {
   if (!player) return <p>Carregando...</p>;
 
   const items = [
-    { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera 50 HP", action: () => healPlayer(50) },
+    { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera 50 HP", action: () => healPlayer(500) },
     { id: 2, name: "Espada de Ferro", price: 100, effect: "+5 de Ataque", action: () => improveAttack(5) },
     { id: 3, name: "Escudo de Madeira", price: 75, effect: "+3 de Defesa", action: () => improveDefense(3) }
   ];

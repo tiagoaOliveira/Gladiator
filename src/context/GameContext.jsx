@@ -57,7 +57,8 @@ export function GameProvider({ children }) {
       physicalDefense: baseStats.physicalDefense,
       magicPower: baseStats.magicPower,
       magicResistance: baseStats.magicResistance,
-      xpToNextLevel: baseStats.xpToNextLevel
+      xpToNextLevel: baseStats.xpToNextLevel,
+      attributePoints: 3 // Iniciamos com 3 pontos de atributo
     };
     
     setPlayer(newPlayer);
@@ -81,27 +82,20 @@ export function GameProvider({ children }) {
     showNotification('Você saiu do jogo', 'info');
   };
 
-  // Level up the player (for testing)
+  // Level up the player (atualizado para dar pontos de atributo em vez de stats automáticos)
   const levelUp = () => {
     if (!player) return;
     
     const newLevel = player.level + 1;
-    const newStats = generatePlayerStats(newLevel);
+    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
     
     updatePlayer({
       level: newLevel,
-      hp: newStats.hp,
-      maxHp: newStats.hp,
-      attack: newStats.attack,
-      critChance: newStats.critChance,
-      attackSpeed: newStats.attackSpeed,
-      physicalDefense: newStats.physicalDefense,
-      magicPower: newStats.magicPower,
-      magicResistance: newStats.magicResistance,
-      xpToNextLevel: newStats.xpToNextLevel
+      attributePoints: (player.attributePoints || 0) + 3, // 3 pontos por nível
+      xpToNextLevel: xpToNextLevel
     });
     
-    showNotification(`Avançou para o nível ${newLevel}!`, 'success');
+    showNotification(`Avançou para o nível ${newLevel}! Ganhou 3 pontos de atributo.`, 'success');
   };
 
   // Handle battle function
@@ -123,9 +117,13 @@ export function GameProvider({ children }) {
       combatLog.push({ type: 'system', message: `--- Rodada ${roundCount} ---` });
       
       // Player attack
-      const playerDamage = Math.max(1, playerClone.attack - enemyClone.defense);
+      let playerBaseDamage = Math.max(1, playerClone.attack);
+      // Aplicar a defesa do inimigo (redução direta)
+      let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
+      
+      // Verificar acerto crítico (dobro de dano)
       const playerCrit = Math.random() * 100 < playerClone.critChance;
-      const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 1.5) : playerDamage;
+      const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
       
       enemyClone.currentHp -= finalPlayerDamage;
       
@@ -140,17 +138,33 @@ export function GameProvider({ children }) {
         break;
       }
       
-      // Enemy attack
-      const enemyDamage = Math.max(1, enemyClone.attack - playerClone.physicalDefense);
+      // Enemy attack with defense damage reduction
+      const enemyBaseDamage = Math.max(1, enemyClone.attack);
+      
+      // Calculate damage reduction from physical defense (10% per 100 defense, max 30%)
+      const damageReduction = Math.min(30, Math.floor(playerClone.physicalDefense / 100) * 10);
+      
+      // Apply percentage damage reduction from defense
+      let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
+      
+      // Enemy critical hit (1.5x for enemies)
       const enemyCrit = Math.random() * 100 < enemyClone.critChance;
       const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
       
       playerClone.currentHp -= finalEnemyDamage;
       
-      combatLog.push({ 
-        type: 'enemy', 
-        message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.` 
-      });
+      // Add defense reduction info to combat log if applicable
+      if (damageReduction > 0) {
+        combatLog.push({ 
+          type: 'enemy', 
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction}%)` 
+        });
+      } else {
+        combatLog.push({ 
+          type: 'enemy', 
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.` 
+        });
+      }
       
       // Check if player is defeated
       if (playerClone.currentHp <= 0) {
@@ -180,23 +194,25 @@ export function GameProvider({ children }) {
       let newXpToNext = player.xpToNextLevel;
       let remainingXP = newXP;
       let leveledUp = false;
+      let attributePointsGained = 0;
       
       while (remainingXP >= newXpToNext) {
         remainingXP -= newXpToNext;
         newLevel += 1;
         newXpToNext = Math.floor(newXpToNext * 1.2);
+        attributePointsGained += 3; // 3 pontos por nível
         leveledUp = true;
       }
       
-      // If leveled up, restore full health
+      // If leveled up
       let newHp = playerClone.currentHp;
       if (leveledUp) {
-        const newStats = generatePlayerStats(newLevel);
-        newHp = newStats.hp;
+        // Restaurar HP completo ao subir de nível
+        newHp = player.maxHp;
         result = {
           type: 'victory',
           title: 'Vitória! Subiu de Nível!',
-          message: `Você derrotou ${enemy.name} e subiu para o nível ${newLevel}!`
+          message: `Você derrotou ${enemy.name}, subiu para o nível ${newLevel} e ganhou ${attributePointsGained} pontos de atributo!`
         };
       } else {
         result = {
@@ -213,11 +229,11 @@ export function GameProvider({ children }) {
       
       updatePlayer({
         hp: newHp,
-        maxHp: leveledUp ? newHp : player.maxHp,
         xp: remainingXP,
         level: newLevel,
         xpToNextLevel: newXpToNext,
-        gold: player.gold + rewardGold
+        gold: player.gold + rewardGold,
+        attributePoints: (player.attributePoints || 0) + attributePointsGained
       });
     }
     

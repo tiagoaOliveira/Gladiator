@@ -1,38 +1,162 @@
 import React from 'react';
 import { useGame } from '../context/GameContext';
-import ProgressBar from '../components/ProgressBar';
 import './Character.css';
-import character from '../assets/images/gladiator.jpg'
+import character from '../assets/images/gladiator.jpg';
 
 export default function Character() {
-  const { player, levelUp } = useGame();
+  const { player, updatePlayer, showNotification } = useGame();
 
   if (!player) return <p>Carregando...</p>;
 
+  const handleStatIncrease = (statName) => {
+    if (player.attributePoints <= 0) {
+      showNotification("Você não tem pontos de atributo disponíveis!", "error");
+      return;
+    }
+
+    const updatedStats = { attributePoints: player.attributePoints - 1 };
+
+    switch (statName) {
+      case 'attack':
+        updatedStats.attack = player.attack + 2;
+        break;
+      case 'physicalDefense':
+        updatedStats.physicalDefense = player.physicalDefense + 2;
+        break;
+      case 'maxHp':
+        updatedStats.maxHp = player.maxHp + 10;
+        updatedStats.hp = player.hp + 10;
+        break;
+      case 'critChance':
+        updatedStats.critChance = player.critChance + 1;
+        break;
+      case 'attackSpeed':
+        updatedStats.attackSpeed = player.attackSpeed + 0.1;
+        break;
+      default:
+        return;
+    }
+
+    updatePlayer(updatedStats);
+    showNotification(`${statName === 'maxHp' ? 'HP' : statName} aumentado com sucesso!`, "success");
+  };
+
+  const damageReduction = Math.min(30, Math.floor(player.physicalDefense / 100) * 10);
+
   return (
     <div className="character-container">
+      <div className="character-header">
+        <h1>{player.name}</h1>
+        <p className="level-display">Nível: {player.level}</p>
+        <p className="points-display">Pontos de Atributo: {player.attributePoints || 0}</p>
+      </div>
+
       <div className="character-content">
         <div className="character-stats">
-          <h1>{player.name}</h1>
-          <p>Nível: {player.level}</p>
-          <p>❤️ HP: {player.hp} / {player.maxHp}</p>
-          <p>🗡️ Ataque: {player.attack}</p>
-          <p>🎯 Chance Crítica: {player.critChance?.toFixed(1)}%</p>
-          <p>⚡ Velocidade de Ataque: {player.attackSpeed?.toFixed(2)}</p>
-          <p>🛡️ Defesa Física: {player.physicalDefense}</p>
-          <p>💰 Ouro: {player.gold}</p>
+
+          {/* HP */}
+          {/* HP */}
+          <div className="stat-block">
+            <div className="stat-header">
+              <h3>HP</h3>
+            </div>
+            <div className="stat-bar-wrapper">
+              <div className="stat-bar">
+                <div className="stat-fill" style={{ width: `${(player.hp / player.maxHp) * 100}%`, backgroundColor: "#f44336" }}></div>
+                <div className="stat-value-inside">{player.hp} / {player.maxHp}</div>
+              </div>
+              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('maxHp')} disabled={player.attributePoints <= 0}>+</button>
+            </div>
+          </div>
+
+          {/* Ataque */}
+          <div className="stat-block">
+            <div className="stat-header">
+              <h3>
+                Ataque
+              </h3>
+            </div>
+            <div className="stat-bar-wrapper">
+              <div className="stat-bar">
+                <div className="stat-fill attack-fill" style={{ width: `${Math.min(100, player.attack / 2)}%` }}></div>
+                <div className="stat-value-inside">{player.attack}</div>
+              </div>
+              <button
+                className="increase-stat-text-btn"
+                onClick={() => handleStatIncrease('attack')}
+                disabled={player.attributePoints <= 0}
+                title="Aumentar ataque"
+              >
+                ＋
+              </button>
+            </div>
+          </div>
+
+          {/* Defesa */}
+          <div className="stat-block">
+            <div className="stat-header">
+              <h3>
+                Defesa
+                <span className="info-tooltip" data-tooltip="Cada 100 pontos de defesa reduzem o dano em 10%, até o máximo de 30%.">ⓘ</span>
+              </h3>
+            </div>
+            <div className="stat-bar-wrapper">
+              <div className="stat-bar">
+                <div className="stat-fill defense-fill" style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}></div>
+                <div className="stat-value-inside">{player.physicalDefense}</div>
+              </div>
+              <button
+                className="increase-stat-text-btn"
+                onClick={() => handleStatIncrease('physicalDefense')}
+                disabled={player.attributePoints <= 0}
+                title="Aumentar defesa"
+              >
+                ＋
+              </button>
+            </div>
+          </div>
+
+          {/* Chance Crítica */}
+          <div className="stat-block">
+            <div className="stat-header">
+              <h3>Chance Crítica
+                <span className="info-tooltip" data-tooltip="Dano crítico: o dobro do valor de ataque.">ⓘ
+                </span>
+              </h3>
+            </div>
+            <div className="stat-bar-wrapper">
+              <div className="stat-bar">
+                <div className="stat-fill crit-fill" style={{ width: `${Math.min(100, player.critChance)}%` }}></div>
+                <div className="stat-value-inside">{player.critChance?.toFixed(1)}%</div>
+              </div>
+              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('critChance')} disabled={player.attributePoints <= 0}>+</button>
+            </div>
+          </div>
+
+          {/* Velocidade de Ataque */}
+          <div className="stat-block">
+            <div className="stat-header">
+              <h3>Velocidade de Ataque</h3>
+            </div>
+            <div className="stat-bar-wrapper">
+              <div className="stat-bar">
+                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 20)}%` }}></div>
+                <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
+              </div>
+              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('attackSpeed')} disabled={player.attributePoints <= 0}>+</button>
+            </div>
+          </div>
+
         </div>
 
         <div className="character-visual">
           <img className="player-img" src={character} alt="Gladiador" />
+          <div className="character-description">
+            <p>Um poderoso gladiador, treinado nas artes do combate.</p>
+            <p>Aprimorando suas habilidades a cada batalha!</p>
+          </div>
         </div>
       </div>
-
-      <div className="character-actions">
-        <button onClick={levelUp} className="action-button">Aumentar Nível (Teste)</button>
-      </div>
-      
-
     </div>
   );
 }

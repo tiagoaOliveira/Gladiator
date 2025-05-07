@@ -1,27 +1,52 @@
 .character-container {
   background-color: #3c2b21;
   color: #fff;
-  border-radius: 8px;
-  padding: 20px;
+  border-radius: 10px;
+  padding: 30px;
   position: relative;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.character-header {
+  margin-bottom: 30px;
+  border-bottom: 2px solid #5a3b2b;
+  padding-bottom: 15px;
+}
+
+.character-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.level-display {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 5px;
+}
+
+.points-display {
+  font-size: 16px;
+  color: #ffc107;
+  font-weight: bold;
+  margin-top: 5px;
 }
 
 .character-content {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-start;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 30px;
 }
 
 .character-stats {
   flex: 1;
-  min-width: 200px;
+  min-width: 320px;
 }
 
 .character-visual {
-  flex: 2;
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -29,29 +54,179 @@
 
 .player-img {
   width: 100%;
-  max-width: 300px;
+  max-width: 280px;
   height: auto;
-  border-radius: 8px;
-  margin-bottom: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  border: 4px solid #5a3b2b;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
 }
 
-.character-actions {
-  margin-top: 20px;
+.character-description {
   text-align: center;
-  margin-bottom: 50px; /* Espaço para o rodapé */
+  font-style: italic;
+  color: #ddd;
+  font-size: 14px;
 }
 
-.action-button {
-  padding: 10px 20px;
-  background-color: #5a3b2b;
-  color: white;
-  border: none;
+.stat-block {
+  margin-bottom: 0px;
+  padding: 15px;
+  /*background-color: #2a1f16;*/
   border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.stat-block:hover {
+  background-color: #34261c;
+}
+
+
+.stat-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.stat-bar-wrapper {
+  display: flex;
+  align-items: center; /* <-- garante alinhamento vertical */
+  gap: 10px;
+  position: relative;
+  min-height: 36px; /* previne "colapso" da altura se botão for maior */
+}
+
+
+.stat-bar {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  background-color: #444;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.stat-fill {
+  height: 100%;
+  transition: width 0.4s ease-in-out;
+  border-radius: 12px 0 0 12px;
+}
+
+.stat-value-inside {
+  position: absolute;
+  width: 100%;
+  text-align: center;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  font-weight: bold;
+  font-size: 14px;
+  color: #fff;
+  pointer-events: none;
+}
+
+.attack-fill {
+  background: linear-gradient(to right, #f44336, #d32f2f);
+}
+
+.defense-fill {
+  background: linear-gradient(to right, #2196f3, #1565c0);
+}
+
+.crit-fill {
+  background: linear-gradient(to right, #ffc107, #ff8f00);
+}
+
+.speed-fill {
+  background: linear-gradient(to right, #4caf50, #2e7d32);
+}
+
+.increase-stat-text-btn {
+  background: none;
+  border: none;
+  color: #ffc107;
+  font-size: 24px; /* tamanho visível do símbolo + */
+  font-weight: bold;
   cursor: pointer;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+
+.stat-description {
+  font-size: 13px;
+  color: #aaa;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Substitui botão redondo por símbolo de + mais clean*/
+.increase-stat-text-btn {
+  background: none;
+  border: none;
+  color: #ffc107;
+  font-size: 22px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.3s ease;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+.increase-stat-text-btn:hover:not(:disabled) {
+  color: #ffca28;
+  transform: scale(2);
+}
+
+.increase-stat-text-btn:disabled {
+  color: #777;
+  cursor: not-allowed;
+}
+
+/* Tooltip de informações (ícone de info ao lado de títulos) */
+.info-tooltip {
+  margin-left: 8px;
+  color: #bbb;
   font-size: 16px;
+  cursor: help;
+  position: relative;
 }
 
-.action-button:hover {
-  background-color: #7d5135;
+.info-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #2a1f16;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: 12px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  z-index: 10;
 }
 
+.info-tooltip:hover::after {
+  opacity: 1;
+}
+
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .character-content {
+    flex-direction: column-reverse;
+  }
+
+  .character-visual {
+    margin-bottom: 25px;
+  }
+}

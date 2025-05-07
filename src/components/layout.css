@@ -71,10 +71,11 @@
   font-size: 14px;
   font-weight: bold;
   margin-bottom: 3px;
+  text-align: center;
 }
 
 .bar-label:first-child {
-  color: crimson;
+  color: white;
 }
 
 .bar-label:last-child {

@@ -32,8 +32,8 @@
   box-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
 }
 
-.enemy-option:hover {
-  transform: translateY(-5px);
+.enemy-thumbnail:hover {
+  transform: scale(1.05);
 }
 
 .enemy-thumbnail {
@@ -41,7 +41,6 @@
   height: 100px;
   object-fit: cover;
   border-radius: 6px;
-  margin-bottom: 4px;
 }
 
 .enemy-option-info {
