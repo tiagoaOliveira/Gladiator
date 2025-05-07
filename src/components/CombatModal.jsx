@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './CombatModal.css';
 import character from '../assets/images/gladiator.jpg';
+import { enemies } from '../utils/enemies';
+
 
 export default function CombatModal({ show, onClose, combatLog, result }) {
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
@@ -11,7 +13,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
   const [battleFinished, setBattleFinished] = useState(false);
   const [playerHealth, setPlayerHealth] = useState(100);
   const [enemyHealth, setEnemyHealth] = useState(100);
-  
+
   // Reset state when modal opens
   useEffect(() => {
     if (show) {
@@ -21,29 +23,36 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       setBattleFinished(false);
       setPlayerHealth(100);
       setEnemyHealth(100);
-      
-      // Extract enemy image and name from the combat log
+  
+      // Extrair nome e imagem do inimigo a partir do combatLog
       if (combatLog && combatLog.length > 0) {
-        // Try to find enemy information in the first message
         const firstMessage = combatLog[0].message;
         if (firstMessage.includes('contra')) {
           const enemyNameMatch = firstMessage.match(/contra (.+?)!/);
           if (enemyNameMatch && enemyNameMatch[1]) {
-            setEnemyName(enemyNameMatch[1]);
+            const name = enemyNameMatch[1];
+            setEnemyName(name);
+  
+            // Buscar imagem do inimigo com base no nome
+            const matchedEnemy = enemies.find(e => e.name === name);
+            if (matchedEnemy) {
+              setEnemyImage(matchedEnemy.image);
+            }
           }
         }
       }
     }
   }, [show, combatLog]);
   
+
   // Process the combat log to show battle animations
   useEffect(() => {
     if (!show || !combatLog || combatLog.length === 0 || currentLogIndex >= combatLog.length) {
       return;
     }
-    
+
     const log = combatLog[currentLogIndex];
-    
+
     if (log.type === 'player') {
       // Extract damage from player action
       const damageMatch = log.message.match(/causou (\d+) de dano/);
@@ -51,7 +60,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
         const damage = parseInt(damageMatch[1]);
         setPlayerDamage(damage);
         setEnemyHealth(prev => Math.max(0, prev - (damage / 2))); // Adjust health reduction for visual effect
-        
+
         // Clear after animation
         setTimeout(() => {
           setPlayerDamage(null);
@@ -64,14 +73,14 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
         const damage = parseInt(damageMatch[1]);
         setEnemyDamage(damage);
         setPlayerHealth(prev => Math.max(0, prev - (damage / 2))); // Adjust health reduction for visual effect
-        
+
         // Clear after animation
         setTimeout(() => {
           setEnemyDamage(null);
         }, 1000);
       }
     }
-    
+
     // Move to next log entry after a delay
     const nextLogTimeout = setTimeout(() => {
       if (currentLogIndex < combatLog.length - 1) {
@@ -80,7 +89,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
         setBattleFinished(true);
       }
     }, 500);
-    
+
     return () => clearTimeout(nextLogTimeout);
   }, [show, combatLog, currentLogIndex]);
 
@@ -97,7 +106,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
     <div className="modal-overlay">
       <div className="combat-modal">
         <h2>Batalha contra {enemyName}</h2>
-        
+
         <div className="battle-visualization">
           <div className="combatant player-combatant">
             <div className="health-bar-wrapper">
@@ -108,9 +117,9 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
             <img src={character} alt="Player character" className="combatant-image" />
             {enemyDamage && <div className="damage-number player-damage">-{enemyDamage}</div>}
           </div>
-          
+
           <div className="battle-vs">VS</div>
-          
+
           <div className="combatant enemy-combatant">
             <div className="health-bar-wrapper">
               <div className="health-bar">
@@ -121,7 +130,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
             {playerDamage && <div className="damage-number enemy-damage">-{playerDamage}</div>}
           </div>
         </div>
-        
+
         <div className="combat-log-content">
           {combatLog.slice(0, currentLogIndex + 1).map((log, index) => (
             <p key={index} className={`log-entry ${log.type}`}>
@@ -129,14 +138,14 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
             </p>
           ))}
         </div>
-        
+
         {battleFinished && result && (
           <div className={`combat-result ${result.type}`}>
             <h3>{result.title}</h3>
             <p>{result.message}</p>
           </div>
         )}
-        
+
         <button className="close-modal-button" onClick={onClose}>
           Fechar
         </button>

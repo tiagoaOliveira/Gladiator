@@ -114,7 +114,6 @@ export function GameProvider({ children }) {
     
     // Combat loop
     while (playerClone.currentHp > 0 && enemyClone.currentHp > 0) {
-      combatLog.push({ type: 'system', message: `--- Rodada ${roundCount} ---` });
       
       // Player attack
       let playerBaseDamage = Math.max(1, playerClone.attack);

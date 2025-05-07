@@ -1,4 +1,6 @@
-import goblin from '../assets/images/goblin.jpg'
+import goblin from '../assets/images/goblin.png'
+import orc from '../assets/images/orc1.png'
+import dragao from '../assets/images/dragao1.png'
 
 export const enemies = [
   {
@@ -16,14 +18,14 @@ export const enemies = [
   },
   {
     id: 2,
-    name: 'Ogro Selvagem',
+    name: 'Orc Selvagem',
     level: 2,
     hp: 160,           // Dobro do Goblin
     attack: 16,       // Dobro do Goblin
     defense: 6,        // Dobro do Goblin
     critChance: 6,     // Dobro do Goblin
     attackSpeed: 2,    // Dobro do Goblin
-    image: './assets/images/ogre.jpg', // Precisará deste arquivo
+    image: orc, // Precisará deste arquivo
     rewardXP: 300,      // Dobro da recompensa
     rewardGoldMultiplier: 2 // Dobro da recompensa de ouro
   },
@@ -36,7 +38,7 @@ export const enemies = [
     defense: 12,       // 4x o Goblin
     critChance: 12,    // 4x o Goblin
     attackSpeed: 4,    // 4x o Goblin
-    image: './assets/images/dragon.jpg', // Precisará deste arquivo
+    image: dragao, // Precisará deste arquivo
     rewardXP: 600,     // 4x a recompensa
     rewardGoldMultiplier: 4 // 4x a recompensa de ouro
   }
