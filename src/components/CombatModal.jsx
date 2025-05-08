@@ -11,8 +11,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
   const [enemyImage, setEnemyImage] = useState('');
   const [enemyName, setEnemyName] = useState('');
   const [battleFinished, setBattleFinished] = useState(false);
-  const [playerHealth, setPlayerHealth] = useState(100);
-  const [enemyHealth, setEnemyHealth] = useState(100);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -21,8 +19,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       setPlayerDamage(null);
       setEnemyDamage(null);
       setBattleFinished(false);
-      setPlayerHealth(100);
-      setEnemyHealth(100);
   
       // Extrair nome e imagem do inimigo a partir do combatLog
       if (combatLog && combatLog.length > 0) {
@@ -59,7 +55,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       if (damageMatch && damageMatch[1]) {
         const damage = parseInt(damageMatch[1]);
         setPlayerDamage(damage);
-        setEnemyHealth(prev => Math.max(0, prev - (damage / 2))); // Adjust health reduction for visual effect
 
         // Clear after animation
         setTimeout(() => {
@@ -72,7 +67,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       if (damageMatch && damageMatch[1]) {
         const damage = parseInt(damageMatch[1]);
         setEnemyDamage(damage);
-        setPlayerHealth(prev => Math.max(0, prev - (damage / 2))); // Adjust health reduction for visual effect
 
         // Clear after animation
         setTimeout(() => {
@@ -109,11 +103,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
 
         <div className="battle-visualization">
           <div className="combatant player-combatant">
-            <div className="health-bar-wrapper">
-              <div className="health-bar">
-                <div className="health-fill" style={{ width: `${playerHealth}%` }}></div>
-              </div>
-            </div>
             <img src={character} alt="Player character" className="combatant-image" />
             {enemyDamage && <div className="damage-number player-damage">-{enemyDamage}</div>}
           </div>
@@ -121,11 +110,6 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
           <div className="battle-vs">VS</div>
 
           <div className="combatant enemy-combatant">
-            <div className="health-bar-wrapper">
-              <div className="health-bar">
-                <div className="health-fill" style={{ width: `${enemyHealth}%` }}></div>
-              </div>
-            </div>
             <img src={getEnemyImage()} alt={enemyName} className="combatant-image" />
             {playerDamage && <div className="damage-number enemy-damage">-{playerDamage}</div>}
           </div>

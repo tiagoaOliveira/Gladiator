@@ -31,17 +31,24 @@ export default function Character() {
         updatedStats.critChance = player.critChance + 1;
         break;
       case 'attackSpeed':
-        updatedStats.attackSpeed = player.attackSpeed + 0.1;
+        // Limitar a velocidade de ataque a 2
+        const newAttackSpeed = (player.attackSpeed + 0.1).toFixed(2);
+        updatedStats.attackSpeed = Math.min(2, parseFloat(newAttackSpeed));
+        
+        // Verificar se já está no limite e notificar o jogador
+        if (player.attackSpeed >= 1.9) {
+          showNotification("Velocidade de ataque máxima atingida!", "info");
+        }
         break;
       default:
         return;
     }
 
     updatePlayer(updatedStats);
-    showNotification(`${statName === 'maxHp' ? 'HP' : statName} aumentado com sucesso!`, "success");
   };
 
-  const damageReduction = Math.min(30, Math.floor(player.physicalDefense / 100) * 10);
+  // Novo cálculo de redução de dano: cada ponto de defesa reduz 0,1% do dano
+  const damageReduction = Math.min(30, (player.physicalDefense * 0.1).toFixed(1));
 
   return (
     <div className="character-container">
@@ -54,7 +61,6 @@ export default function Character() {
       <div className="character-content">
         <div className="character-stats">
 
-          {/* HP */}
           {/* HP */}
           <div className="stat-block">
             <div className="stat-header">
@@ -97,7 +103,7 @@ export default function Character() {
             <div className="stat-header">
               <h3>
                 Defesa
-                <span className="info-tooltip" data-tooltip="Cada 100 pontos de defesa reduzem o dano em 10%, até o máximo de 30%.">ⓘ</span>
+                <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%.">ⓘ</span>
               </h3>
             </div>
             <div className="stat-bar-wrapper">
@@ -120,7 +126,7 @@ export default function Character() {
           <div className="stat-block">
             <div className="stat-header">
               <h3>Chance Crítica
-                <span className="info-tooltip" data-tooltip="Dano crítico: o dobro do valor de ataque.">ⓘ
+                <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ
                 </span>
               </h3>
             </div>
@@ -136,14 +142,18 @@ export default function Character() {
           {/* Velocidade de Ataque */}
           <div className="stat-block">
             <div className="stat-header">
-              <h3>Velocidade de Ataque</h3>
+              <h3>Velocidade de Ataque              </h3>
             </div>
             <div className="stat-bar-wrapper">
               <div className="stat-bar">
-                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 20)}%` }}></div>
+                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 50)}%` }}></div>
                 <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
               </div>
-              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('attackSpeed')} disabled={player.attributePoints <= 0}>+</button>
+              <button 
+                className="increase-stat-text-btn" 
+                onClick={() => handleStatIncrease('attackSpeed')} 
+                disabled={player.attributePoints <= 0 || player.attackSpeed >= 2}
+              >+</button>
             </div>
           </div>
 

@@ -53,7 +53,7 @@ export function GameProvider({ children }) {
       maxHp: baseStats.hp,
       attack: baseStats.attack,
       critChance: baseStats.critChance,
-      attackSpeed: baseStats.attackSpeed,
+      attackSpeed: Math.min(2, baseStats.attackSpeed), // Limitar a velocidade de ataque a 2
       physicalDefense: baseStats.physicalDefense,
       magicPower: baseStats.magicPower,
       magicResistance: baseStats.magicResistance,
@@ -69,6 +69,12 @@ export function GameProvider({ children }) {
   const updatePlayer = (updates) => {
     setPlayer(prev => {
       if (!prev) return null;
+      
+      // Ensure attackSpeed never exceeds 2
+      if (updates.attackSpeed && updates.attackSpeed > 2) {
+        updates.attackSpeed = 2;
+      }
+      
       const updated = { ...prev, ...updates };
       return updated;
     });
@@ -140,8 +146,8 @@ export function GameProvider({ children }) {
       // Enemy attack with defense damage reduction
       const enemyBaseDamage = Math.max(1, enemyClone.attack);
       
-      // Calculate damage reduction from physical defense (10% per 100 defense, max 30%)
-      const damageReduction = Math.min(30, Math.floor(playerClone.physicalDefense / 100) * 10);
+      // Nova lógica: cada ponto de defesa reduz 0,1% do dano, limitado a 30%
+      const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
       
       // Apply percentage damage reduction from defense
       let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
@@ -156,7 +162,7 @@ export function GameProvider({ children }) {
       if (damageReduction > 0) {
         combatLog.push({ 
           type: 'enemy', 
-          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction}%)` 
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)` 
         });
       } else {
         combatLog.push({ 
