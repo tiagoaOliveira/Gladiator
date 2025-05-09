@@ -81,6 +81,10 @@
   background-color: #34261c;
 }
 
+.stat-header {
+  width: 100px;
+  flex-shrink: 0;
+}
 
 .stat-header h3 {
   margin: 0;
@@ -217,6 +221,34 @@
 
 .info-tooltip:hover::after {
   opacity: 1;
+}
+
+/*Reset Button*/
+.reset-button-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.reset-button {
+  background-color: #6d4c41;
+  color: #fff;
+  border: none;
+  padding: 10px 64px;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.reset-button:hover:not(:disabled) {
+  background-color: #8d6e63;
+}
+
+.reset-button:disabled {
+  background-color: #444;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 

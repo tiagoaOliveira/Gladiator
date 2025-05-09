@@ -4,7 +4,7 @@ import './Character.css';
 import character from '../assets/images/gladiator.jpg';
 
 export default function Character() {
-  const { player, updatePlayer, showNotification } = useGame();
+  const { player, updatePlayer, showNotification, resetStats } = useGame();
 
   if (!player) return <p>Carregando...</p>;
 
@@ -34,7 +34,7 @@ export default function Character() {
         // Limitar a velocidade de ataque a 2
         const newAttackSpeed = (player.attackSpeed + 0.1).toFixed(2);
         updatedStats.attackSpeed = Math.min(2, parseFloat(newAttackSpeed));
-        
+
         // Verificar se já está no limite e notificar o jogador
         if (player.attackSpeed >= 1.9) {
           showNotification("Velocidade de ataque máxima atingida!", "info");
@@ -63,10 +63,10 @@ export default function Character() {
 
           {/* HP */}
           <div className="stat-block">
-            <div className="stat-header">
-              <h3>HP</h3>
-            </div>
             <div className="stat-bar-wrapper">
+              <div className="stat-header">
+                <h3>HP</h3>
+              </div>
               <div className="stat-bar">
                 <div className="stat-fill" style={{ width: `${(player.hp / player.maxHp) * 100}%`, backgroundColor: "#f44336" }}></div>
                 <div className="stat-value-inside">{player.hp} / {player.maxHp}</div>
@@ -77,12 +77,12 @@ export default function Character() {
 
           {/* Ataque */}
           <div className="stat-block">
-            <div className="stat-header">
-              <h3>
-                Ataque
-              </h3>
-            </div>
             <div className="stat-bar-wrapper">
+              <div className="stat-header">
+                <h3>
+                  Ataque
+                </h3>
+              </div>
               <div className="stat-bar">
                 <div className="stat-fill attack-fill" style={{ width: `${Math.min(100, player.attack / 2)}%` }}></div>
                 <div className="stat-value-inside">{player.attack}</div>
@@ -100,13 +100,13 @@ export default function Character() {
 
           {/* Defesa */}
           <div className="stat-block">
-            <div className="stat-header">
-              <h3>
-                Defesa
-                <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%.">ⓘ</span>
-              </h3>
-            </div>
             <div className="stat-bar-wrapper">
+              <div className="stat-header">
+                <h3>
+                  Defesa
+                  <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%.">ⓘ</span>
+                </h3>
+              </div>
               <div className="stat-bar">
                 <div className="stat-fill defense-fill" style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}></div>
                 <div className="stat-value-inside">{player.physicalDefense}</div>
@@ -124,13 +124,13 @@ export default function Character() {
 
           {/* Chance Crítica */}
           <div className="stat-block">
-            <div className="stat-header">
-              <h3>Chance Crítica
-                <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ
-                </span>
-              </h3>
-            </div>
             <div className="stat-bar-wrapper">
+              <div className="stat-header">
+                <h3>Crítico
+                  <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ
+                  </span>
+                </h3>
+              </div>
               <div className="stat-bar">
                 <div className="stat-fill crit-fill" style={{ width: `${Math.min(100, player.critChance)}%` }}></div>
                 <div className="stat-value-inside">{player.critChance?.toFixed(1)}%</div>
@@ -141,21 +141,34 @@ export default function Character() {
 
           {/* Velocidade de Ataque */}
           <div className="stat-block">
-            <div className="stat-header">
-              <h3>Velocidade de Ataque              </h3>
-            </div>
             <div className="stat-bar-wrapper">
+              <div className="stat-header">
+                <h3>Vel. Ataq</h3>
+              </div>
               <div className="stat-bar">
                 <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 50)}%` }}></div>
                 <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
               </div>
-              <button 
-                className="increase-stat-text-btn" 
-                onClick={() => handleStatIncrease('attackSpeed')} 
+              <button
+                className="increase-stat-text-btn"
+                onClick={() => handleStatIncrease('attackSpeed')}
                 disabled={player.attributePoints <= 0 || player.attackSpeed >= 2}
               >+</button>
             </div>
           </div>
+
+          {/*resetStats */}
+          <div className="reset-button-wrapper">
+            <button
+              onClick={resetStats}
+              className="reset-button"
+              disabled={player.attributePoints === 3 * player.level}
+            >
+              Reset
+            </button>
+          </div>
+
+
 
         </div>
 

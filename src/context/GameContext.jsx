@@ -34,7 +34,7 @@ export function GameProvider({ children }) {
   // Show notification with auto-hide
   const showNotification = (message, type = 'info') => {
     setNotification({ show: true, message, type });
-    
+
     // Auto hide after 3 seconds
     setTimeout(() => {
       setNotification(prev => ({ ...prev, show: false }));
@@ -60,7 +60,7 @@ export function GameProvider({ children }) {
       xpToNextLevel: baseStats.xpToNextLevel,
       attributePoints: 3 // Iniciamos com 3 pontos de atributo
     };
-    
+
     setPlayer(newPlayer);
     showNotification(`Bem-vindo, ${name}!`, 'success');
   };
@@ -69,17 +69,37 @@ export function GameProvider({ children }) {
   const updatePlayer = (updates) => {
     setPlayer(prev => {
       if (!prev) return null;
-      
+
       // Ensure attackSpeed never exceeds 2
       if (updates.attackSpeed && updates.attackSpeed > 2) {
         updates.attackSpeed = 2;
       }
-      
+
       const updated = { ...prev, ...updates };
       return updated;
     });
     return player;
   };
+
+  // Resetar atributos do jogador com base no nível atual
+  const resetStats = () => {
+    if (!player) return;
+
+    const baseStats = generatePlayerStats(player.level);
+
+    updatePlayer({
+      hp: baseStats.hp,
+      maxHp: baseStats.hp,
+      attack: baseStats.attack,
+      physicalDefense: baseStats.physicalDefense,
+      critChance: baseStats.critChance,
+      attackSpeed: Math.min(2, baseStats.attackSpeed),
+      attributePoints: 3 * player.level // Recalcula pontos
+    });
+
+    showNotification("Atributos reiniciados!", "info");
+  };
+
 
   // Log the player out (clear data)
   const logout = () => {
@@ -91,95 +111,95 @@ export function GameProvider({ children }) {
   // Level up the player (atualizado para dar pontos de atributo em vez de stats automáticos)
   const levelUp = () => {
     if (!player) return;
-    
+
     const newLevel = player.level + 1;
     const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
-    
+
     updatePlayer({
       level: newLevel,
       attributePoints: (player.attributePoints || 0) + 3, // 3 pontos por nível
       xpToNextLevel: xpToNextLevel
     });
-    
+
     showNotification(`Avançou para o nível ${newLevel}! Ganhou 3 pontos de atributo.`, 'success');
   };
 
   // Handle battle function
   const handleBattle = (enemy) => {
     if (!player) return { success: false, combatLog: [] };
-    
+
     // Clone the enemy and player for combat
     const enemyClone = { ...enemy, currentHp: enemy.hp };
     const playerClone = { ...player, currentHp: player.hp };
-    
+
     // Combat log
     const combatLog = [];
     let roundCount = 1;
-    
+
     combatLog.push({ type: 'system', message: `Combate iniciado contra ${enemy.name}!` });
-    
+
     // Combat loop
     while (playerClone.currentHp > 0 && enemyClone.currentHp > 0) {
-      
+
       // Player attack
       let playerBaseDamage = Math.max(1, playerClone.attack);
       // Aplicar a defesa do inimigo (redução direta)
       let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
-      
+
       // Verificar acerto crítico (dobro de dano)
       const playerCrit = Math.random() * 100 < playerClone.critChance;
       const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
-      
+
       enemyClone.currentHp -= finalPlayerDamage;
-      
-      combatLog.push({ 
-        type: 'player', 
-        message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.` 
+
+      combatLog.push({
+        type: 'player',
+        message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.`
       });
-      
+
       // Check if enemy is defeated
       if (enemyClone.currentHp <= 0) {
         combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
         break;
       }
-      
+
       // Enemy attack with defense damage reduction
       const enemyBaseDamage = Math.max(1, enemyClone.attack);
-      
+
       // Nova lógica: cada ponto de defesa reduz 0,1% do dano, limitado a 30%
       const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
-      
+
       // Apply percentage damage reduction from defense
       let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
-      
+
       // Enemy critical hit (1.5x for enemies)
       const enemyCrit = Math.random() * 100 < enemyClone.critChance;
       const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
-      
+
       playerClone.currentHp -= finalEnemyDamage;
-      
+
       // Add defense reduction info to combat log if applicable
       if (damageReduction > 0) {
-        combatLog.push({ 
-          type: 'enemy', 
-          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)` 
+        combatLog.push({
+          type: 'enemy',
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)`
         });
       } else {
-        combatLog.push({ 
-          type: 'enemy', 
-          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.` 
+        combatLog.push({
+          type: 'enemy',
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.`
         });
       }
-      
+
       // Check if player is defeated
       if (playerClone.currentHp <= 0) {
         combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
         break;
       }
-      
+
       roundCount++;
     }
-    
+
     // Combat result
     let result;
     if (playerClone.currentHp <= 0) {
@@ -189,7 +209,7 @@ export function GameProvider({ children }) {
         title: 'Derrota!',
         message: `Você foi derrotado por ${enemy.name}.`
       };
-      
+
       // Update player HP (minimum 1)
       updatePlayer({ hp: 1 });
     } else {
@@ -200,7 +220,7 @@ export function GameProvider({ children }) {
       let remainingXP = newXP;
       let leveledUp = false;
       let attributePointsGained = 0;
-      
+
       while (remainingXP >= newXpToNext) {
         remainingXP -= newXpToNext;
         newLevel += 1;
@@ -208,7 +228,7 @@ export function GameProvider({ children }) {
         attributePointsGained += 3; // 3 pontos por nível
         leveledUp = true;
       }
-      
+
       // If leveled up
       let newHp = playerClone.currentHp;
       if (leveledUp) {
@@ -226,12 +246,12 @@ export function GameProvider({ children }) {
           message: `Você derrotou ${enemy.name} e ganhou ${enemy.rewardXP} XP!`
         };
       }
-      
+
       // Use gold reward multiplier if available
       const goldMultiplier = enemy.rewardGoldMultiplier || 1;
       const rewardGold = Math.floor(enemy.level * 10 * (1 + Math.random() * 0.5) * goldMultiplier);
       combatLog.push({ type: 'system', message: `Você ganhou ${rewardGold} de ouro!` });
-      
+
       updatePlayer({
         hp: newHp,
         xp: remainingXP,
@@ -241,11 +261,11 @@ export function GameProvider({ children }) {
         attributePoints: (player.attributePoints || 0) + attributePointsGained
       });
     }
-    
-    return { 
-      success: playerClone.currentHp > 0, 
-      combatLog, 
-      result 
+
+    return {
+      success: playerClone.currentHp > 0,
+      combatLog,
+      result
     };
   };
 
@@ -258,7 +278,8 @@ export function GameProvider({ children }) {
     levelUp,
     handleBattle,
     notification,
-    showNotification
+    showNotification,
+    resetStats
   };
 
   return (
