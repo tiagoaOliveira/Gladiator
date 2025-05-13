@@ -22,7 +22,7 @@ export default function Character() {
         updatedStats.attack = player.attack + 2;
         break;
       case 'physicalDefense':
-        updatedStats.physicalDefense = player.physicalDefense + 2;
+        updatedStats.physicalDefense = player.physicalDefense + 5;
         break;
       case 'maxHp':
         updatedStats.maxHp = player.maxHp + 10;

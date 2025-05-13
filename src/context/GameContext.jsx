@@ -53,7 +53,7 @@ export function GameProvider({ children }) {
       maxHp: baseStats.hp,
       attack: baseStats.attack,
       critChance: baseStats.critChance,
-      attackSpeed: Math.min(2, baseStats.attackSpeed), // Limitar a velocidade de ataque a 2
+      attackSpeed: Math.min(3, baseStats.attackSpeed), // Limitar a velocidade de ataque a 3
       physicalDefense: baseStats.physicalDefense,
       magicPower: baseStats.magicPower,
       magicResistance: baseStats.magicResistance,
@@ -265,20 +265,20 @@ export function GameProvider({ children }) {
         result = {
           type: 'victory',
           title: 'Vitória! Subiu de Nível!',
-          message: `Você derrotou ${enemy.name}, subiu para o nível ${newLevel} e ganhou ${attributePointsGained} pontos de atributo!`
+          message: `Você derrotou ${enemy.name}, subiu para o nível ${newLevel}, ganhou ${attributePointsGained} pontos de atributo`
         };
       } else {
         result = {
           type: 'victory',
           title: 'Vitória!',
-          message: `Você derrotou ${enemy.name} e ganhou ${enemy.rewardXP} XP!`
+          message: `Você derrotou ${enemy.name}, ganhou ${enemy.rewardXP} XP`
         };
       }
 
       // Use gold reward multiplier if available
       const goldMultiplier = enemy.rewardGoldMultiplier || 1;
       const rewardGold = Math.floor(enemy.level * 10 * (1 + Math.random() * 0.5) * goldMultiplier);
-      combatLog.push({ type: 'system', message: `Você ganhou ${rewardGold} de ouro!` });
+      result.message += ` e mais ${rewardGold} de ouro!`;
 
       updatePlayer({
         hp: newHp,

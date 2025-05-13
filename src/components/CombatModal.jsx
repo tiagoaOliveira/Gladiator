@@ -81,7 +81,6 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result 
 
     // If the message contains attack speed information, adjust the delay
     if (log.attackSpeed) {
-      // The higher the attack speed, the less time between attacks
       // Min delay of 200ms for readability
       displayDelay = Math.max(200, 500 / log.attackSpeed);
     }
@@ -160,7 +159,7 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result 
             Fechar
           </button>
         </div>
-        
+
       </div>
     </div>
   );
