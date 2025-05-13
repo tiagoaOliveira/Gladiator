@@ -10,6 +10,7 @@ import Layout from './components/layout';
 import Login from './pages/Login';
 import Character from './pages/Character';
 import Arena from './pages/Arena';
+import Torneio from './pages/Torneio';
 import Shop from './pages/Shop';
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
           <Route path="/" element={<Layout><Login /></Layout>} />
           <Route path="/character" element={<Layout><Character /></Layout>} />
           <Route path="/arena" element={<Layout><Arena /></Layout>} />
+          <Route path='/Torneio' element={<Layout><Torneio/></Layout>}/>
           <Route path="/shop" element={<Layout><Shop /></Layout>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

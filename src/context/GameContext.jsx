@@ -70,9 +70,9 @@ export function GameProvider({ children }) {
     setPlayer(prev => {
       if (!prev) return null;
 
-      // Ensure attackSpeed never exceeds 2
-      if (updates.attackSpeed && updates.attackSpeed > 2) {
-        updates.attackSpeed = 2;
+      // Ensure attackSpeed never exceeds 3
+      if (updates.attackSpeed && updates.attackSpeed > 3) {
+        updates.attackSpeed = 3;
       }
 
       const updated = { ...prev, ...updates };
@@ -80,6 +80,7 @@ export function GameProvider({ children }) {
     });
     return player;
   };
+
 
   // Resetar atributos do jogador com base no nível atual
   const resetStats = () => {
@@ -93,7 +94,7 @@ export function GameProvider({ children }) {
       attack: baseStats.attack,
       physicalDefense: baseStats.physicalDefense,
       critChance: baseStats.critChance,
-      attackSpeed: Math.min(2, baseStats.attackSpeed),
+      attackSpeed: Math.min(3, baseStats.attackSpeed),
       attributePoints: 3 * player.level // Recalcula pontos
     });
 
@@ -134,70 +135,97 @@ export function GameProvider({ children }) {
 
     // Combat log
     const combatLog = [];
-    let roundCount = 1;
+
+    // Tempo de simulação (em segundos)
+    let battleTime = 0;
+    const timeIncrement = 0.1; // Incrementos de 0.1 segundos
+
+    // Contadores para ataques baseados na velocidade
+    let playerAttackCounter = 0;
+    let enemyAttackCounter = 0;
 
     combatLog.push({ type: 'system', message: `Combate iniciado contra ${enemy.name}!` });
 
-    // Combat loop
+    // Combat loop - agora simulamos o tempo passando
     while (playerClone.currentHp > 0 && enemyClone.currentHp > 0) {
+      battleTime += timeIncrement;
 
-      // Player attack
-      let playerBaseDamage = Math.max(1, playerClone.attack);
-      // Aplicar a defesa do inimigo (redução direta)
-      let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
+      // Verificar se é hora do jogador atacar com base na velocidade de ataque
+      // attackSpeed 1.0 = ataque a cada 1 segundo
+      // attackSpeed 2.0 = ataque a cada 0.5 segundos
+      if (battleTime >= (playerAttackCounter + 1) / playerClone.attackSpeed) {
+        playerAttackCounter++;
 
-      // Verificar acerto crítico (dobro de dano)
-      const playerCrit = Math.random() * 100 < playerClone.critChance;
-      const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
+        // Player attack
+        let playerBaseDamage = Math.max(1, playerClone.attack);
+        // Aplicar a defesa do inimigo (redução direta)
+        let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
 
-      enemyClone.currentHp -= finalPlayerDamage;
+        // Verificar acerto crítico (dobro de dano)
+        const playerCrit = Math.random() * 100 < playerClone.critChance;
+        const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
 
-      combatLog.push({
-        type: 'player',
-        message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.`
-      });
+        enemyClone.currentHp -= finalPlayerDamage;
 
-      // Check if enemy is defeated
-      if (enemyClone.currentHp <= 0) {
-        combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
+        combatLog.push({
+          type: 'player',
+          message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.`,
+          attackSpeed: playerClone.attackSpeed
+        });
+
+        // Check if enemy is defeated
+        if (enemyClone.currentHp <= 0) {
+          combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
+          break;
+        }
+      }
+
+      // Verificar se é hora do inimigo atacar com base na velocidade de ataque
+      if (battleTime >= (enemyAttackCounter + 1) / enemyClone.attackSpeed) {
+        enemyAttackCounter++;
+
+        // Enemy attack with defense damage reduction
+        const enemyBaseDamage = Math.max(1, enemyClone.attack);
+
+        // Nova lógica: cada ponto de defesa reduz 0,1% do dano, limitado a 30%
+        const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
+
+        // Apply percentage damage reduction from defense
+        let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
+
+        // Enemy critical hit (1.5x for enemies)
+        const enemyCrit = Math.random() * 100 < enemyClone.critChance;
+        const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
+
+        playerClone.currentHp -= finalEnemyDamage;
+
+        // Add defense reduction info to combat log if applicable
+        if (damageReduction > 0) {
+          combatLog.push({
+            type: 'enemy',
+            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)`,
+            attackSpeed: enemyClone.attackSpeed
+          });
+        } else {
+          combatLog.push({
+            type: 'enemy',
+            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.`,
+            attackSpeed: enemyClone.attackSpeed
+          });
+        }
+
+        // Check if player is defeated
+        if (playerClone.currentHp <= 0) {
+          combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
+          break;
+        }
+      }
+
+      // Evitar loops infinitos - limite de 100 segundos de combate
+      if (battleTime > 100) {
+        combatLog.push({ type: 'system', message: `O combate foi muito longo e terminou em empate!` });
         break;
       }
-
-      // Enemy attack with defense damage reduction
-      const enemyBaseDamage = Math.max(1, enemyClone.attack);
-
-      // Nova lógica: cada ponto de defesa reduz 0,1% do dano, limitado a 30%
-      const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
-
-      // Apply percentage damage reduction from defense
-      let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
-
-      // Enemy critical hit (1.5x for enemies)
-      const enemyCrit = Math.random() * 100 < enemyClone.critChance;
-      const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
-
-      playerClone.currentHp -= finalEnemyDamage;
-
-      // Add defense reduction info to combat log if applicable
-      if (damageReduction > 0) {
-        combatLog.push({
-          type: 'enemy',
-          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)`
-        });
-      } else {
-        combatLog.push({
-          type: 'enemy',
-          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.`
-        });
-      }
-
-      // Check if player is defeated
-      if (playerClone.currentHp <= 0) {
-        combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
-        break;
-      }
-
-      roundCount++;
     }
 
     // Combat result

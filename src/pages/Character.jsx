@@ -8,6 +8,7 @@ export default function Character() {
 
   if (!player) return <p>Carregando...</p>;
 
+  // Trecho do handleStatIncrease do arquivo Character.jsx para permitir velocidade de ataque até 3
   const handleStatIncrease = (statName) => {
     if (player.attributePoints <= 0) {
       showNotification("Você não tem pontos de atributo disponíveis!", "error");
@@ -31,12 +32,12 @@ export default function Character() {
         updatedStats.critChance = player.critChance + 1;
         break;
       case 'attackSpeed':
-        // Limitar a velocidade de ataque a 2
+        // Limitar a velocidade de ataque a 3
         const newAttackSpeed = (player.attackSpeed + 0.1).toFixed(2);
-        updatedStats.attackSpeed = Math.min(2, parseFloat(newAttackSpeed));
+        updatedStats.attackSpeed = Math.min(3, parseFloat(newAttackSpeed));
 
         // Verificar se já está no limite e notificar o jogador
-        if (player.attackSpeed >= 1.9) {
+        if (player.attackSpeed >= 2.9) {
           showNotification("Velocidade de ataque máxima atingida!", "info");
         }
         break;
@@ -139,6 +140,7 @@ export default function Character() {
             </div>
           </div>
 
+
           {/* Velocidade de Ataque */}
           <div className="stat-block">
             <div className="stat-bar-wrapper">
@@ -146,13 +148,13 @@ export default function Character() {
                 <h3>Vel. Ataq</h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 50)}%` }}></div>
+                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 33.33)}%` }}></div>
                 <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
               </div>
               <button
                 className="increase-stat-text-btn"
                 onClick={() => handleStatIncrease('attackSpeed')}
-                disabled={player.attributePoints <= 0 || player.attackSpeed >= 2}
+                disabled={player.attributePoints <= 0 || player.attackSpeed >= 3}
               >+</button>
             </div>
           </div>

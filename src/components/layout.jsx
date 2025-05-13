@@ -26,6 +26,7 @@ export default function Layout({ children }) {
           <Link to="/character">🏹 Perfil</Link>
           <Link to="/arena">⚔️ Arena</Link>
           <Link to="/shop">🏛️ Loja</Link>
+          <Link to='/Torneio'>🏆Torneio</Link>
           <button onClick={handleLogout}>🚪 Sair</button>
         </nav>
       )}

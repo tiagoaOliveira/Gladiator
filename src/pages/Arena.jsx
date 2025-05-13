@@ -10,7 +10,7 @@ export default function Arena() {
   const [showCombatModal, setShowCombatModal] = useState(false);
   const [combatLog, setCombatLog] = useState([]);
   const [combatResult, setCombatResult] = useState(null);
-  
+
   if (!player) return <p>Carregando...</p>;
 
   const startBattle = () => {
@@ -20,14 +20,22 @@ export default function Arena() {
     setShowCombatModal(true);
   };
 
+  const retryBattle = () => {
+    const battleResult = handleBattle(selectedEnemy);
+    setCombatLog(battleResult.combatLog);
+    setCombatResult(battleResult.result);
+    setShowCombatModal(true);
+  };
+
+
   return (
     <div className="arena-container">
       <div className="enemy-selector">
         <h2>Escolha seu Oponente</h2>
         <div className="enemy-list">
           {enemies.map(enemy => (
-            <div 
-              key={enemy.id} 
+            <div
+              key={enemy.id}
               className={`enemy-option ${selectedEnemy.id === enemy.id ? 'selected' : ''}`}
               onClick={() => setSelectedEnemy(enemy)}
             >
@@ -63,22 +71,23 @@ export default function Arena() {
       </div>
 
       <div className="arena-actions">
-        <button 
-          onClick={startBattle} 
-          className="battle-button" 
+        <button
+          onClick={startBattle}
+          className="battle-button"
           disabled={player.hp <= 0}
         >
           Iniciar Batalha
         </button>
       </div>
 
-      <CombatModal 
-        show={showCombatModal} 
-        onClose={() => setShowCombatModal(false)} 
+      <CombatModal
+        show={showCombatModal}
+        onClose={() => setShowCombatModal(false)}
         combatLog={combatLog}
         result={combatResult}
         enemyImage={selectedEnemy.image}
         enemyName={selectedEnemy.name}
+        onRetry={retryBattle}
       />
     </div>
   );

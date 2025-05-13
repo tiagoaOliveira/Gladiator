@@ -112,7 +112,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 15px;
-  max-height: 200px;
+  min-height: 200px;
 }
 
 .log-entry {
@@ -136,7 +136,7 @@
 
 .combat-result {
   padding: 15px;
-  margin: 10px;
+  margin: 20px 50px;
   border-radius: 8px;
   text-align: center;
 }
@@ -151,9 +151,17 @@
   border: 1px solid #f44336;
 }
 
-.close-modal-button {
+
+.combat-modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  padding: 0 15px 20px;
+}
+
+.combat-modal-buttons button {
+  width: 150px; /* TAMANHO FIXO para ambos */
   padding: 12px;
-  margin: 15px;
   background-color: #6d4c41;
   color: white;
   border: none;
@@ -163,6 +171,10 @@
   transition: background-color 0.3s;
 }
 
-.close-modal-button:hover {
-  background-color: #5a3b2b;
+.retry-button {
+  background-color: #4caf50;
+}
+
+.retry-button:hover {
+  background-color: #388e3c;
 }

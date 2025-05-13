@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './CombatModal.css';
 import character from '../assets/images/gladiator.jpg';
 import { enemies } from '../utils/enemies';
 
 
-export default function CombatModal({ show, onClose, combatLog, result }) {
+export default function CombatModal({ show, onClose, onRetry, combatLog, result }) {
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
   const [playerDamage, setPlayerDamage] = useState(null);
   const [enemyDamage, setEnemyDamage] = useState(null);
   const [enemyImage, setEnemyImage] = useState('');
   const [enemyName, setEnemyName] = useState('');
   const [battleFinished, setBattleFinished] = useState(false);
+  const logEndRef = useRef(null);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -19,7 +20,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       setPlayerDamage(null);
       setEnemyDamage(null);
       setBattleFinished(false);
-  
+
       // Extrair nome e imagem do inimigo a partir do combatLog
       if (combatLog && combatLog.length > 0) {
         const firstMessage = combatLog[0].message;
@@ -28,7 +29,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
           if (enemyNameMatch && enemyNameMatch[1]) {
             const name = enemyNameMatch[1];
             setEnemyName(name);
-  
+
             // Buscar imagem do inimigo com base no nome
             const matchedEnemy = enemies.find(e => e.name === name);
             if (matchedEnemy) {
@@ -39,7 +40,7 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       }
     }
   }, [show, combatLog]);
-  
+
 
   // Process the combat log to show battle animations
   useEffect(() => {
@@ -75,6 +76,16 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       }
     }
 
+    // Regular entries get standard delay, but we'll make attack speed entries faster
+    let displayDelay = 500; // Default delay
+
+    // If the message contains attack speed information, adjust the delay
+    if (log.attackSpeed) {
+      // The higher the attack speed, the less time between attacks
+      // Min delay of 200ms for readability
+      displayDelay = Math.max(200, 500 / log.attackSpeed);
+    }
+
     // Move to next log entry after a delay
     const nextLogTimeout = setTimeout(() => {
       if (currentLogIndex < combatLog.length - 1) {
@@ -82,10 +93,17 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
       } else {
         setBattleFinished(true);
       }
-    }, 500);
+    }, displayDelay);
 
     return () => clearTimeout(nextLogTimeout);
   }, [show, combatLog, currentLogIndex]);
+
+  useEffect(() => {
+    if (logEndRef.current) {
+      logEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [currentLogIndex]);
+
 
   if (!show) return null;
 
@@ -121,7 +139,9 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
               {log.message}
             </p>
           ))}
+          <div ref={logEndRef} />
         </div>
+
 
         {battleFinished && result && (
           <div className={`combat-result ${result.type}`}>
@@ -130,9 +150,17 @@ export default function CombatModal({ show, onClose, combatLog, result }) {
           </div>
         )}
 
-        <button className="close-modal-button" onClick={onClose}>
-          Fechar
-        </button>
+        <div className="combat-modal-buttons">
+          {battleFinished && (
+            <button className="retry-button" onClick={onRetry}>
+              Lutar Novamente
+            </button>
+          )}
+          <button className="close-modal-button" onClick={onClose}>
+            Fechar
+          </button>
+        </div>
+        
       </div>
     </div>
   );

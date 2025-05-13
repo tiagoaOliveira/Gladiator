@@ -14,8 +14,11 @@ export default function Shop() {
   ];
 
   const healPlayer = (amount) => {
-    updatePlayer({ hp: player.hp + amount });
-    showNotification(`Você recuperou ${amount} pontos de vida!`, 'success');
+    const newHp = Math.min(player.maxHp, player.hp + amount);
+    const actualHealing = newHp - player.hp;
+    
+    updatePlayer({ hp: newHp });
+    showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
   };
 
   const improveAttack = (amount) => {
@@ -29,8 +32,15 @@ export default function Shop() {
   };
 
   const buyItem = (item) => {
+    // Verificar se há ouro suficiente
     if (player.gold < item.price) {
       showNotification("Ouro insuficiente para esta compra!", 'error');
+      return;
+    }
+    
+    // Verificar se é uma poção de cura e o HP já está no máximo
+    if (item.name === "Poção de Cura" && player.hp >= player.maxHp) {
+      showNotification("Sua vida já está no máximo!", 'error');
       return;
     }
     
@@ -53,7 +63,7 @@ export default function Shop() {
             <button 
               onClick={() => buyItem(item)} 
               className="buy-button"
-              disabled={player.gold < item.price}
+              disabled={player.gold < item.price || (item.name === "Poção de Cura" && player.hp >= player.maxHp)}
             >
               Comprar
             </button>
