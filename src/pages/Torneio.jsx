@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import CombatModal from '../components/CombatModal';
+import { generatePlayerStats } from '../utils/player';
 import './Torneio.css';
 
-// Gerando pseudo-jogadores para o torneio
+// Gerando pseudo-jogadores para o torneio com os mesmos atributos do player base
 const generatePseudoPlayers = (count = 31) => {
   const names = [
     'Maximus', 'Spartacus', 'Crixus', 'Gannicus', 'Atticus', 'Brutus', 'Flamma',
@@ -16,19 +17,22 @@ const generatePseudoPlayers = (count = 31) => {
 
   return Array.from({ length: count }, (_, i) => {
     const level = Math.floor(Math.random() * 5) + 1; // Nível entre 1 e 5
-    const baseStats = {
+    
+    // Usar os mesmos atributos base do jogador da generatePlayerStats
+    const baseStats = generatePlayerStats(level);
+    
+    return {
       id: i + 1,
       name: names[i % names.length],
       level,
-      hp: 100 + level * 20,
-      maxHp: 100 + level * 20,
-      attack: 15 + level * 5,
-      physicalDefense: 10 + level * 3,
-      critChance: 5 + level * 1.5,
-      attackSpeed: Math.min(3, 1 + level * 0.1),
+      hp: baseStats.hp,
+      maxHp: baseStats.hp,
+      attack: baseStats.attack,
+      physicalDefense: baseStats.physicalDefense,
+      critChance: baseStats.critChance,
+      attackSpeed: baseStats.attackSpeed,
       wins: 0
     };
-    return baseStats;
   });
 };
 
@@ -54,7 +58,14 @@ export default function Torneio() {
     // Gerar pseudo-jogadores e adicionar o jogador real ao torneio
     const bots = generatePseudoPlayers(31);
     const allPlayers = [
-      { ...player, id: 0, name: player.name, maxHp: player.maxHp, wins: 0 },
+      { 
+        ...player, 
+        id: 0, 
+        name: player.name, 
+        maxHp: player.maxHp,
+        hp: player.maxHp, // Garantir HP cheio ao iniciar
+        wins: 0 
+      },
       ...bots
     ];
     
@@ -87,27 +98,39 @@ export default function Torneio() {
     
   }, [player]);
 
-  // Simular uma batalha entre dois jogadores
+  // Simular uma batalha entre o jogador e um oponente
   const simulateBattle = (player1, player2) => {
+    // Garantir que ambos os jogadores estejam com HP cheio antes da batalha
+    const playerWithFullHp = { ...player1, hp: player1.maxHp, currentHp: player1.maxHp };
+    
     // Converter jogador para formato de inimigo para usar com handleBattle
     const enemyFormat = {
       name: player2.name,
       level: player2.level,
-      hp: player2.hp,
+      hp: player2.maxHp, // Garantir HP cheio
       attack: player2.attack,
       defense: player2.physicalDefense,
       critChance: player2.critChance,
       attackSpeed: player2.attackSpeed,
-      rewardXP: player2.level * 50,
-      rewardGoldMultiplier: 1
+      rewardXP: 0, // Sem recompensa de XP
+      rewardGoldMultiplier: 0 // Sem multiplicador de ouro
     };
 
     // Usar a função handleBattle do GameContext
     const battle = handleBattle(enemyFormat);
     
+    // Criar resultado personalizado sem premiações
+    if (battle.result) {
+      if (battle.result.type === 'victory') {
+        battle.result.message = `Você derrotou ${player2.name}!`;
+      } else {
+        battle.result.message = `Você foi derrotado por ${player2.name}.`;
+      }
+    }
+    
     return {
-      winner: battle.success ? player1 : player2,
-      loser: battle.success ? player2 : player1,
+      winner: battle.success ? playerWithFullHp : player2,
+      loser: battle.success ? player2 : playerWithFullHp,
       combatLog: battle.combatLog,
       result: battle.result
     };
@@ -117,41 +140,65 @@ export default function Torneio() {
   const simulateBotBattle = (player1, player2) => {
     // Sistema simplificado de combate para simulação entre bots
     const log = [];
-    let player1HP = player1.hp;
-    let player2HP = player2.hp;
+    
+    // Garantir HP cheio para ambos os combatentes
+    let player1HP = player1.maxHp;
+    let player2HP = player2.maxHp;
     
     log.push({ type: 'system', message: `Combate iniciado entre ${player1.name} e ${player2.name}!` });
 
+    // Evitar loops infinitos limitando o número de rodadas
+    let rounds = 0;
+    const maxRounds = 50;
+    
     // Simular rounds de combate
-    while (player1HP > 0 && player2HP > 0) {
+    while (player1HP > 0 && player2HP > 0 && rounds < maxRounds) {
+      rounds++;
+      
       // Ataque do jogador 1
-      const p1Damage = Math.floor(player1.attack * (1 - player2.physicalDefense * 0.01));
+      const p1Damage = Math.max(1, Math.floor(player1.attack * (1 - player2.physicalDefense * 0.01)));
       const p1IsCrit = Math.random() * 100 < player1.critChance;
-      const finalP1Damage = p1IsCrit ? p1Damage * 2 : p1Damage;
+      const finalP1Damage = Math.floor(p1IsCrit ? p1Damage * 2 : p1Damage);
       
       player2HP -= finalP1Damage;
       log.push({
         type: 'player',
-        message: `${player1.name} causou ${finalP1Damage} de dano${p1IsCrit ? ' (crítico!)' : ''} a ${player2.name}.`
+        message: `${player1.name} causou ${finalP1Damage} de dano${p1IsCrit ? ' (crítico!)' : ''} a ${player2.name}.`,
+        attackSpeed: player1.attackSpeed
       });
       
       if (player2HP <= 0) break;
       
       // Ataque do jogador 2
-      const p2Damage = Math.floor(player2.attack * (1 - player1.physicalDefense * 0.01));
+      const p2Damage = Math.max(1, Math.floor(player2.attack * (1 - player1.physicalDefense * 0.01)));
       const p2IsCrit = Math.random() * 100 < player2.critChance;
-      const finalP2Damage = p2IsCrit ? p2Damage * 2 : p2Damage;
+      const finalP2Damage = Math.floor(p2IsCrit ? p2Damage * 2 : p2Damage);
       
       player1HP -= finalP2Damage;
       log.push({
         type: 'enemy',
-        message: `${player2.name} causou ${finalP2Damage} de dano${p2IsCrit ? ' (crítico!)' : ''} a ${player1.name}.`
+        message: `${player2.name} causou ${finalP2Damage} de dano${p2IsCrit ? ' (crítico!)' : ''} a ${player1.name}.`,
+        attackSpeed: player2.attackSpeed
       });
     }
     
-    // Determinar vencedor
-    const winner = player1HP > 0 ? player1 : player2;
-    const loser = player1HP > 0 ? player2 : player1;
+    // Determinar vencedor (em caso de empate por limite de rodadas, escolhemos aleatoriamente)
+    let winner, loser;
+    if (player1HP <= 0) {
+      winner = player2;
+      loser = player1;
+    } else if (player2HP <= 0) {
+      winner = player1;
+      loser = player2;
+    } else {
+      // Empate por limite de rodadas - escolher aleatoriamente
+      winner = Math.random() < 0.5 ? player1 : player2;
+      loser = winner === player1 ? player2 : player1;
+      log.push({ 
+        type: 'system', 
+        message: `O combate foi muito longo e ${winner.name} venceu por decisão!` 
+      });
+    }
     
     log.push({ 
       type: winner.id === player1.id ? 'player' : 'enemy', 
@@ -177,39 +224,50 @@ export default function Torneio() {
     const { player1, player2, matchesWon } = bracket;
     const newBracket = { ...bracket };
     
-    // Simular a batalha
-    let battleResult;
-    if (isPlayerMatch) {
-      battleResult = simulateBattle(player1.id === 0 ? player1 : player2, player1.id === 0 ? player2 : player1);
-    } else {
-      battleResult = simulateBotBattle(player1, player2);
+    try {
+      // Simular a batalha
+      let battleResult;
+      if (isPlayerMatch) {
+        const playerObj = player1.id === 0 ? player1 : player2;
+        const enemyObj = player1.id === 0 ? player2 : player1;
+        battleResult = simulateBattle(playerObj, enemyObj);
+      } else {
+        battleResult = simulateBotBattle(player1, player2);
+      }
+      
+      // Atualizar pontuação da série
+      if (battleResult.winner.id === player1.id) {
+        newBracket.matchesWon.player1 += 1;
+      } else {
+        newBracket.matchesWon.player2 += 1;
+      }
+      
+      // Adicionar resultado da partida ao histórico
+      newBracket.matches.push({
+        winner: battleResult.winner,
+        combatLog: battleResult.combatLog,
+        result: battleResult.result
+      });
+      
+      // Verificar se há um vencedor na série
+      if (newBracket.matchesWon.player1 >= 2) {
+        newBracket.winner = player1;
+      } else if (newBracket.matchesWon.player2 >= 2) {
+        newBracket.winner = player2;
+      }
+      
+      return {
+        updatedBracket: newBracket,
+        battleResult
+      };
+    } catch (error) {
+      console.error("Erro ao simular batalha:", error);
+      showNotification("Erro ao simular a batalha", "error");
+      return {
+        updatedBracket: bracket,
+        battleResult: null
+      };
     }
-    
-    // Atualizar pontuação da série
-    if (battleResult.winner.id === player1.id) {
-      newBracket.matchesWon.player1 += 1;
-    } else {
-      newBracket.matchesWon.player2 += 1;
-    }
-    
-    // Adicionar resultado da partida ao histórico
-    newBracket.matches.push({
-      winner: battleResult.winner,
-      combatLog: battleResult.combatLog,
-      result: battleResult.result
-    });
-    
-    // Verificar se há um vencedor na série
-    if (newBracket.matchesWon.player1 >= 2) {
-      newBracket.winner = player1;
-    } else if (newBracket.matchesWon.player2 >= 2) {
-      newBracket.winner = player2;
-    }
-    
-    return {
-      updatedBracket: newBracket,
-      battleResult
-    };
   };
 
   // Avançar uma rodada no torneio
@@ -235,13 +293,20 @@ export default function Torneio() {
     // Criar próxima rodada de matchups
     const nextRoundBrackets = [];
     for (let i = 0; i < winners.length; i += 2) {
-      nextRoundBrackets.push({
-        player1: winners[i],
-        player2: winners[i + 1],
-        winner: null,
-        matches: [],
-        matchesWon: { player1: 0, player2: 0 }
-      });
+      // Garantir que temos jogadores suficientes para formar um par
+      if (i + 1 < winners.length) {
+        // Garantir que os jogadores estão com HP cheio antes da próxima rodada
+        const player1 = { ...winners[i], hp: winners[i].maxHp };
+        const player2 = { ...winners[i + 1], hp: winners[i + 1].maxHp };
+        
+        nextRoundBrackets.push({
+          player1,
+          player2,
+          winner: null,
+          matches: [],
+          matchesWon: { player1: 0, player2: 0 }
+        });
+      }
     }
     
     setBrackets(nextRoundBrackets);
@@ -254,7 +319,7 @@ export default function Torneio() {
     setPlayerMatchups(playerMatchups);
     setCurrentMatchIndex(0);
     
-    showNotification(`Avançando para ${roundNames[currentRound + 1]}!`, "info");
+    showNotification(`Avançando para ${roundNames[currentRound + 1] || "Próxima Rodada"}!`, "info");
   };
 
   // Jogar uma partida manualmente (quando o jogador está envolvido)
@@ -272,97 +337,132 @@ export default function Torneio() {
     // Configurar e abrir o modal de combate
     setSelectedMatch(bracketIndex);
     
-    // Jogar a partida
-    const { updatedBracket, battleResult } = playBestOfThree(bracket, true);
-    
-    // Atualizar os brackets
-    const newBrackets = [...brackets];
-    newBrackets[bracketIndex] = updatedBracket;
-    setBrackets(newBrackets);
-    
-    // Mostrar o resultado no modal
-    setCombatLog(battleResult.combatLog);
-    setCombatResult(battleResult.result);
-    setIsModalOpen(true);
-    
-    // Verificar se há um vencedor na série
-    if (updatedBracket.winner) {
-      const playerWon = updatedBracket.winner.id === 0;
-      if (playerWon) {
-        showNotification("Você venceu a série!", "success");
-      } else {
-        showNotification("Você perdeu a série!", "error");
+    try {
+      // Jogar a partida
+      const { updatedBracket, battleResult } = playBestOfThree(bracket, true);
+      
+      if (!battleResult) {
+        showNotification("Ocorreu um erro ao jogar a partida", "error");
+        return;
       }
+      
+      // Atualizar os brackets
+      const newBrackets = [...brackets];
+      newBrackets[bracketIndex] = updatedBracket;
+      setBrackets(newBrackets);
+      
+      // Mostrar o resultado no modal
+      setCombatLog(battleResult.combatLog);
+      setCombatResult(battleResult.result);
+      setIsModalOpen(true);
+      
+      // Verificar se há um vencedor na série
+      if (updatedBracket.winner) {
+        const playerWon = updatedBracket.winner.id === 0;
+        showNotification(playerWon ? "Você venceu a série!" : "Você perdeu a série!", playerWon ? "success" : "error");
+      }
+    } catch (error) {
+      console.error("Erro ao jogar partida:", error);
+      showNotification("Ocorreu um erro ao jogar a partida", "error");
     }
   };
 
   // Simular todos os confrontos de bots na rodada atual
   const simulateAllBotMatches = () => {
-    const newBrackets = [...brackets];
-    let anyPlayerMatchSimulated = false;
-    
-    newBrackets.forEach((bracket, index) => {
-      // Pular confrontos que já têm vencedor
-      if (bracket.winner) return;
+    try {
+      const newBrackets = [...brackets];
+      let anyPlayerMatchSimulated = false;
       
-      // Pular confrontos do jogador
-      if (bracket.player1.id === 0 || bracket.player2.id === 0) {
-        anyPlayerMatchSimulated = true;
-        return;
+      for (let index = 0; index < newBrackets.length; index++) {
+        const bracket = newBrackets[index];
+        
+        // Pular confrontos que já têm vencedor
+        if (bracket.winner) continue;
+        
+        // Pular confrontos do jogador
+        if (bracket.player1.id === 0 || bracket.player2.id === 0) {
+          anyPlayerMatchSimulated = true;
+          continue;
+        }
+        
+        // Jogar melhor de 3 para bots até determinar um vencedor
+        let attempts = 0;
+        while (!bracket.winner && attempts < 10) { // Limitar tentativas para evitar loops infinitos
+          attempts++;
+          const { updatedBracket } = playBestOfThree(bracket);
+          newBrackets[index] = updatedBracket;
+          
+          // Se ainda não tem vencedor após muitas tentativas, forçar um vencedor
+          if (attempts >= 9 && !updatedBracket.winner) {
+            newBrackets[index].winner = Math.random() < 0.5 ? bracket.player1 : bracket.player2;
+            showNotification("Algumas partidas foram decididas por sorteio", "info");
+          }
+        }
       }
       
-      // Jogar melhor de 3 para bots
-      while (!bracket.winner) {
-        const { updatedBracket } = playBestOfThree(bracket);
-        newBrackets[index] = updatedBracket;
+      if (anyPlayerMatchSimulated) {
+        showNotification("Você precisa jogar seus próprios confrontos", "info");
       }
-    });
-    
-    if (anyPlayerMatchSimulated) {
-      showNotification("Você precisa jogar seus próprios confrontos", "info");
+      
+      setBrackets(newBrackets);
+    } catch (error) {
+      console.error("Erro ao simular partidas:", error);
+      showNotification("Ocorreu um erro ao simular as partidas", "error");
     }
-    
-    setBrackets(newBrackets);
   };
 
   // Reiniciar o torneio
   const restartTournament = () => {
-    // Gerar pseudo-jogadores e adicionar o jogador real ao torneio
-    const bots = generatePseudoPlayers(31);
-    const allPlayers = [
-      { ...player, id: 0, name: player.name, maxHp: player.maxHp, wins: 0 },
-      ...bots
-    ];
-    
-    setPseudoPlayers(allPlayers);
-    
-    // Embaralhar os jogadores para matchups aleatórios
-    const shuffled = [...allPlayers].sort(() => 0.5 - Math.random());
-    
-    // Criar os confrontos iniciais
-    const initialBrackets = [];
-    for (let i = 0; i < shuffled.length; i += 2) {
-      initialBrackets.push({
-        player1: shuffled[i],
-        player2: shuffled[i + 1],
-        winner: null,
-        matches: [],
-        matchesWon: { player1: 0, player2: 0 }
-      });
+    try {
+      // Gerar pseudo-jogadores e adicionar o jogador real ao torneio
+      const bots = generatePseudoPlayers(31);
+      const allPlayers = [
+        { 
+          ...player, 
+          id: 0, 
+          name: player.name, 
+          hp: player.maxHp, // Garantir HP cheio
+          maxHp: player.maxHp, 
+          wins: 0 
+        },
+        ...bots
+      ];
+      
+      setPseudoPlayers(allPlayers);
+      
+      // Embaralhar os jogadores para matchups aleatórios
+      const shuffled = [...allPlayers].sort(() => 0.5 - Math.random());
+      
+      // Criar os confrontos iniciais
+      const initialBrackets = [];
+      for (let i = 0; i < shuffled.length; i += 2) {
+        if (i + 1 < shuffled.length) { // Garantir que temos par completo
+          initialBrackets.push({
+            player1: shuffled[i],
+            player2: shuffled[i + 1],
+            winner: null,
+            matches: [],
+            matchesWon: { player1: 0, player2: 0 }
+          });
+        }
+      }
+      
+      setBrackets(initialBrackets);
+      setCurrentRound(0);
+      setTournamentWinner(null);
+      
+      // Encontrar confrontos do jogador
+      const playerMatchups = initialBrackets.filter(
+        bracket => bracket.player1.id === 0 || bracket.player2.id === 0
+      );
+      setPlayerMatchups(playerMatchups);
+      setCurrentMatchIndex(0);
+      
+      showNotification("Torneio reiniciado!", "success");
+    } catch (error) {
+      console.error("Erro ao reiniciar torneio:", error);
+      showNotification("Ocorreu um erro ao reiniciar o torneio", "error");
     }
-    
-    setBrackets(initialBrackets);
-    setCurrentRound(0);
-    setTournamentWinner(null);
-    
-    // Encontrar confrontos do jogador
-    const playerMatchups = initialBrackets.filter(
-      bracket => bracket.player1.id === 0 || bracket.player2.id === 0
-    );
-    setPlayerMatchups(playerMatchups);
-    setCurrentMatchIndex(0);
-    
-    showNotification("Torneio reiniciado!", "success");
   };
 
   if (!player) return <p>Carregando...</p>;
