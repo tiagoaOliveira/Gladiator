@@ -50,6 +50,9 @@ export default function Torneio() {
   const [playerMatchups, setPlayerMatchups] = useState([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [roundNames] = useState(['Primeira Rodada', 'Segunda Rodada', 'Quartas de Final', 'Semifinal', 'Final']);
+  
+  // Constante para definir quantas vitórias são necessárias (melhor de 5 = 3 vitórias)
+  const WINS_NEEDED = 3;
 
   // Inicializar torneio
   useEffect(() => {
@@ -219,8 +222,8 @@ export default function Torneio() {
     };
   };
 
-  // Jogar uma partida de melhor de 3
-  const playBestOfThree = (bracket, isPlayerMatch = false) => {
+  // Jogar uma partida de melhor de 5
+  const playBestOfFive = (bracket, isPlayerMatch = false) => {
     const { player1, player2, matchesWon } = bracket;
     const newBracket = { ...bracket };
     
@@ -249,10 +252,10 @@ export default function Torneio() {
         result: battleResult.result
       });
       
-      // Verificar se há um vencedor na série
-      if (newBracket.matchesWon.player1 >= 2) {
+      // Verificar se há um vencedor na série (agora precisa de 3 vitórias para melhor de 5)
+      if (newBracket.matchesWon.player1 >= WINS_NEEDED) {
         newBracket.winner = player1;
-      } else if (newBracket.matchesWon.player2 >= 2) {
+      } else if (newBracket.matchesWon.player2 >= WINS_NEEDED) {
         newBracket.winner = player2;
       }
       
@@ -339,14 +342,14 @@ export default function Torneio() {
     
     try {
       // Jogar a partida
-      const { updatedBracket, battleResult } = playBestOfThree(bracket, true);
+      const { updatedBracket, battleResult } = playBestOfFive(bracket, true);
       
       if (!battleResult) {
         showNotification("Ocorreu um erro ao jogar a partida", "error");
         return;
       }
       
-      // Atualizar os brackets
+      // Atualizar os brackets - IMPORTANTE: Criar um novo array para garantir que o React detecte a mudança
       const newBrackets = [...brackets];
       newBrackets[bracketIndex] = updatedBracket;
       setBrackets(newBrackets);
@@ -360,6 +363,16 @@ export default function Torneio() {
       if (updatedBracket.winner) {
         const playerWon = updatedBracket.winner.id === 0;
         showNotification(playerWon ? "Você venceu a série!" : "Você perdeu a série!", playerWon ? "success" : "error");
+      } else {
+        // Indicar o progresso da série
+        const player1Wins = updatedBracket.matchesWon.player1;
+        const player2Wins = updatedBracket.matchesWon.player2;
+        const playerIsPlayer1 = updatedBracket.player1.id === 0;
+        
+        const playerWins = playerIsPlayer1 ? player1Wins : player2Wins;
+        const opponentWins = playerIsPlayer1 ? player2Wins : player1Wins;
+        
+        showNotification(`Série em andamento: Você ${playerWins}-${opponentWins} Oponente`, "info");
       }
     } catch (error) {
       console.error("Erro ao jogar partida:", error);
@@ -385,18 +398,12 @@ export default function Torneio() {
           continue;
         }
         
-        // Jogar melhor de 3 para bots até determinar um vencedor
-        let attempts = 0;
-        while (!bracket.winner && attempts < 10) { // Limitar tentativas para evitar loops infinitos
-          attempts++;
-          const { updatedBracket } = playBestOfThree(bracket);
+        // Jogar melhor de 5 para bots até determinar um vencedor
+        while (!bracket.winner && 
+               bracket.matchesWon.player1 < WINS_NEEDED && 
+               bracket.matchesWon.player2 < WINS_NEEDED) {
+          const { updatedBracket } = playBestOfFive(newBrackets[index]);
           newBrackets[index] = updatedBracket;
-          
-          // Se ainda não tem vencedor após muitas tentativas, forçar um vencedor
-          if (attempts >= 9 && !updatedBracket.winner) {
-            newBrackets[index].winner = Math.random() < 0.5 ? bracket.player1 : bracket.player2;
-            showNotification("Algumas partidas foram decididas por sorteio", "info");
-          }
         }
       }
       
@@ -404,7 +411,8 @@ export default function Torneio() {
         showNotification("Você precisa jogar seus próprios confrontos", "info");
       }
       
-      setBrackets(newBrackets);
+      // Importante: Use setBrackets com um novo array para garantir que o React detecte a mudança
+      setBrackets([...newBrackets]);
     } catch (error) {
       console.error("Erro ao simular partidas:", error);
       showNotification("Ocorreu um erro ao simular as partidas", "error");
@@ -512,7 +520,7 @@ export default function Torneio() {
             {brackets.map((bracket, index) => (
               <div key={index} className={`bracket ${bracket.winner ? 'completed' : ''}`}>
                 <div className="bracket-header">
-                  <span>Melhor de 3</span>
+                  <span>Melhor de 5</span>
                   <span className="bracket-score">
                     {bracket.matchesWon.player1}-{bracket.matchesWon.player2}
                   </span>
@@ -549,7 +557,7 @@ export default function Torneio() {
                       className="play-match-button"
                       onClick={() => playPlayerMatch(index)}
                     >
-                      Jogar Partida
+                      Jogar Partida {bracket.matches.length + 1}
                     </button>
                   ) : (
                     <span className="pending-tag">Aguardando...</span>
