@@ -28,13 +28,16 @@ const db = new sqlite.Database(dbFile);
 db.serialize(() => {
   // Jogadores
   db.run(`
-    CREATE TABLE IF NOT EXISTS players (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      level INTEGER DEFAULT 1,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  CREATE TABLE IF NOT EXISTS players (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    level INTEGER DEFAULT 1,
+    xp INTEGER DEFAULT 0,
+    gold INTEGER DEFAULT 50,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
   // Torneios
   db.run(`
     CREATE TABLE IF NOT EXISTS tournaments (
@@ -64,7 +67,7 @@ app.get('/api/players', (req, res) => {
 app.post('/api/players', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
-  db.run(`INSERT INTO players (name) VALUES (?)`, [name], function(err) {
+  db.run(`INSERT INTO players (name) VALUES (?)`, [name], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ id: this.lastID, name, level: 1 });
   });
@@ -77,7 +80,7 @@ app.post('/api/tournaments', (req, res) => {
   if (!Array.isArray(playerIds) || playerIds.length < 2) {
     return res.status(400).json({ error: 'At least two players required' });
   }
-  db.run(`INSERT INTO tournaments (state) VALUES (?)`, ['pending'], function(err) {
+  db.run(`INSERT INTO tournaments (state) VALUES (?)`, ['pending'], function (err) {
     if (err) return res.status(500).json({ error: err.message });
     const tid = this.lastID;
     const stmt = db.prepare(`INSERT INTO tournament_players (tournament_id, player_id) VALUES (?,?)`);
