@@ -5,6 +5,7 @@ import './Login.css';
 
 export default function Login() {
   const [name, setName] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const { createPlayer, player } = useGame();
 
@@ -16,23 +17,59 @@ export default function Login() {
   }, [player, navigate]);
 
   const handleLogin = () => {
-    if (!name.trim()) return;
+    // Validação básica do nome
+    if (!name.trim()) {
+      setError('Por favor, digite um nome');
+      return;
+    }
     
+    if (name.length < 3) {
+      setError('O nome deve ter pelo menos 3 caracteres');
+      return;
+    }
+    
+    setError(''); // Limpa o erro se passou na validação
     createPlayer(name);
     navigate('/character');
+  };
+
+  // Função para lidar com a tecla Enter
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
   };
 
   return (
     <div className="login-container">
       <h1>Bem-vindo à Arena!</h1>
+      <p className="login-description">
+        Entre com seu nome para começar sua jornada como gladiador!
+      </p>
+      
       <div className="login-form">
         <input
           value={name}
           onChange={e => setName(e.target.value)}
+          onKeyPress={handleKeyPress}
           placeholder="Digite seu nome"
           className="login-input"
+          autoFocus
         />
-        <button onClick={handleLogin} className="login-button">Entrar</button>
+        
+        {error && <div className="login-error">{error}</div>}
+        
+        <button 
+          onClick={handleLogin} 
+          className="login-button"
+          disabled={!name.trim()}
+        >
+          Entrar
+        </button>
+      </div>
+      
+      <div className="login-info">
+        <p>Guerreiros que já batalharam aqui antes serão reconhecidos!</p>
       </div>
     </div>
   );
