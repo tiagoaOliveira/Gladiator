@@ -20,21 +20,45 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
+// GET /api/ranking – jogadores ordenados por nível desc
+app.get('/api/ranking', (req, res) => {
+  db.all(
+    `SELECT id, name, level, xp FROM players ORDER BY level DESC, xp DESC LIMIT 50`,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    }
+  );
+});
+
+
 // Banco SQLite
 const dbFile = path.resolve(__dirname, 'tournament.db');
 const sqlite = sqlite3.verbose();
 const db = new sqlite.Database(dbFile);
 
 db.serialize(() => {
-  // Jogadores
+  // Jogadores - Adicionados mais campos para salvar todos os atributos do jogador
   db.run(`
   CREATE TABLE IF NOT EXISTS players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
+    name TEXT NOT NULL UNIQUE,
     level INTEGER DEFAULT 1,
     xp INTEGER DEFAULT 0,
     gold INTEGER DEFAULT 50,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    hp INTEGER DEFAULT 150,
+    maxHp INTEGER DEFAULT 150,
+    attack INTEGER DEFAULT 20,
+    critChance REAL DEFAULT 10,
+    attackSpeed REAL DEFAULT 1.0,
+    physicalDefense INTEGER DEFAULT 30,
+    magicPower INTEGER DEFAULT 0,
+    magicResistance INTEGER DEFAULT 0,
+    xpToNextLevel INTEGER DEFAULT 300,
+    attributePoints INTEGER DEFAULT 3,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
@@ -64,12 +88,81 @@ app.get('/api/players', (req, res) => {
     res.json(rows);
   });
 });
-app.post('/api/players', (req, res) => {
+
+// Login ou criação de jogador
+app.post('/api/players/login', (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ error: 'Name is required' });
-  db.run(`INSERT INTO players (name) VALUES (?)`, [name], function (err) {
+
+  // Primeiro, verificar se o jogador existe
+  db.get(`SELECT * FROM players WHERE name = ?`, [name], (err, player) => {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ id: this.lastID, name, level: 1 });
+
+    if (player) {
+      // Jogador existe - atualizar last_login e retornar dados
+      db.run(`UPDATE players SET last_login = CURRENT_TIMESTAMP WHERE id = ?`, [player.id], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(player);
+      });
+    } else {
+      // Jogador não existe - criar novo
+      db.run(`
+        INSERT INTO players (name) 
+        VALUES (?)`,
+        [name],
+        function (err) {
+          if (err) return res.status(500).json({ error: err.message });
+
+          // Buscar o jogador recém-criado para retornar todos os valores default
+          db.get(`SELECT * FROM players WHERE id = ?`, [this.lastID], (err, newPlayer) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(newPlayer);
+          });
+        }
+      );
+    }
+  });
+});
+
+// Atualizar jogador
+app.put('/api/players/:id', (req, res) => {
+  const playerId = req.params.id;
+  const playerData = req.body;
+
+  // Excluir campos que não devem ser atualizados diretamente
+  const { id, created_at, last_login, ...updateData } = playerData;
+
+  // Construir query dinâmica com os campos a atualizar
+  const fields = Object.keys(updateData);
+  if (fields.length === 0) {
+    return res.status(400).json({ error: 'No fields to update' });
+  }
+
+  const placeholders = fields.map(field => `${field} = ?`).join(', ');
+  const values = fields.map(field => updateData[field]);
+  values.push(playerId); // Para o WHERE id = ?
+
+  const query = `UPDATE players SET ${placeholders} WHERE id = ?`;
+
+  db.run(query, values, function (err) {
+    if (err) return res.status(500).json({ error: err.message });
+    if (this.changes === 0) return res.status(404).json({ error: 'Player not found' });
+
+    // Retornar o jogador atualizado
+    db.get(`SELECT * FROM players WHERE id = ?`, [playerId], (err, player) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(player);
+    });
+  });
+});
+
+// Buscar jogador pelo ID
+app.get('/api/players/:id', (req, res) => {
+  const playerId = req.params.id;
+  db.get(`SELECT * FROM players WHERE id = ?`, [playerId], (err, player) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    res.json(player);
   });
 });
 
@@ -107,6 +200,3 @@ app.get('/api/tournaments/:id/players', (req, res) => {
 app.listen(PORT, () => {
   console.log(`⚔️  Backend ESM rodando em http://localhost:${PORT}`);
 });
-
-
-

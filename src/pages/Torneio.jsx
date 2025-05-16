@@ -1,139 +1,94 @@
 // src/pages/Torneio.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useGame } from '../context/GameContext';
 import './Torneio.css';
-import CombatModal from '../components/CombatModal';
 
 export default function Torneio() {
-  const [stage, setStage] = useState('idle'); // 'idle' | 'pending' | 'in-progress' | 'results'
-  const [matches, setMatches] = useState([]);
-  const [round, setRound] = useState(1);
-  const [countdown, setCountdown] = useState(5);
-  const [champion, setChampion] = useState(null);
+  const { player } = useGame();
+  const [rankingVisible, setRankingVisible] = useState(false);
+  const [ranking, setRanking] = useState([]);
+  const [playerPosition, setPlayerPosition] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  // Inicia o torneio: busca jogadores e monta bracket de 32
-  const startTournament = async () => {
-    setStage('pending');
+  const TOP_N = 2; // número de posições a exibir no ranking
+
+  const fetchRanking = async () => {
+    setLoading(true);
     try {
-      const res = await fetch('http://localhost:4000/api/players');
-      let players = await res.json();
-      // Completa com bots até 32
-      const botsNeeded = 32 - players.length;
-      for (let i = 0; i < botsNeeded; i++) {
-        players.push({ id: `bot-${i}`, name: `Bot #${i+1}`, level: Math.ceil(Math.random()*10), image: '/placeholder.png' });
+      // 1) Busca ranking completo do servidor
+      const resTop = await fetch('http://localhost:4000/api/ranking');
+      const fullRanking = await resTop.json();
+
+      // 2) Guarda só os TOP_N primeiros
+      const topRanking = fullRanking.slice(0, TOP_N);
+      setRanking(topRanking);
+
+      // 3) Se o player estiver logado e não estiver no top, calcula posição real
+      if (player?.id && !topRanking.find(p => p.id === player.id)) {
+        const resAll = await fetch('http://localhost:4000/api/players');
+        const all = await resAll.json();
+        all.sort((a, b) =>
+          b.level !== a.level ? b.level - a.level : b.xp - a.xp
+        );
+        const idx = all.findIndex(p => p.id === player.id);
+        if (idx >= 0) setPlayerPosition(idx + 1);
+      } else {
+        setPlayerPosition(null);
       }
-      // Shuffle
-      players = players.sort(() => Math.random() - 0.5);
-      // Cria pares iniciais
-      const initial = [];
-      for (let i = 0; i < 32; i += 2) {
-        initial.push({
-          a: players[i],
-          b: players[i+1],
-          winner: null,
-          result: []
-        });
-      }
-      setMatches(initial);
-      setStage('in-progress');
-      // Inicia contagem regressiva
-      setCountdown(5);
     } catch (err) {
-      console.error(err);
-      setStage('idle');
+      console.error('Erro ao carregar ranking:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Countdown para simular a rodada
-  useEffect(() => {
-    if (stage !== 'in-progress') return;
-    if (countdown > 0) {
-      const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-      return () => clearTimeout(timer);
-    }
-    // Após contagem, simula cada match
-    const next = matches.map(m => {
-      // Melhor de 3
-      const wins = { a: 0, b: 0 };
-      while (wins.a < 2 && wins.b < 2) {
-        Math.random() < 0.5 ? wins.a++ : wins.b++;
-      }
-      const winner = wins.a > wins.b ? m.a : m.b;
-      return { ...m, winner, result: [wins.a, wins.b] };
-    });
-    setMatches(next);
-  }, [countdown, stage]);
+  const toggleRanking = () => {
+    if (!rankingVisible) fetchRanking();
+    setRankingVisible(v => !v);
+  };
 
-  // Avança para próxima rodada ou termina torneio
-  useEffect(() => {
-    if (stage !== 'in-progress' || countdown >= 0) return;
-    // Se todos tiverem vencedor, prepara próxima fase
-    if (matches.every(m => m.winner)) {
-      const winners = matches.map(m => m.winner);
-      if (winners.length === 1) {
-        setChampion(winners[0]);
-        setStage('results');
-        return;
-      }
-      // Monta próximos pares
-      const nextPairs = [];
-      for (let i = 0; i < winners.length; i += 2) {
-        nextPairs.push({ a: winners[i], b: winners[i+1], winner: null, result: [] });
-      }
-      setMatches(nextPairs);
-      setRound(r => r + 1);
-      setCountdown(5);
-    }
-  }, [matches, countdown, stage]);
+  return (
+    <div className="tournament-page">
+      <h1>🏆 Torneio Gladiador</h1>
 
-  if (stage === 'idle') {
-    return (
-      <div className="start-container" onClick={startTournament}>
-        <h2>Clique aqui para iniciar o torneio</h2>
-      </div>
-    );
-  }
+      <button onClick={toggleRanking} className="ranking-button">
+        {rankingVisible ? 'Ocultar Ranking' : 'Ver Ranking de Gladiadores'}
+      </button>
 
-  if (stage === 'pending' || (stage === 'in-progress' && countdown > 0)) {
-    return (
-      <div className="loading-container">
-        <h2>Rodada {round} inicia em {countdown}s</h2>
-      </div>
-    );
-  }
+      {rankingVisible && (
+        <div className="ranking-list">
+          {loading ? (
+            <p>Carregando ranking...</p>
+          ) : (
+            <ol>
+              {ranking.map((p, i) => (
+                <li key={p.id}>
+                  <strong>{i + 1}º</strong> {p.name} – Lvl {p.level} ({p.xp} XP)
+                </li>
+              ))}
 
-  if (stage === 'in-progress') {
-    return (
-      <div className="tournament-container">
-        <h2>Rodada {round}</h2>
-        <div className="matches-grid">
-          {matches.map((m, i) => (
-            <div key={i} className="match-card">
-              <div className="player">
-                <img src={m.a.image} alt={m.a.name} />
-                <strong>{m.a.name}</strong> (Lvl {m.a.level})
-              </div>
-              <div className="vl">VS</div>
-              <div className="player">
-                <img src={m.b.image} alt={m.b.name} />
-                <strong>{m.b.name}</strong> (Lvl {m.b.level})
-              </div>
-              {m.winner && <div className="result">Resultado: {m.result[0]} x {m.result[1]}</div>}
-            </div>
-          ))}
+              {playerPosition && (
+                <li className="your-position">
+                  <li className="separator">…</li>
+                  <strong>{playerPosition}º</strong> {player.name} – Lvl {player.level} ({player.xp} XP)
+                </li>
+              )}
+            </ol>
+          )}
         </div>
-      </div>
-    );
-  }
+      )}
 
-  if (stage === 'results') {
-    return (
-      <div className="champion-container">
-        <h2>🏆 Campeão: {champion.name}</h2>
-        <img src={champion.image} alt={champion.name} />
-        <p>Recompensa: +500 ouro, +100 XP</p>
+      <div className="tournament-info">
+        <h2>📜 Sobre o Torneio</h2>
+        <p>
+          O torneio é uma competição entre todos os gladiadores cadastrados.
+          As batalhas são apenas simuladas, e o campeão recebe recompensas em ouro e experiência.
+        </p>
       </div>
-    );
-  }
 
-  return null;
+      <button className="participate-button">
+        Participar do Torneio
+      </button>
+    </div>
+  );
 }

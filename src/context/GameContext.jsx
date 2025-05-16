@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { generatePlayerStats } from '../utils/player';
 
+// API base URL
+const API_URL = 'http://localhost:4000/api';
+
 // Create the context
 const GameContext = createContext();
 
@@ -15,21 +18,70 @@ export function GameProvider({ children }) {
     message: '',
     type: 'info'
   });
+  const [loading, setLoading] = useState(false);
 
-  // Check for existing player in localStorage on startup
+  // Check for existing player in localStorage on startup for fallback
   useEffect(() => {
-    const savedPlayer = localStorage.getItem('gladiator_player');
-    if (savedPlayer) {
-      setPlayer(JSON.parse(savedPlayer));
+    const savedPlayerId = localStorage.getItem('gladiator_player_id');
+    if (savedPlayerId) {
+      fetchPlayerById(savedPlayerId);
     }
   }, []);
 
-  // Save player to localStorage when updated
-  useEffect(() => {
-    if (player) {
-      localStorage.setItem('gladiator_player', JSON.stringify(player));
+  // Fetch player by ID from API
+  const fetchPlayerById = async (playerId) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/players/${playerId}`);
+      
+      if (!response.ok) {
+        // Se o jogador não for encontrado, limpar localStorage
+        if (response.status === 404) {
+          localStorage.removeItem('gladiator_player_id');
+        }
+        throw new Error('Failed to fetch player data');
+      }
+      
+      const playerData = await response.json();
+      
+      // Converter jogador do banco para o formato usado pelo frontend
+      const formattedPlayer = formatPlayerData(playerData);
+      setPlayer(formattedPlayer);
+      
+    } catch (error) {
+      console.error('Error fetching player:', error);
+      showNotification('Erro ao carregar dados do jogador', 'error');
+    } finally {
+      setLoading(false);
     }
-  }, [player]);
+  };
+
+  // Converter formato do banco para o formato usado pelo frontend
+  const formatPlayerData = (dbPlayer) => {
+    return {
+      id: dbPlayer.id,
+      name: dbPlayer.name,
+      level: dbPlayer.level,
+      xp: dbPlayer.xp,
+      gold: dbPlayer.gold,
+      hp: dbPlayer.hp,
+      maxHp: dbPlayer.maxHp,
+      attack: dbPlayer.attack,
+      critChance: dbPlayer.critChance,
+      attackSpeed: dbPlayer.attackSpeed,
+      physicalDefense: dbPlayer.physicalDefense,
+      magicPower: dbPlayer.magicPower || 0,
+      magicResistance: dbPlayer.magicResistance || 0,
+      xpToNextLevel: dbPlayer.xpToNextLevel,
+      attributePoints: dbPlayer.attributePoints
+    };
+  };
+
+  // Converter formato do frontend para o formato do banco
+  const formatPlayerForDB = (frontendPlayer) => {
+    const { id, ...playerData } = frontendPlayer;
+    return playerData;
+  };
 
   // Show notification with auto-hide
   const showNotification = (message, type = 'info') => {
@@ -41,46 +93,82 @@ export function GameProvider({ children }) {
     }, 3000);
   };
 
-  // Create a new player
-  const createPlayer = (name) => {
-    const baseStats = generatePlayerStats(1);
-    const newPlayer = {
-      name,
-      level: 1,
-      xp: 0,
-      gold: 50,
-      hp: baseStats.hp,
-      maxHp: baseStats.hp,
-      attack: baseStats.attack,
-      critChance: baseStats.critChance,
-      attackSpeed: Math.min(3, baseStats.attackSpeed), // Limitar a velocidade de ataque a 3
-      physicalDefense: baseStats.physicalDefense,
-      magicPower: baseStats.magicPower,
-      magicResistance: baseStats.magicResistance,
-      xpToNextLevel: baseStats.xpToNextLevel,
-      attributePoints: 3 // Iniciamos com 3 pontos de atributo
-    };
+  // Create or log in a player
+  const createPlayer = async (name) => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/players/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name }),
+      });
 
-    setPlayer(newPlayer);
-    showNotification(`Bem-vindo, ${name}!`, 'success');
-  };
-
-  // Update player stats
-  const updatePlayer = (updates) => {
-    setPlayer(prev => {
-      if (!prev) return null;
-
-      // Ensure attackSpeed never exceeds 3
-      if (updates.attackSpeed && updates.attackSpeed > 3) {
-        updates.attackSpeed = 3;
+      if (!response.ok) {
+        throw new Error('Failed to create/login player');
       }
 
-      const updated = { ...prev, ...updates };
-      return updated;
-    });
-    return player;
+      const playerData = await response.json();
+      
+      // Salvar ID do jogador no localStorage para recuperação posterior
+      localStorage.setItem('gladiator_player_id', playerData.id);
+      
+      // Formatar dados do jogador para o formato do frontend
+      const formattedPlayer = formatPlayerData(playerData);
+      setPlayer(formattedPlayer);
+      
+      const isNewPlayer = playerData.xp === 0 && playerData.level === 1;
+      showNotification(
+        isNewPlayer 
+          ? `Bem-vindo, ${name}!` 
+          : `Bem-vindo de volta, ${name}!`, 
+        'success'
+      );
+      
+      return formattedPlayer;
+    } catch (error) {
+      console.error('Error creating/logging in player:', error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // Update player stats in database
+  const updatePlayer = async (updates) => {
+    if (!player) return null;
+
+    // Ensure attackSpeed never exceeds 3
+    if (updates.attackSpeed && updates.attackSpeed > 3) {
+      updates.attackSpeed = 3;
+    }
+
+    // Atualizar o state localmente primeiro para resposta imediata na UI
+    const updatedPlayer = { ...player, ...updates };
+    setPlayer(updatedPlayer);
+
+    try {
+      // Atualizar no servidor em background
+      const response = await fetch(`${API_URL}/players/${player.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to update player on server');
+        // Poderíamos reverter para o estado anterior em caso de erro
+        // mas vamos manter a boa experiência de usuário e apenas logar o erro
+      }
+    } catch (error) {
+      console.error('Error updating player:', error);
+    }
+
+    return updatedPlayer;
+  };
 
   // Resetar atributos do jogador com base no nível atual
   const resetStats = () => {
@@ -101,15 +189,14 @@ export function GameProvider({ children }) {
     showNotification("Atributos reiniciados!", "info");
   };
 
-
   // Log the player out (clear data)
   const logout = () => {
-    localStorage.removeItem('gladiator_player');
+    localStorage.removeItem('gladiator_player_id');
     setPlayer(null);
     showNotification('Você saiu do jogo', 'info');
   };
 
-  // Level up the player (atualizado para dar pontos de atributo em vez de stats automáticos)
+  // Level up the player
   const levelUp = () => {
     if (!player) return;
 
@@ -300,6 +387,7 @@ export function GameProvider({ children }) {
   // Context value
   const contextValue = {
     player,
+    loading,
     createPlayer,
     updatePlayer,
     logout,

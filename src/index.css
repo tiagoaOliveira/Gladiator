@@ -11,3 +11,7 @@ body {
 button {
   font-family: Georgia, serif;
 }
+
+li {
+  list-style: none;
+}

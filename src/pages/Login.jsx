@@ -1,4 +1,3 @@
-// src/pages/Login.jsx  (baseado na sua versão :contentReference[oaicite:2]{index=2}:contentReference[oaicite:3]{index=3})
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
@@ -7,47 +6,45 @@ import './Login.css';
 export default function Login() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const { player, createPlayer, loading } = useGame();
   const navigate = useNavigate();
-  const { player, createPlayer } = useGame();
 
+  // Redirecionar para página de personagem se já estiver logado
   useEffect(() => {
     if (player) navigate('/character');
   }, [player, navigate]);
 
-  const handleLogin = async () => {
-    const trimmed = name.trim();
-    if (trimmed.length < 3) {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    
+    const trimmedName = name.trim();
+    if (trimmedName.length < 3) {
       setError('O nome deve ter ao menos 3 caracteres');
       return;
     }
+    
     setError('');
-    setLoading(true);
+    
     try {
-      await createPlayer(trimmed);
+      await createPlayer(trimmedName);
       navigate('/character');
     } catch (err) {
-      console.error(err);
-      setError('Erro ao conectar com o servidor');
-    } finally {
-      setLoading(false);
+      console.error('Login error:', err);
+      setError('Erro ao conectar com o servidor. Tente novamente.');
     }
   };
 
-  const handleKeyPress = e => e.key === 'Enter' && handleLogin();
-
   return (
     <div className="login-container">
-      <h1>Bem‑vindo à Arena!</h1>
+      <h1>Bem-vindo à Arena!</h1>
       <p className="login-description">
         Entre com seu nome para começar sua jornada como gladiador!
       </p>
 
-      <div className="login-form">
+      <form className="login-form" onSubmit={handleLogin}>
         <input
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyPress={handleKeyPress}
           placeholder="Digite seu nome"
           className="login-input"
           autoFocus
@@ -55,16 +52,16 @@ export default function Login() {
         />
         {error && <div className="login-error">{error}</div>}
         <button
-          onClick={handleLogin}
+          type="submit"
           className="login-button"
           disabled={loading || name.trim().length < 3}
         >
-          {loading ? 'Entrando...' : 'Entrar'}
+          {loading ? 'Carregando...' : 'Entrar'}
         </button>
-      </div>
+      </form>
 
       <div className="login-info">
-        <p>Guerreiros que já batalharam aqui antes serão reconhecidos!</p>
+        <p>Guerreiros que já batalharam aqui antes serão reconhecidos pelo nome!</p>
       </div>
     </div>
   );
