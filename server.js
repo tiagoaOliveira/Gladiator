@@ -1,8 +1,4 @@
-// ================= server.js (Backend - Node/Express + SQLite - ESM) =================
-// Instalar dependências:
-// npm install express sqlite3 cors body-parser
-// npm install --save-dev nodemon
-
+// Atualizar o schema para incluir rankedPoints
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -20,26 +16,13 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(bodyParser.json());
 
-// GET /api/ranking – jogadores ordenados por nível desc
-app.get('/api/ranking', (req, res) => {
-  db.all(
-    `SELECT id, name, level, xp FROM players ORDER BY level DESC, xp DESC LIMIT 50`,
-    [],
-    (err, rows) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.json(rows);
-    }
-  );
-});
-
-
 // Banco SQLite
 const dbFile = path.resolve(__dirname, 'tournament.db');
 const sqlite = sqlite3.verbose();
 const db = new sqlite.Database(dbFile);
 
 db.serialize(() => {
-  // Jogadores - Adicionados mais campos para salvar todos os atributos do jogador
+  // Jogadores - Adicionado o campo rankedPoints
   db.run(`
   CREATE TABLE IF NOT EXISTS players (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,10 +40,43 @@ db.serialize(() => {
     magicResistance INTEGER DEFAULT 0,
     xpToNextLevel INTEGER DEFAULT 300,
     attributePoints INTEGER DEFAULT 3,
+    rankedPoints INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_login DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+
+  // Adicionar coluna rankedPoints se ela não existir
+  db.run(`
+    PRAGMA table_info(players)
+  `, [], (err, rows) => {
+    if (err) {
+      console.error('Erro ao verificar colunas da tabela:', err);
+      return;
+    }
+    
+    // Verificar se a coluna rankedPoints já existe
+    db.get(`PRAGMA table_info(players)`, [], (err, rows) => {
+      if (err) {
+        console.error('Erro ao verificar colunas:', err);
+        return;
+      }
+      
+      const columns = Array.isArray(rows) ? rows : [];
+      const hasRankedPoints = columns.some(col => col.name === 'rankedPoints');
+      
+      if (!hasRankedPoints) {
+        console.log('Adicionando coluna rankedPoints à tabela players...');
+        db.run(`ALTER TABLE players ADD COLUMN rankedPoints INTEGER DEFAULT 0`, [], (err) => {
+          if (err) {
+            console.error('Erro ao adicionar coluna rankedPoints:', err);
+          } else {
+            console.log('Coluna rankedPoints adicionada com sucesso!');
+          }
+        });
+      }
+    });
+  });
 
   // Torneios
   db.run(`
@@ -70,6 +86,7 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  
   // Associação torneio ↔ jogadores
   db.run(`
     CREATE TABLE IF NOT EXISTS tournament_players (
@@ -79,6 +96,35 @@ db.serialize(() => {
       FOREIGN KEY(player_id) REFERENCES players(id)
     )
   `);
+  
+  // Histórico de batalhas de torneio
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tournament_battles (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player1_id INTEGER NOT NULL,
+      player2_id INTEGER NOT NULL,
+      winner_id INTEGER,
+      points_gained INTEGER DEFAULT 30,
+      points_lost INTEGER DEFAULT 10,
+      battle_log TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(player1_id) REFERENCES players(id),
+      FOREIGN KEY(player2_id) REFERENCES players(id),
+      FOREIGN KEY(winner_id) REFERENCES players(id)
+    )
+  `);
+});
+
+// Modificar para ordenar por pontos de ranking, não por nível
+app.get('/api/ranking', (req, res) => {
+  db.all(
+    `SELECT id, name, level, xp, rankedPoints FROM players ORDER BY rankedPoints DESC, level DESC LIMIT 50`,
+    [],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(rows);
+    }
+  );
 });
 
 // Endpoints de jogadores
@@ -166,6 +212,94 @@ app.get('/api/players/:id', (req, res) => {
   });
 });
 
+// Obter um adversário próximo no ranking
+app.get('/api/tournament/opponent/:playerId', (req, res) => {
+  const playerId = req.params.playerId;
+  
+  db.get(`SELECT rankedPoints FROM players WHERE id = ?`, [playerId], (err, player) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    
+    // Encontrar jogadores com pontuação próxima (até 13 posições abaixo)
+    db.all(`
+      SELECT * FROM players 
+      WHERE id != ? 
+      ORDER BY ABS(rankedPoints - ?) ASC
+      LIMIT 13
+    `, [playerId, player.rankedPoints], (err, opponents) => {
+      if (err) return res.status(500).json({ error: err.message });
+      
+      if (opponents.length === 0) {
+        // Se não encontrar oponentes próximos, selecionar qualquer oponente aleatório
+        db.all(`SELECT * FROM players WHERE id != ? LIMIT 20`, [playerId], (err, randomOpponents) => {
+          if (err) return res.status(500).json({ error: err.message });
+          if (randomOpponents.length === 0) {
+            return res.status(404).json({ error: 'No opponents available' });
+          }
+          
+          // Selecionar oponente aleatório
+          const randomIndex = Math.floor(Math.random() * randomOpponents.length);
+          res.json(randomOpponents[randomIndex]);
+        });
+      } else {
+        // Selecionar um oponente aleatório entre os encontrados
+        const randomIndex = Math.floor(Math.random() * opponents.length);
+        res.json(opponents[randomIndex]);
+      }
+    });
+  });
+});
+
+// Registrar batalha de torneio
+app.post('/api/tournament/battle', (req, res) => {
+  const { player1Id, player2Id, winnerId, battleLog } = req.body;
+  
+  if (!player1Id || !player2Id) {
+    return res.status(400).json({ error: 'Player IDs are required' });
+  }
+  
+  // Adicionar o registro da batalha
+  db.run(`
+    INSERT INTO tournament_battles (player1_id, player2_id, winner_id, battle_log)
+    VALUES (?, ?, ?, ?)
+  `, [player1Id, player2Id, winnerId, JSON.stringify(battleLog)], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    // Atualizar pontuação dos jogadores
+    if (winnerId) {
+      // Winner ganha 30 pontos
+      db.run(`
+        UPDATE players SET rankedPoints = rankedPoints + 30
+        WHERE id = ?
+      `, [winnerId], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        
+        // Loser perde 10 pontos (mas não fica negativo)
+        const loserId = winnerId === player1Id ? player2Id : player1Id;
+        db.run(`
+          UPDATE players SET rankedPoints = MAX(0, rankedPoints - 10)
+          WHERE id = ?
+        `, [loserId], (err) => {
+          if (err) return res.status(500).json({ error: err.message });
+          
+          res.json({ 
+            success: true, 
+            battleId: this.lastID,
+            message: `Batalha registrada. ${winnerId} ganhou 30 pontos, ${loserId} perdeu 10 pontos.`
+          });
+        });
+      });
+    } else {
+      // Empate, ninguém ganha ou perde pontos
+      res.json({ 
+        success: true, 
+        battleId: this.lastID,
+        message: "Batalha empatada, nenhum ponto foi alterado."
+      });
+    }
+  });
+});
+
 // Endpoints de torneio
 // Inicia um novo torneio com lista de playerIds
 app.post('/api/tournaments', (req, res) => {
@@ -182,6 +316,7 @@ app.post('/api/tournaments', (req, res) => {
     res.json({ tournamentId: tid });
   });
 });
+
 // Busca jogadores de um torneio
 app.get('/api/tournaments/:id/players', (req, res) => {
   const tid = req.params.id;
