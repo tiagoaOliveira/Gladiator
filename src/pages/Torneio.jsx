@@ -102,6 +102,7 @@ export default function Torneio() {
     registerBattleResult(battleResult.success, battleOpponent.id, battleResult.combatLog);
   };
 
+  // Esta função ainda existe mas não será mais acessível pelo botão
   const retryTournamentBattle = async () => {
     // Buscar novo oponente
     const battleOpponent = await findOpponent();
@@ -187,8 +188,9 @@ export default function Torneio() {
 
         // Player attack
         let playerBaseDamage = Math.max(1, playerClone.attack);
-        // Aplicar a defesa do inimigo (redução direta)
-        let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
+        // Usar a mesma lógica percentual para defesa dos inimigos
+const enemyDamageReduction = Math.min(30, enemyClone.defense * 0.1);
+let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100));
 
         // Verificar acerto crítico (dobro de dano)
         const playerCrit = Math.random() * 100 < playerClone.critChance;
@@ -361,6 +363,7 @@ export default function Torneio() {
         enemyImage={opponent?.image}
         enemyName={opponent?.name}
         onRetry={retryTournamentBattle}
+        showRetryButton={false} /* Esta é a mudança principal - não mostrar o botão de retry */
       />
     </div>
   );

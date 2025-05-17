@@ -4,7 +4,7 @@ import character from '../assets/images/gladiator.jpg';
 import { enemies } from '../utils/enemies';
 
 
-export default function CombatModal({ show, onClose, onRetry, combatLog, result }) {
+export default function CombatModal({ show, onClose, onRetry, combatLog, result, showRetryButton = true }) {
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
   const [playerDamage, setPlayerDamage] = useState(null);
   const [enemyDamage, setEnemyDamage] = useState(null);
@@ -150,7 +150,7 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result 
         )}
 
         <div className="combat-modal-buttons">
-          {battleFinished && (
+          {battleFinished && showRetryButton && (
             <button className="retry-button" onClick={onRetry}>
               Lutar Novamente
             </button>
