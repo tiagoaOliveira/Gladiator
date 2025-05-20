@@ -178,9 +178,18 @@ export function GameProvider({ children }) {
 
     const baseStats = generatePlayerStats(player.level);
 
+    // Salvar o HP atual antes do reset
+    const currentHp = player.hp;
+
+    // Calcular o novo maxHp para o nível atual
+    const newMaxHp = baseStats.hp;
+
+    // Garantir que o HP atual não ultrapasse o novo maxHp
+    const adjustedHp = Math.min(currentHp, newMaxHp);
+
     updatePlayer({
-      hp: baseStats.hp,
-      maxHp: baseStats.hp,
+      maxHp: newMaxHp,
+      hp: adjustedHp, // Mantém o HP atual, mas limita ao novo maxHp
       attack: baseStats.attack,
       physicalDefense: baseStats.physicalDefense,
       critChance: baseStats.critChance,
@@ -203,7 +212,7 @@ export function GameProvider({ children }) {
     if (!player) return;
 
     const newLevel = player.level + 1;
-    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
+    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.1);
 
     try {
       // Realizar atualização de nível em uma única operação
@@ -256,8 +265,10 @@ export function GameProvider({ children }) {
 
         // Player attack
         let playerBaseDamage = Math.max(1, playerClone.attack);
-        // Aplicar a defesa do inimigo (redução direta)
-        let playerDamage = Math.max(1, playerBaseDamage - enemyClone.defense);
+        // Aplicar a defesa do inimigo como redução percentual (0,1% por ponto, máx 30%)
+        const enemyDamageReduction = Math.min(30, enemyClone.defense * 0.1);
+        let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100));
+        playerDamage = Math.max(1, playerDamage); // Garantir dano mínimo de 1
 
         // Verificar acerto crítico (dobro de dano)
         const playerCrit = Math.random() * 100 < playerClone.critChance;

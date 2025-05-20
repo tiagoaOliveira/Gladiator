@@ -8,38 +8,52 @@ export default function Character() {
 
   if (!player) return <p>Carregando...</p>;
 
-  // Trecho do handleStatIncrease do arquivo Character.jsx para permitir velocidade de ataque até 3
-  const handleStatIncrease = (statName) => {
-    if (player.attributePoints <= 0) {
-      showNotification("Você não tem pontos de atributo disponíveis!", "error");
+  // Função para aumentar atributos (flexível para 1x ou 10x)
+  const handleStatIncrease = (statName, amount = 1) => {
+    // Verificar pontos disponíveis
+    if (player.attributePoints < amount) {
+      showNotification(`Você precisa de ${amount} pontos de atributo disponíveis!`, "error");
       return;
     }
 
-    const updatedStats = { attributePoints: player.attributePoints - 1 };
+    const updatedStats = { attributePoints: player.attributePoints - amount };
 
     switch (statName) {
       case 'attack':
-        updatedStats.attack = player.attack + 2;
+        updatedStats.attack = player.attack + (2 * amount);
         break;
       case 'physicalDefense':
-        updatedStats.physicalDefense = player.physicalDefense + 5;
+        updatedStats.physicalDefense = player.physicalDefense + (5 * amount);
         break;
       case 'maxHp':
-        updatedStats.maxHp = player.maxHp + 10;
-        updatedStats.hp = player.hp + 10;
+        updatedStats.maxHp = player.maxHp + (10 * amount);
+        updatedStats.hp = player.hp + (10 * amount);
         break;
       case 'critChance':
-        updatedStats.critChance = player.critChance + 1;
+        updatedStats.critChance = player.critChance + (1 * amount);
         break;
       case 'attackSpeed':
-        // Limitar a velocidade de ataque a 3
-        const newAttackSpeed = (player.attackSpeed + 0.1).toFixed(2);
-        updatedStats.attackSpeed = Math.min(3, parseFloat(newAttackSpeed));
-
-        // Verificar se já está no limite e notificar o jogador
-        if (player.attackSpeed >= 2.9) {
-          showNotification("Velocidade de ataque máxima atingida!", "info");
+        // Calcular nova velocidade de ataque
+        let newAttackSpeed = player.attackSpeed;
+        for (let i = 0; i < amount; i++) {
+          newAttackSpeed += 0.1;
+          
+          // Se atingir o limite máximo, interrompe o loop
+          if (newAttackSpeed >= 3) {
+            newAttackSpeed = 3;
+            const pointsUsed = i + 1;
+            
+            // Retornar os pontos não usados
+            if (pointsUsed < amount) {
+              updatedStats.attributePoints = player.attributePoints - pointsUsed;
+            }
+            
+            showNotification("Velocidade de ataque máxima atingida!", "info");
+            break;
+          }
         }
+        
+        updatedStats.attackSpeed = parseFloat(newAttackSpeed.toFixed(2));
         break;
       default:
         return;
@@ -72,7 +86,24 @@ export default function Character() {
                 <div className="stat-fill" style={{ width: `${(player.hp / player.maxHp) * 100}%`, backgroundColor: "#f44336" }}></div>
                 <div className="stat-value-inside">{player.hp} / {player.maxHp}</div>
               </div>
-              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('maxHp')} disabled={player.attributePoints <= 0}>+</button>
+              <div className="stat-buttons">
+                <button 
+                  className="increase-stat-btn btn-1x" 
+                  onClick={() => handleStatIncrease('maxHp', 1)} 
+                  disabled={player.attributePoints < 1}
+                  title="Aumentar 1 ponto"
+                >
+                  1x
+                </button>
+                <button 
+                  className="increase-stat-btn btn-10x" 
+                  onClick={() => handleStatIncrease('maxHp', 10)} 
+                  disabled={player.attributePoints < 10}
+                  title="Aumentar 10 pontos"
+                >
+                  10x
+                </button>
+              </div>
             </div>
           </div>
 
@@ -88,14 +119,24 @@ export default function Character() {
                 <div className="stat-fill attack-fill" style={{ width: `${Math.min(100, player.attack / 2)}%` }}></div>
                 <div className="stat-value-inside">{player.attack}</div>
               </div>
-              <button
-                className="increase-stat-text-btn"
-                onClick={() => handleStatIncrease('attack')}
-                disabled={player.attributePoints <= 0}
-                title="Aumentar ataque"
-              >
-                ＋
-              </button>
+              <div className="stat-buttons">
+                <button 
+                  className="increase-stat-btn btn-1x" 
+                  onClick={() => handleStatIncrease('attack', 1)} 
+                  disabled={player.attributePoints < 1}
+                  title="Aumentar 1 ponto"
+                >
+                  1x
+                </button>
+                <button 
+                  className="increase-stat-btn btn-10x" 
+                  onClick={() => handleStatIncrease('attack', 10)} 
+                  disabled={player.attributePoints < 10}
+                  title="Aumentar 10 pontos"
+                >
+                  10x
+                </button>
+              </div>
             </div>
           </div>
 
@@ -112,14 +153,24 @@ export default function Character() {
                 <div className="stat-fill defense-fill" style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}></div>
                 <div className="stat-value-inside">{player.physicalDefense}</div>
               </div>
-              <button
-                className="increase-stat-text-btn"
-                onClick={() => handleStatIncrease('physicalDefense')}
-                disabled={player.attributePoints <= 0}
-                title="Aumentar defesa"
-              >
-                ＋
-              </button>
+              <div className="stat-buttons">
+                <button 
+                  className="increase-stat-btn btn-1x" 
+                  onClick={() => handleStatIncrease('physicalDefense', 1)} 
+                  disabled={player.attributePoints < 1}
+                  title="Aumentar 1 ponto"
+                >
+                  1x
+                </button>
+                <button 
+                  className="increase-stat-btn btn-10x" 
+                  onClick={() => handleStatIncrease('physicalDefense', 10)} 
+                  disabled={player.attributePoints < 10}
+                  title="Aumentar 10 pontos"
+                >
+                  10x
+                </button>
+              </div>
             </div>
           </div>
 
@@ -136,7 +187,24 @@ export default function Character() {
                 <div className="stat-fill crit-fill" style={{ width: `${Math.min(100, player.critChance)}%` }}></div>
                 <div className="stat-value-inside">{player.critChance?.toFixed(1)}%</div>
               </div>
-              <button className="increase-stat-text-btn" onClick={() => handleStatIncrease('critChance')} disabled={player.attributePoints <= 0}>+</button>
+              <div className="stat-buttons">
+                <button 
+                  className="increase-stat-btn btn-1x" 
+                  onClick={() => handleStatIncrease('critChance', 1)} 
+                  disabled={player.attributePoints < 1}
+                  title="Aumentar 1 ponto"
+                >
+                  1x
+                </button>
+                <button 
+                  className="increase-stat-btn btn-10x" 
+                  onClick={() => handleStatIncrease('critChance', 10)} 
+                  disabled={player.attributePoints < 10}
+                  title="Aumentar 10 pontos"
+                >
+                  10x
+                </button>
+              </div>
             </div>
           </div>
 
@@ -151,11 +219,24 @@ export default function Character() {
                 <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 33.33)}%` }}></div>
                 <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
               </div>
-              <button
-                className="increase-stat-text-btn"
-                onClick={() => handleStatIncrease('attackSpeed')}
-                disabled={player.attributePoints <= 0 || player.attackSpeed >= 3}
-              >+</button>
+              <div className="stat-buttons">
+                <button 
+                  className="increase-stat-btn btn-1x" 
+                  onClick={() => handleStatIncrease('attackSpeed', 1)} 
+                  disabled={player.attributePoints < 1 || player.attackSpeed >= 3}
+                  title="Aumentar 1 ponto"
+                >
+                  1x
+                </button>
+                <button 
+                  className="increase-stat-btn btn-10x" 
+                  onClick={() => handleStatIncrease('attackSpeed', 10)} 
+                  disabled={player.attributePoints < 10 || player.attackSpeed >= 3}
+                  title="Aumentar 10 pontos"
+                >
+                  10x
+                </button>
+              </div>
             </div>
           </div>
 

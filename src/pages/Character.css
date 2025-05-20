@@ -144,51 +144,50 @@
   background: linear-gradient(to right, #4caf50, #2e7d32);
 }
 
-.increase-stat-text-btn {
+.stat-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.increase-stat-btn {
   background: none;
   border: none;
   color: #ffc107;
-  font-size: 24px; /* tamanho visível do símbolo + */
   font-weight: bold;
   cursor: pointer;
-  width: 36px;
-  height: 36px;
+  flex-shrink: 0;
+  padding: 0 5px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  padding: 0;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
+.increase-stat-btn:hover:not(:disabled) {
+  background-color: rgba(255, 193, 7, 0.2);
+  color: #ffd54f;
+}
+
+.increase-stat-btn:disabled {
+  color: #777;
+  cursor: not-allowed;
+}
+
+.increase-stat-btn.btn-1x {
+  font-size: 16px;
+}
+
+.increase-stat-btn.btn-10x {
+  font-size: 14px;
+}
 
 .stat-description {
   font-size: 13px;
   color: #aaa;
   font-style: italic;
   margin-top: 4px;
-}
-
-/* Substitui botão redondo por símbolo de + mais clean*/
-.increase-stat-text-btn {
-  background: none;
-  border: none;
-  color: #ffc107;
-  font-size: 22px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: color 0.3s ease;
-  padding: 0 6px;
-  line-height: 1;
-}
-
-.increase-stat-text-btn:hover:not(:disabled) {
-  color: #ffca28;
-  transform: scale(2);
-}
-
-.increase-stat-text-btn:disabled {
-  color: #777;
-  cursor: not-allowed;
 }
 
 /* Tooltip de informações (ícone de info ao lado de títulos) */

@@ -9,13 +9,11 @@ export default function Shop() {
   if (!player) return <p>Carregando...</p>;
 
   // Cálculo do preço para comprar um nível
-  const levelUpPrice = Math.floor(1 * Math.pow(1.2, player.level - 1));
+  const levelUpPrice = Math.floor(10 * Math.pow(1.2, player.level - 1));
 
   const items = [
-    { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera 50 HP", action: () => healPlayer(50) },
-    { id: 2, name: "Espada de Ferro", price: 100, effect: "+5 de Ataque", action: () => improveAttack(5) },
-    { id: 3, name: "Escudo de Madeira", price: 75, effect: "+3 de Defesa", action: () => improveDefense(3) },
-    { id: 4, name: "Comprar Nível", price: levelUpPrice, effect: "+1 Nível, +3 Pontos de Atributo", action: () => buyLevel() }
+    { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera todo HP", action: () => healPlayer() },
+    { id: 2, name: "Comprar Nível", price: levelUpPrice, effect: "+1 Nível, +3 Pontos de Atributo", action: () => buyLevel() }
   ];
 
   const healPlayer = (amount) => {
@@ -64,38 +62,38 @@ export default function Shop() {
 
       // Calcular o novo valor de ouro
       const newGold = player.gold - item.price;
-      
+
       // Para poção de cura, aplicamos o efeito e reduzimos o ouro numa única atualização
       if (item.name === "Poção de Cura") {
-        await updatePlayer({ 
+        await updatePlayer({
           gold: newGold,
-          hp: player.maxHp 
+          hp: player.maxHp
         });
         const actualHealing = player.maxHp - player.hp;
         showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
-      } 
-      // Para aumento de ataque
-      else if (item.name === "Espada de Ferro") {
-        await updatePlayer({ 
-          gold: newGold,
-          attack: player.attack + 5
-        });
-        showNotification(`Seu ataque aumentou em 5!`, 'success');
-      }
-      // Para aumento de defesa
-      else if (item.name === "Escudo de Madeira") {
-        await updatePlayer({ 
-          gold: newGold,
-          physicalDefense: player.physicalDefense + 3
-        });
-        showNotification(`Sua defesa aumentou em 3!`, 'success');
       }
       // Para compra de nível
       else if (item.name === "Comprar Nível") {
-        // Aplicar diretamente a redução de ouro
-        await updatePlayer({ gold: newGold });
-        // E depois executar o levelUp
-        levelUp();
+        try {
+          // Primeiro, aplicamos manualmente o aumento de nível, pontos de atributo e também o desconto no ouro
+          const updatedLevel = player.level + 1;
+          const updatedAttributePoints = player.attributePoints + 3; // 3 pontos por nível
+          const updatedXpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
+
+          // Atualizar tudo de uma vez, incluindo a restauração de HP e o desconto no ouro
+          await updatePlayer({
+            level: updatedLevel,
+            attributePoints: updatedAttributePoints,
+            xpToNextLevel: updatedXpToNextLevel,
+            hp: player.maxHp, // Restaurar HP completo ao subir de nível
+            gold: newGold // Aplicar o desconto no ouro
+          });
+
+          showNotification(`Você subiu para o nível ${updatedLevel}! Ganhou 3 pontos de atributo.`, 'success');
+        } catch (error) {
+          console.error('Erro na compra de nível:', error);
+          showNotification('Ocorreu um erro ao subir de nível.', 'error');
+        }
       }
       // Para qualquer outro item
       else {
