@@ -135,40 +135,33 @@ export function GameProvider({ children }) {
     }
   };
 
-  // Update player stats in database
-  const updatePlayer = async (updates) => {
-    if (!player) return null;
+// Update player stats in database
+const updatePlayer = async (updates) => {
+  if (!player) return null;
 
-    // Ensure attackSpeed never exceeds 3
-    if (updates.attackSpeed && updates.attackSpeed > 3) {
-      updates.attackSpeed = 3;
-    }
+  // 1) Limita attackSpeed
+  if (updates.attackSpeed && updates.attackSpeed > 3) {
+    updates.attackSpeed = 3;
+  }
 
-    // Atualizar o state localmente primeiro para resposta imediata na UI
-    const updatedPlayer = { ...player, ...updates };
-    setPlayer(updatedPlayer);
+  // 2) Mescla corretamente o novo estado
+  const updatedPlayer = { ...player, ...updates };
+  setPlayer(updatedPlayer);
 
-    try {
-      // Atualizar no servidor em background
-      const response = await fetch(`${API_URL}/players/${player.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
-      });
+  // 3) Persiste em background no servidor
+  try {
+    await fetch(`${API_URL}/players/${player.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
+    });
+  } catch (err) {
+    console.error('Erro ao atualizar no servidor', err);
+  }
 
-      if (!response.ok) {
-        console.error('Failed to update player on server');
-        // Poderíamos reverter para o estado anterior em caso de erro
-        // mas vamos manter a boa experiência de usuário e apenas logar o erro
-      }
-    } catch (error) {
-      console.error('Error updating player:', error);
-    }
+  return updatedPlayer;
+};
 
-    return updatedPlayer;
-  };
 
   // Resetar atributos do jogador com base no nível atual
   const resetStats = () => {

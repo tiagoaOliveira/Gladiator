@@ -11,7 +11,6 @@
   border: none;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .ranking-button {
@@ -19,23 +18,9 @@
   color: #fff;
 }
 
-.ranking-button:hover {
-  background-color: #666;
-}
-
 .participate-button {
   background-color: #007bff;
   color: #fff;
-}
-
-.participate-button:hover {
-  background-color: #0056b3;
-}
-
-.participate-button:disabled {
-  background-color: #74a7d8;
-  cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .ranking-list {
@@ -44,39 +29,24 @@
   max-width: 500px;
   background: #111;
   color: #fff;
-  padding: 1.5rem;
+  padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.ranking-list h3 {
-  text-align: center;
-  margin-top: 0;
-  color: #ffd700;
-  margin-bottom: 1rem;
 }
 
 .ranking-list ol {
-  padding-left: 2rem;
+  padding-left: 0;
 }
 
 .ranking-list li {
-  margin-bottom: 0.6rem;
-  padding: 0.4rem 0;
+  margin-bottom: 0.4rem;
 }
 
 .tournament-info {
-  margin: 2rem auto;
-  padding: 1.5rem;
+  margin-top: 2rem;
+  padding: 1rem;
   background-color: #222;
   color: #fff;
   border-radius: 10px;
-  max-width: 600px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.tournament-info p {
-  margin: 1rem 0;
 }
 
 /* linha de reticências */
@@ -84,21 +54,11 @@
   text-align: center;
   font-size: 1.2rem;
   color: #888;
-  margin: 0.5rem 0;
-  list-style-type: none;
+  margin: 1rem 0;
 }
 
 /* destaque da sua linha */
 .your-position {
   font-weight: bold;
   color: #ffd700;
-  background-color: rgba(255, 215, 0, 0.1);
-  border-radius: 5px;
-  padding: 0.4rem 0.6rem !important;
-}
-
-.health-warning {
-  color: #ff4d4d;
-  font-weight: bold;
-  margin-top: 0.5rem;
 }
