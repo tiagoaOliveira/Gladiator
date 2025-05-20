@@ -33,7 +33,7 @@ export function GameProvider({ children }) {
     try {
       setLoading(true);
       const response = await fetch(`${API_URL}/players/${playerId}`);
-      
+
       if (!response.ok) {
         // Se o jogador não for encontrado, limpar localStorage
         if (response.status === 404) {
@@ -41,13 +41,13 @@ export function GameProvider({ children }) {
         }
         throw new Error('Failed to fetch player data');
       }
-      
+
       const playerData = await response.json();
-      
+
       // Converter jogador do banco para o formato usado pelo frontend
       const formattedPlayer = formatPlayerData(playerData);
       setPlayer(formattedPlayer);
-      
+
     } catch (error) {
       console.error('Error fetching player:', error);
       showNotification('Erro ao carregar dados do jogador', 'error');
@@ -110,22 +110,22 @@ export function GameProvider({ children }) {
       }
 
       const playerData = await response.json();
-      
+
       // Salvar ID do jogador no localStorage para recuperação posterior
       localStorage.setItem('gladiator_player_id', playerData.id);
-      
+
       // Formatar dados do jogador para o formato do frontend
       const formattedPlayer = formatPlayerData(playerData);
       setPlayer(formattedPlayer);
-      
+
       const isNewPlayer = playerData.xp === 0 && playerData.level === 1;
       showNotification(
-        isNewPlayer 
-          ? `Bem-vindo, ${name}!` 
-          : `Bem-vindo de volta, ${name}!`, 
+        isNewPlayer
+          ? `Bem-vindo, ${name}!`
+          : `Bem-vindo de volta, ${name}!`,
         'success'
       );
-      
+
       return formattedPlayer;
     } catch (error) {
       console.error('Error creating/logging in player:', error);
@@ -135,32 +135,41 @@ export function GameProvider({ children }) {
     }
   };
 
-// Update player stats in database
-const updatePlayer = async (updates) => {
-  if (!player) return null;
+  // Update player stats in database
+  const updatePlayer = async (updates) => {
+    if (!player) return null;
 
-  // 1) Limita attackSpeed
-  if (updates.attackSpeed && updates.attackSpeed > 3) {
-    updates.attackSpeed = 3;
-  }
+    // 1) Limita attackSpeed
+    if (updates.attackSpeed && updates.attackSpeed > 3) {
+      updates.attackSpeed = 3;
+    }
 
-  // 2) Mescla corretamente o novo estado
-  const updatedPlayer = { ...player, ...updates };
-  setPlayer(updatedPlayer);
+    try {
+      // 2) Mescla corretamente o novo estado
+      const updatedPlayer = { ...player, ...updates };
+      setPlayer(updatedPlayer);
 
-  // 3) Persiste em background no servidor
-  try {
-    await fetch(`${API_URL}/players/${player.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
-    });
-  } catch (err) {
-    console.error('Erro ao atualizar no servidor', err);
-  }
+      // 3) Persiste no servidor e aguarda a resposta
+      const response = await fetch(`${API_URL}/players/${player.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
+      });
 
-  return updatedPlayer;
-};
+      if (!response.ok) {
+        console.error('Erro na resposta do servidor:', response.status);
+        // Em caso de erro, podemos atualizar o estado local com os dados do servidor para consistência
+        throw new Error('Falha ao atualizar o jogador no servidor');
+      }
+
+      return updatedPlayer;
+    } catch (err) {
+      console.error('Erro ao atualizar no servidor', err);
+      // No caso de um erro, podemos tentar buscar o estado atual do servidor
+      fetchPlayerById(player.id);
+      throw err;
+    }
+  };
 
 
   // Resetar atributos do jogador com base no nível atual
@@ -190,19 +199,28 @@ const updatePlayer = async (updates) => {
   };
 
   // Level up the player
-  const levelUp = () => {
+  const levelUp = async () => {
     if (!player) return;
 
     const newLevel = player.level + 1;
     const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
 
-    updatePlayer({
-      level: newLevel,
-      attributePoints: (player.attributePoints || 0) + 3, // 3 pontos por nível
-      xpToNextLevel: xpToNextLevel
-    });
+    try {
+      // Realizar atualização de nível em uma única operação
+      const updatedPlayer = await updatePlayer({
+        level: newLevel,
+        attributePoints: (player.attributePoints || 0) + 3, // 3 pontos por nível
+        xpToNextLevel: xpToNextLevel,
+        // Restaurar HP completo ao subir de nível
+        hp: player.maxHp
+      });
 
-    showNotification(`Avançou para o nível ${newLevel}! Ganhou 3 pontos de atributo.`, 'success');
+      showNotification(`Avançou para o nível ${newLevel}! Ganhou 3 pontos de atributo.`, 'success');
+      return updatedPlayer;
+    } catch (error) {
+      console.error('Erro ao subir de nível:', error);
+      showNotification('Ocorreu um erro ao subir de nível.', 'error');
+    }
   };
 
   // Handle battle function

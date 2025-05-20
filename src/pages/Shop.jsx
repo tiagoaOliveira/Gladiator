@@ -58,24 +58,59 @@ export default function Shop() {
       // Verificar se é uma poção de cura e o HP já está no máximo
       if (item.name === "Poção de Cura" && player.hp >= player.maxHp) {
         showNotification("Sua vida já está no máximo!", 'error');
+        setPurchasing(false);
         return;
       }
 
-      // Primeiro reduzir o ouro no contexto (e no servidor)  
+      // Calcular o novo valor de ouro
       const newGold = player.gold - item.price;
-      await updatePlayer({ gold: newGold });
-
-      // Depois aplicar o efeito do item
-      item.action();
+      
+      // Para poção de cura, aplicamos o efeito e reduzimos o ouro numa única atualização
+      if (item.name === "Poção de Cura") {
+        await updatePlayer({ 
+          gold: newGold,
+          hp: player.maxHp 
+        });
+        const actualHealing = player.maxHp - player.hp;
+        showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
+      } 
+      // Para aumento de ataque
+      else if (item.name === "Espada de Ferro") {
+        await updatePlayer({ 
+          gold: newGold,
+          attack: player.attack + 5
+        });
+        showNotification(`Seu ataque aumentou em 5!`, 'success');
+      }
+      // Para aumento de defesa
+      else if (item.name === "Escudo de Madeira") {
+        await updatePlayer({ 
+          gold: newGold,
+          physicalDefense: player.physicalDefense + 3
+        });
+        showNotification(`Sua defesa aumentou em 3!`, 'success');
+      }
+      // Para compra de nível
+      else if (item.name === "Comprar Nível") {
+        // Aplicar diretamente a redução de ouro
+        await updatePlayer({ gold: newGold });
+        // E depois executar o levelUp
+        levelUp();
+      }
+      // Para qualquer outro item
+      else {
+        await updatePlayer({ gold: newGold });
+        item.action();
+      }
 
       showNotification(`Você comprou ${item.name}!`, 'success');
     } catch (err) {
-    console.error(err);
-    showNotification("Erro ao completar a compra", 'error');
-  } finally {
-    setPurchasing(false);
-  }
-};
+      console.error(err);
+      showNotification("Erro ao completar a compra", 'error');
+    } finally {
+      setPurchasing(false);
+    }
+  };
 
   return (
     <div className="shop-container">
