@@ -4,7 +4,15 @@ import character from '../assets/images/gladiator.jpg';
 import { enemies } from '../utils/enemies';
 
 
-export default function CombatModal({ show, onClose, onRetry, combatLog, result, showRetryButton = true }) {
+export default function CombatModal({ 
+  show, 
+  onClose, 
+  onRetry, 
+  combatLog, 
+  result, 
+  showRetryButton = true,
+  isAutoBattle = false
+}) {
   const [currentLogIndex, setCurrentLogIndex] = useState(0);
   const [playerDamage, setPlayerDamage] = useState(null);
   const [enemyDamage, setEnemyDamage] = useState(null);
@@ -38,13 +46,18 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result,
           }
         }
       }
+      
+      // Em modo de batalha automática, definir o log como finalizado imediatamente
+      if (isAutoBattle) {
+        setBattleFinished(true);
+      }
     }
-  }, [show, combatLog]);
+  }, [show, combatLog, isAutoBattle]);
 
 
-  // Process the combat log to show battle animations
+  // Process the combat log to show battle animations (skip in auto-battle mode)
   useEffect(() => {
-    if (!show || !combatLog || combatLog.length === 0 || currentLogIndex >= combatLog.length) {
+    if (!show || !combatLog || combatLog.length === 0 || currentLogIndex >= combatLog.length || isAutoBattle) {
       return;
     }
 
@@ -95,7 +108,7 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result,
     }, displayDelay);
 
     return () => clearTimeout(nextLogTimeout);
-  }, [show, combatLog, currentLogIndex]);
+  }, [show, combatLog, currentLogIndex, isAutoBattle]);
 
   useEffect(() => {
     if (logEndRef.current) {
@@ -113,6 +126,57 @@ export default function CombatModal({ show, onClose, onRetry, combatLog, result,
     return enemyImage || '/api/placeholder/150/150';
   };
 
+  // Renderização para modo de batalha automática
+  if (isAutoBattle && result && result.type === 'auto-battle') {
+    // Extrair os números do resultado
+    const resultParts = result.message.split(', ');
+    const extractValue = (part, label) => {
+      const match = part.match(new RegExp(`${label}: (\\d+)`));
+      return match ? match[1] : '0';
+    };
+
+    const battles = extractValue(resultParts[0], 'Batalhas');
+    const xp = extractValue(resultParts[1], 'XP');
+    const gold = extractValue(resultParts[2], 'Ouro');
+    const hpLost = extractValue(resultParts[3], 'HP Perdido');
+
+    return (
+      <div className="modal-overlay">
+        <div className="combat-modal">
+          <h2>Resumo de Batalha Automática</h2>
+
+          <div className="auto-battle-summary">
+            <div className="auto-battle-stats">
+              <div className="stat-item">
+                <span className="stat-label">Batalhas:</span>
+                <span className="stat-value">{battles}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">XP Ganho:</span>
+                <span className="stat-value xp-value">+{xp}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">Ouro Ganho:</span>
+                <span className="stat-value gold-value">+{gold}</span>
+              </div>
+              <div className="stat-item">
+                <span className="stat-label">HP Perdido:</span>
+                <span className="stat-value hp-value">-{hpLost}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="combat-modal-buttons">
+            <button className="close-modal-button" onClick={onClose}>
+              Fechar
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Renderização padrão para batalha normal
   return (
     <div className="modal-overlay">
       <div className="combat-modal">

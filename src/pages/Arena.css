@@ -104,6 +104,9 @@
 .arena-actions {
   margin-top: 20px;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
 }
 
 .battle-button {
@@ -126,4 +129,70 @@
   background-color: #6b4444;
   cursor: not-allowed;
   opacity: 0.7;
+}
+
+/* Estilos para batalha automática */
+.auto-battle-button {
+  padding: 12px 24px;
+  background-color: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.auto-battle-button:hover:not(:disabled) {
+  background-color: #a0522d;
+}
+
+.auto-battle-button:disabled {
+  background-color: #614c42;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auto-battle-progress {
+  background-color: #5a3b2b;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 20px 0;
+  text-align: center;
+  border: 2px solid #ffc107;
+  animation: pulseBorder 2s infinite;
+}
+
+@keyframes pulseBorder {
+  0% {
+    border-color: #ffc107;
+  }
+  50% {
+    border-color: #ff9800;
+  }
+  100% {
+    border-color: #ffc107;
+  }
+}
+
+.auto-battle-progress h3 {
+  margin-top: 0;
+  color: #ffc107;
+}
+
+.stop-auto-battle-button {
+  padding: 8px 16px;
+  background-color: #ff5722;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: background-color 0.3s;
+}
+
+.stop-auto-battle-button:hover {
+  background-color: #e64a19;
 }
