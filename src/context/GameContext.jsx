@@ -144,10 +144,29 @@ export function GameProvider({ children }) {
     }
   }, [player]);
 
-  // Carregar progresso das missões do localStorage
-  const loadPlayerMissions = () => {
+  // Carregar progresso das missões do banco de dados
+  const loadPlayerMissions = async () => {
     if (!player) return;
     
+    try {
+      const response = await fetch(`${API_URL}/players/${player.id}/missions`);
+      if (response.ok) {
+        const missions = await response.json();
+        setPlayerMissions(missions);
+      } else {
+        console.error('Erro ao carregar missões do servidor');
+        // Fallback para localStorage se o servidor falhar
+        loadPlayerMissionsFromLocalStorage();
+      }
+    } catch (error) {
+      console.error('Erro ao conectar com o servidor para carregar missões:', error);
+      // Fallback para localStorage se houver erro de conexão
+      loadPlayerMissionsFromLocalStorage();
+    }
+  };
+
+  // Fallback: carregar do localStorage se o servidor não estiver disponível
+  const loadPlayerMissionsFromLocalStorage = () => {
     const savedMissions = localStorage.getItem(`gladiator_missions_${player.id}`);
     if (savedMissions) {
       setPlayerMissions(JSON.parse(savedMissions));
@@ -158,14 +177,60 @@ export function GameProvider({ children }) {
         initialMissions[mission.id] = { progress: 0, completed: false, claimed: false };
       });
       setPlayerMissions(initialMissions);
-      saveMissions(initialMissions);
+      saveMissionsToServer(initialMissions);
     }
   };
 
-  // Salvar progresso no localStorage
-  const saveMissions = (missions) => {
+  // Salvar progresso das missões no servidor
+  const saveMissionsToServer = async (missions) => {
+    if (!player) return;
+
+    try {
+      const response = await fetch(`${API_URL}/players/${player.id}/missions`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(missions),
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao salvar missões no servidor');
+        // Fallback para localStorage se o servidor falhar
+        saveMissionsToLocalStorage(missions);
+      }
+    } catch (error) {
+      console.error('Erro ao conectar com o servidor para salvar missões:', error);
+      // Fallback para localStorage se houver erro de conexão
+      saveMissionsToLocalStorage(missions);
+    }
+  };
+
+  // Fallback: salvar no localStorage
+  const saveMissionsToLocalStorage = (missions) => {
     if (player) {
       localStorage.setItem(`gladiator_missions_${player.id}`, JSON.stringify(missions));
+    }
+  };
+
+  // Salvar uma missão específica no servidor
+  const saveSingleMissionToServer = async (missionId, missionData) => {
+    if (!player) return;
+
+    try {
+      const response = await fetch(`${API_URL}/players/${player.id}/missions/${missionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(missionData),
+      });
+
+      if (!response.ok) {
+        console.error('Erro ao salvar missão no servidor');
+      }
+    } catch (error) {
+      console.error('Erro ao conectar com o servidor para salvar missão:', error);
     }
   };
 
@@ -209,12 +274,16 @@ export function GameProvider({ children }) {
           updatedMissions[mission.id].completed = true;
           showNotification(`🎯 Missão "${mission.title}" completada!`, 'success');
         }
+
+        // Salvar esta missão específica no servidor
+        saveSingleMissionToServer(mission.id, updatedMissions[mission.id]);
       }
     });
 
     if (hasUpdates) {
       setPlayerMissions(updatedMissions);
-      saveMissions(updatedMissions);
+      // Também manter backup no localStorage
+      saveMissionsToLocalStorage(updatedMissions);
     }
   };
 
@@ -236,7 +305,11 @@ export function GameProvider({ children }) {
       const updatedMissions = { ...playerMissions };
       updatedMissions[missionId].claimed = true;
       setPlayerMissions(updatedMissions);
-      saveMissions(updatedMissions);
+      
+      // Salvar no servidor
+      await saveSingleMissionToServer(missionId, updatedMissions[missionId]);
+      // Backup no localStorage
+      saveMissionsToLocalStorage(updatedMissions);
 
       showNotification(
         `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`, 

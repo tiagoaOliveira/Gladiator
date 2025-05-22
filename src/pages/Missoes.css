@@ -290,7 +290,7 @@
 
 /* Animações para cards completados */
 .mission-card.completed {
-  animation: completedPulse 2s infinite;
+  animation: completedPulse 1s infinite;
 }
 
 @keyframes completedPulse {

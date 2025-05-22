@@ -1,4 +1,3 @@
-// Atualizar o schema para incluir rankedPoints
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
@@ -77,6 +76,22 @@ db.serialize(() => {
       }
     });
   });
+
+  // Tabela de missões do jogador
+  db.run(`
+    CREATE TABLE IF NOT EXISTS player_missions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER NOT NULL,
+      mission_id INTEGER NOT NULL,
+      progress INTEGER DEFAULT 0,
+      completed BOOLEAN DEFAULT FALSE,
+      claimed BOOLEAN DEFAULT FALSE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY(player_id) REFERENCES players(id),
+      UNIQUE(player_id, mission_id)
+    )
+  `);
 
   // Torneios
   db.run(`
@@ -210,6 +225,104 @@ app.get('/api/players/:id', (req, res) => {
     if (!player) return res.status(404).json({ error: 'Player not found' });
     res.json(player);
   });
+});
+
+// Buscar missões do jogador
+app.get('/api/players/:id/missions', (req, res) => {
+  const playerId = req.params.id;
+  
+  db.all(`
+    SELECT mission_id, progress, completed, claimed, updated_at 
+    FROM player_missions 
+    WHERE player_id = ?
+  `, [playerId], (err, missions) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    // Converter array para formato de objeto que o frontend espera
+    const missionsObject = {};
+    missions.forEach(mission => {
+      missionsObject[mission.mission_id] = {
+        progress: mission.progress,
+        completed: mission.completed === 1, // SQLite retorna 1/0 para boolean
+        claimed: mission.claimed === 1,
+        updated_at: mission.updated_at
+      };
+    });
+    
+    res.json(missionsObject);
+  });
+});
+
+// Atualizar progresso de uma missão
+app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
+  const { playerId, missionId } = req.params;
+  const { progress, completed, claimed } = req.body;
+  
+  // Verificar se a missão já existe para o jogador
+  db.get(`
+    SELECT * FROM player_missions 
+    WHERE player_id = ? AND mission_id = ?
+  `, [playerId, missionId], (err, existingMission) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    if (existingMission) {
+      // Atualizar missão existente
+      db.run(`
+        UPDATE player_missions 
+        SET progress = ?, completed = ?, claimed = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE player_id = ? AND mission_id = ?
+      `, [progress, completed ? 1 : 0, claimed ? 1 : 0, playerId, missionId], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, updated: true });
+      });
+    } else {
+      // Criar nova entrada de missão
+      db.run(`
+        INSERT INTO player_missions (player_id, mission_id, progress, completed, claimed)
+        VALUES (?, ?, ?, ?, ?)
+      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, created: true });
+      });
+    }
+  });
+});
+
+// Salvar múltiplas missões de uma vez (batch update)
+app.put('/api/players/:playerId/missions', (req, res) => {
+  const playerId = req.params.playerId;
+  const missions = req.body; // Objeto com as missões no formato { missionId: { progress, completed, claimed } }
+  
+  if (!missions || typeof missions !== 'object') {
+    return res.status(400).json({ error: 'Invalid missions data' });
+  }
+  
+  // Preparar as queries para inserção/atualização
+  const upsertPromises = Object.entries(missions).map(([missionId, missionData]) => {
+    return new Promise((resolve, reject) => {
+      const { progress, completed, claimed } = missionData;
+      
+      // Usar INSERT OR REPLACE para upsert
+      db.run(`
+        INSERT OR REPLACE INTO player_missions 
+        (player_id, mission_id, progress, completed, claimed, updated_at)
+        VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function(err) {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  });
+  
+  // Executar todas as queries
+  Promise.all(upsertPromises)
+    .then(() => {
+      res.json({ success: true, message: 'Missions updated successfully' });
+    })
+    .catch(err => {
+      console.error('Error updating missions:', err);
+      res.status(500).json({ error: 'Failed to update missions' });
+    });
 });
 
 // Obter um adversário próximo no ranking

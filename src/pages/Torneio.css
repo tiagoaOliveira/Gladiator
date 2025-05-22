@@ -62,3 +62,8 @@
   font-weight: bold;
   color: #ffd700;
 }
+
+.health-warning {
+  color: red;
+  font-size: 20px;
+}
