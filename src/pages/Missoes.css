@@ -133,14 +133,14 @@
   border: 1px solid #5a3b2b;
 }
 
-.progress-bar {
+.progress-bar-missoes {
   height: 100%;
   background: linear-gradient(90deg, #ffc107, #ff9800);
   transition: width 0.5s ease;
   position: relative;
 }
 
-.progress-bar::after {
+.progress-bar-missoes::after {
   content: "";
   position: absolute;
   top: 0;
@@ -165,7 +165,7 @@
   }
 }
 
-.progress-text {
+.progress-text-missoes {
   text-align: center;
   color: #ffc107;
   font-weight: bold;
@@ -261,20 +261,7 @@
   font-size: 1.2rem;
 }
 
-.missions-footer {
-  text-align: center;
-  padding: 20px;
-  background-color: #2a1f16;
-  border-radius: 8px;
-  border: 1px solid #5a3b2b;
-}
 
-.missions-footer p {
-  color: #d4af37;
-  margin: 0;
-  font-size: 1rem;
-  font-style: italic;
-}
 
 /* Responsividade */
 @media (max-width: 768px) {

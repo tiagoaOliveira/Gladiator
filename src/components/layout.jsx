@@ -27,7 +27,7 @@ export default function Layout({ children }) {
           <Link to="/arena">⚔️ Arena</Link>
           <Link to='/Torneio'>🏆Torneio</Link>
           <Link to="/shop">🏛️ Loja</Link>
-          <Link to="/missões">📜 Missões</Link>
+          <Link to="/missoes">📜 Missões</Link>
           <button onClick={handleLogout}>🚪 Sair</button>
         </nav>
       )}

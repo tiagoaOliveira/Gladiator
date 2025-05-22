@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import './Missões.css';
+import './Missoes.css';
 
 // Definindo as missões disponíveis
 const availableMissions = [
@@ -272,11 +272,11 @@ export default function Missões() {
               <div className="mission-progress">
                 <div className="progress-bar-container">
                   <div 
-                    className="progress-bar"
+                    className="progress-bar-missoes"
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
-                <div className="progress-text">
+                <div className="progress-text-missoes">
                   {missionProgress.progress} / {mission.targetCount}
                 </div>
               </div>
@@ -315,9 +315,6 @@ export default function Missões() {
         </div>
       )}
 
-      <div className="missions-footer">
-        <p>💡 Dica: Vença batalhas na arena para progredir nas missões!</p>
-      </div>
     </div>
   );
 }
