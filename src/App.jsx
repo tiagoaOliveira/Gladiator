@@ -12,6 +12,7 @@ import Character from './pages/Character';
 import Arena from './pages/Arena';
 import Torneio from './pages/Torneio';
 import Shop from './pages/Shop';
+import Missões from './pages/Missões';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/arena" element={<Layout><Arena /></Layout>} />
           <Route path='/Torneio' element={<Layout><Torneio/></Layout>}/>
           <Route path="/shop" element={<Layout><Shop /></Layout>} />
+          <Route path="/missões" element={<Layout><Missões /></Layout>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
