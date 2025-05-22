@@ -20,21 +20,21 @@ export default function Layout({ children }) {
   return (
     <div className="container">
       {notification.show && <Notification message={notification.message} type={notification.type} />}
-      
+
       {showNavigation && (
         <nav className="navigation">
           <Link to="/character">🏹 Perfil</Link>
           <Link to="/arena">⚔️ Arena</Link>
-          <Link to="/shop">🏛️ Loja</Link>
           <Link to='/Torneio'>🏆Torneio</Link>
+          <Link to="/shop">🏛️ Loja</Link>
           <button onClick={handleLogout}>🚪 Sair</button>
         </nav>
       )}
-      
+
       <main className="content">
         {children}
       </main>
-      
+
       {/* Barras de HP e XP no rodapé */}
       {player && (
         <div className="game-footer">

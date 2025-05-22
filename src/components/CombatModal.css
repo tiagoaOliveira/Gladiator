@@ -174,3 +174,66 @@
   cursor: pointer;
   font-weight: bold;
 }
+
+/* Botões de ação */
+.retry-button {
+  background-color: #4caf50;
+  transition: background-color 0.3s;
+}
+
+.retry-button:hover {
+  background-color: #388e3c;
+}
+
+.close-modal-button {
+  background-color: #f44336;
+  transition: background-color 0.3s;
+}
+
+.close-modal-button:hover {
+  background-color: #d32f2f;
+}
+
+/* Estilos do resumo de batalha automática */
+.auto-battle-summary {
+  padding: 20px;
+  margin: 15px;
+  background-color: #2a1f16;
+  border-radius: 8px;
+}
+
+.auto-battle-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background-color: #3c2b21;
+  border-radius: 4px;
+  font-size: 18px;
+}
+
+.stat-label {
+  font-weight: bold;
+  color: #e0e0e0;
+}
+
+.stat-value {
+  font-weight: bold;
+}
+
+.xp-value {
+  color: #4caf50;
+}
+
+.gold-value {
+  color: #ffc107;
+}
+
+.hp-value {
+  color: #f44336;
+}
