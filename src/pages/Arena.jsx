@@ -57,7 +57,7 @@ export default function Arena() {
         clearInterval(autoBattleInterval);
         endAutoBattle(true);
       }
-    }, 2000);
+    }, 1500);
 
     return () => clearInterval(autoBattleInterval);
   }, [autoBattleActive, player]);

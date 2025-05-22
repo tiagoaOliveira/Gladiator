@@ -10,9 +10,118 @@ const GameContext = createContext();
 // Custom hook to use the game context
 export const useGame = () => useContext(GameContext);
 
+// Definindo as missões disponíveis
+const availableMissions = [
+  {
+    id: 1,
+    title: "Caçador de Goblins",
+    description: "Derrote 50 Goblins na arena",
+    target: "Goblin Berserker",
+    targetCount: 50,
+    rewards: {
+      xp: 5000,
+      gold: 2500
+    },
+    difficulty: "Fácil",
+    icon: "🏹"
+  },
+  {
+    id: 2,
+    title: "Exterminador de Orcs",
+    description: "Derrote 20 Orcs Guerreiros",
+    target: "Orc Selvagem",
+    targetCount: 20,
+    rewards: {
+      xp: 8000,
+      gold: 4000
+    },
+    difficulty: "Médio",
+    icon: "⚔️"
+  },
+    {
+    id: 3,
+    title: "Caçador de Dragões",
+    description: "Derrote 5 Dragões Vermelhos",
+    target: "Dragão Ancião",
+    targetCount: 5,
+    rewards: {
+      xp: 20000,
+      gold: 10000
+    },
+    difficulty: "Extremo",
+    icon: "🐉"
+  },
+  {
+    id: 4,
+    title: "Domador de Trolls",
+    description: "Derrote 10 Trolls das Cavernas",
+    target: "Guarda Real",
+    targetCount: 10,
+    rewards: {
+      xp: 12000,
+      gold: 6000
+    },
+    difficulty: "Difícil",
+    icon: "🛡️"
+  },
+  {
+    id: 5,
+    title: "Assassino de Esqueletos",
+    description: "Derrote 30 Esqueletos Guerreiros",
+    target: "Esqueleto Guerreiro",
+    targetCount: 30,
+    rewards: {
+      xp: 6000,
+      gold: 3000
+    },
+    difficulty: "Médio",
+    icon: "💀"
+  },
+  {
+    id: 6,
+    title: "Conquistador do Minotauro",
+    description: "Derrote 8 Minotauros",
+    target: "Minotauro",
+    targetCount: 8,
+    rewards: {
+      xp: 15000,
+      gold: 7500
+    },
+    difficulty: "Difícil",
+    icon: "🐂"
+  },
+  {
+    id: 7,
+    title: "Sobrevivente Iniciante",
+    description: "Vença 100 batalhas na arena",
+    target: "any",
+    targetCount: 100,
+    rewards: {
+      xp: 3000,
+      gold: 1500
+    },
+    difficulty: "Fácil",
+    icon: "🏆"
+  },
+  {
+    id: 8,
+    title: "Gladiador Veterano",
+    description: "Vença 500 batalhas na arena",
+    target: "any",
+    targetCount: 500,
+    rewards: {
+      xp: 25000,
+      gold: 15000
+    },
+    difficulty: "Extremo",
+    icon: "👑"
+  }
+];
+
 // Provider component
 export function GameProvider({ children }) {
   const [player, setPlayer] = useState(null);
+  const [playerMissions, setPlayerMissions] = useState({});
   const [notification, setNotification] = useState({
     show: false,
     message: '',
@@ -27,6 +136,136 @@ export function GameProvider({ children }) {
       fetchPlayerById(savedPlayerId);
     }
   }, []);
+
+  // Carregar missões quando o jogador for carregado
+  useEffect(() => {
+    if (player) {
+      loadPlayerMissions();
+    }
+  }, [player]);
+
+  // Carregar progresso das missões do localStorage
+  const loadPlayerMissions = () => {
+    if (!player) return;
+    
+    const savedMissions = localStorage.getItem(`gladiator_missions_${player.id}`);
+    if (savedMissions) {
+      setPlayerMissions(JSON.parse(savedMissions));
+    } else {
+      // Primeira vez - inicializar todas as missões
+      const initialMissions = {};
+      availableMissions.forEach(mission => {
+        initialMissions[mission.id] = { progress: 0, completed: false, claimed: false };
+      });
+      setPlayerMissions(initialMissions);
+      saveMissions(initialMissions);
+    }
+  };
+
+  // Salvar progresso no localStorage
+  const saveMissions = (missions) => {
+    if (player) {
+      localStorage.setItem(`gladiator_missions_${player.id}`, JSON.stringify(missions));
+    }
+  };
+
+  // Função para normalizar nomes de inimigos para comparação
+  const normalizeEnemyName = (name) => {
+    return name.toLowerCase().trim();
+  };
+
+  // Atualizar progresso das missões
+  const updateMissionProgress = (enemyName, isVictory) => {
+    if (!isVictory || !player) return;
+
+    const updatedMissions = { ...playerMissions };
+    let hasUpdates = false;
+
+    availableMissions.forEach(mission => {
+      if (updatedMissions[mission.id]?.completed) return;
+
+      let applies = false;
+      
+      // Verificar se a missão se aplica à batalha
+      if (mission.target === "any") {
+        applies = true;
+      } else {
+        // Comparação normalizada para evitar problemas de case/espaços
+        const normalizedTarget = normalizeEnemyName(mission.target);
+        const normalizedEnemy = normalizeEnemyName(enemyName);
+        applies = normalizedTarget === normalizedEnemy;
+      }
+      
+      if (applies) {
+        if (!updatedMissions[mission.id]) {
+          updatedMissions[mission.id] = { progress: 0, completed: false, claimed: false };
+        }
+        
+        updatedMissions[mission.id].progress += 1;
+        hasUpdates = true;
+
+        // Verificar se a missão foi completada
+        if (updatedMissions[mission.id].progress >= mission.targetCount && !updatedMissions[mission.id].completed) {
+          updatedMissions[mission.id].completed = true;
+          showNotification(`🎯 Missão "${mission.title}" completada!`, 'success');
+        }
+      }
+    });
+
+    if (hasUpdates) {
+      setPlayerMissions(updatedMissions);
+      saveMissions(updatedMissions);
+    }
+  };
+
+  // Coletar recompensa da missão
+  const claimMissionReward = async (missionId) => {
+    const mission = availableMissions.find(m => m.id === missionId);
+    const missionProgress = playerMissions[missionId];
+    
+    if (!mission || !missionProgress?.completed || missionProgress.claimed) return false;
+
+    try {
+      // Dar recompensas ao jogador
+      await updatePlayer({
+        xp: player.xp + mission.rewards.xp,
+        gold: player.gold + mission.rewards.gold
+      });
+
+      // Marcar missão como reivindicada
+      const updatedMissions = { ...playerMissions };
+      updatedMissions[missionId].claimed = true;
+      setPlayerMissions(updatedMissions);
+      saveMissions(updatedMissions);
+
+      showNotification(
+        `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`, 
+        'success'
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Erro ao coletar recompensa:', error);
+      showNotification('Erro ao coletar recompensa da missão', 'error');
+      return false;
+    }
+  };
+
+  // Obter missões ativas (não reivindicadas)
+  const getActiveMissions = () => {
+    return availableMissions.filter(mission => {
+      const progress = playerMissions[mission.id];
+      return !progress?.claimed;
+    });
+  };
+
+  // Obter missões completadas mas não reivindicadas
+  const getCompletedMissions = () => {
+    return availableMissions.filter(mission => {
+      const progress = playerMissions[mission.id];
+      return progress?.completed && !progress?.claimed;
+    });
+  };
 
   // Fetch player by ID from API
   const fetchPlayerById = async (playerId) => {
@@ -73,7 +312,8 @@ export function GameProvider({ children }) {
       magicPower: dbPlayer.magicPower || 0,
       magicResistance: dbPlayer.magicResistance || 0,
       xpToNextLevel: dbPlayer.xpToNextLevel,
-      attributePoints: dbPlayer.attributePoints
+      attributePoints: dbPlayer.attributePoints,
+      rankedPoints: dbPlayer.rankedPoints || 0
     };
   };
 
@@ -171,7 +411,6 @@ export function GameProvider({ children }) {
     }
   };
 
-
   // Resetar atributos do jogador com base no nível atual
   const resetStats = () => {
     if (!player) return;
@@ -203,7 +442,11 @@ export function GameProvider({ children }) {
   // Log the player out (clear data)
   const logout = () => {
     localStorage.removeItem('gladiator_player_id');
+    if (player) {
+      localStorage.removeItem(`gladiator_missions_${player.id}`);
+    }
     setPlayer(null);
+    setPlayerMissions({});
     showNotification('Você saiu do jogo', 'info');
   };
 
@@ -339,7 +582,9 @@ export function GameProvider({ children }) {
 
     // Combat result
     let result;
-    if (playerClone.currentHp <= 0) {
+    const isVictory = playerClone.currentHp > 0;
+    
+    if (!isVictory) {
       // Player defeated
       result = {
         type: 'defeat',
@@ -350,7 +595,9 @@ export function GameProvider({ children }) {
       // Update player HP (minimum 1)
       updatePlayer({ hp: 1 });
     } else {
-      // Player won
+      // Player won - atualizar progresso das missões
+      updateMissionProgress(enemy.name, true);
+      
       const newXP = player.xp + enemy.rewardXP;
       let newLevel = player.level;
       let newXpToNext = player.xpToNextLevel;
@@ -400,7 +647,7 @@ export function GameProvider({ children }) {
     }
 
     return {
-      success: playerClone.currentHp > 0,
+      success: isVictory,
       combatLog,
       result
     };
@@ -417,7 +664,14 @@ export function GameProvider({ children }) {
     handleBattle,
     notification,
     showNotification,
-    resetStats
+    resetStats,
+    // Missões
+    playerMissions,
+    availableMissions,
+    updateMissionProgress,
+    claimMissionReward,
+    getActiveMissions,
+    getCompletedMissions
   };
 
   return (
