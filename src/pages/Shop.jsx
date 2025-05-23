@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
+import usePiNetwork from '../utils/usePiNetwork';
 import './Shop.css';
 
 export default function Shop() {
   const { player, updatePlayer, showNotification, levelUp } = useGame();
   const [purchasing, setPurchasing] = useState(false);
+
+  // Extrai as funções do hook para autenticação e pagamento Pi
+  const { loginWithPi, makePayment } = usePiNetwork();
 
   if (!player) return <p>Carregando...</p>;
 
@@ -16,87 +20,51 @@ export default function Shop() {
     { id: 2, name: "Comprar Nível", price: levelUpPrice, effect: "+1 Nível, +3 Pontos de Atributo", action: () => buyLevel() }
   ];
 
-  const healPlayer = (amount) => {
+  function healPlayer() {
     const newHp = player.maxHp;
     const actualHealing = newHp - player.hp;
 
     updatePlayer({ hp: newHp });
     showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
-  };
+  }
 
-  const improveAttack = (amount) => {
-    updatePlayer({ attack: player.attack + amount });
-    showNotification(`Seu ataque aumentou em ${amount}!`, 'success');
-  };
-
-  const improveDefense = (amount) => {
-    updatePlayer({ physicalDefense: player.physicalDefense + amount });
-    showNotification(`Sua defesa aumentou em ${amount}!`, 'success');
-  };
-
-  const buyLevel = () => {
-    // Utilizamos a função levelUp do GameContext
+  function buyLevel() {
     levelUp();
     showNotification(`Você subiu para o nível ${player.level + 1}!`, 'success');
-  };
+  }
 
-  const buyItem = async (item) => {
-    // Evitar compras múltiplas enquanto uma está processando
+  async function buyItem(item) {
     if (purchasing) return;
     setPurchasing(true);
 
     try {
-      // Verificar se há ouro suficiente
       if (player.gold < item.price) {
         showNotification("Ouro insuficiente para esta compra!", 'error');
-        setPurchasing(false);
         return;
       }
 
-      // Verificar se é uma poção de cura e o HP já está no máximo
-      if (item.name === "Poção de Cura" && player.hp >= player.maxHp) {
-        showNotification("Sua vida já está no máximo!", 'error');
-        setPurchasing(false);
-        return;
-      }
-
-      // Calcular o novo valor de ouro
+      // Fluxo de compra via ouro
       const newGold = player.gold - item.price;
 
-      // Para poção de cura, aplicamos o efeito e reduzimos o ouro numa única atualização
       if (item.name === "Poção de Cura") {
-        await updatePlayer({
-          gold: newGold,
-          hp: player.maxHp
-        });
+        await updatePlayer({ gold: newGold, hp: player.maxHp });
         const actualHealing = player.maxHp - player.hp;
         showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
-      }
-      // Para compra de nível
-      else if (item.name === "Comprar Nível") {
-        try {
-          // Primeiro, aplicamos manualmente o aumento de nível, pontos de atributo e também o desconto no ouro
-          const updatedLevel = player.level + 1;
-          const updatedAttributePoints = player.attributePoints + 3; // 3 pontos por nível
-          const updatedXpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
+      } else if (item.name === "Comprar Nível") {
+        const updatedLevel = player.level + 1;
+        const updatedAttributePoints = player.attributePoints + 3;
+        const updatedXpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
 
-          // Atualizar tudo de uma vez, incluindo a restauração de HP e o desconto no ouro
-          await updatePlayer({
-            level: updatedLevel,
-            attributePoints: updatedAttributePoints,
-            xpToNextLevel: updatedXpToNextLevel,
-            hp: player.maxHp, // Restaurar HP completo ao subir de nível
-            gold: newGold // Aplicar o desconto no ouro
-          });
+        await updatePlayer({
+          level: updatedLevel,
+          attributePoints: updatedAttributePoints,
+          xpToNextLevel: updatedXpToNextLevel,
+          hp: player.maxHp,
+          gold: newGold
+        });
 
-          showNotification(`Você subiu para o nível ${updatedLevel}! Ganhou 3 pontos de atributo.`, 'success');
-        } catch (error) {
-          console.error('Erro na compra de nível:', error);
-          showNotification('Ocorreu um erro ao subir de nível.', 'error');
-        }
-      }
-      // Para qualquer outro item
-      else {
+        showNotification(`Você subiu para o nível ${updatedLevel}! Ganhou 3 pontos de atributo.`, 'success');
+      } else {
         await updatePlayer({ gold: newGold });
         item.action();
       }
@@ -108,7 +76,32 @@ export default function Shop() {
     } finally {
       setPurchasing(false);
     }
-  };
+  }
+
+  // Função de compra via Pi Network
+  async function buyWithPi(item) {
+    if (purchasing) return;
+    setPurchasing(true);
+
+    try {
+      // Garante autenticação
+      const user = await loginWithPi();
+      if (!user) {
+        showNotification("Falha na autenticação Pi.", 'error');
+        return;
+      }
+
+      // Cria pagamento
+      const payment = await makePayment(item.price, `Compra de ${item.name}`);
+      console.log("Pagamento Pi simulado:", payment);
+      showNotification(`Pagamento Pi para ${item.name} processado com sucesso!`, 'success');
+    } catch (err) {
+      console.error("Erro no pagamento Pi:", err);
+      showNotification("Erro ao processar pagamento Pi.", 'error');
+    } finally {
+      setPurchasing(false);
+    }
+  }
 
   return (
     <div className="shop-container">
@@ -121,6 +114,7 @@ export default function Shop() {
             <h3>{item.name}</h3>
             <p className="item-effect">{item.effect}</p>
             <p className="item-price">🪙 {item.price}</p>
+
             <button
               onClick={() => buyItem(item)}
               className="buy-button"
@@ -130,7 +124,15 @@ export default function Shop() {
                 (item.name === "Poção de Cura" && player.hp >= player.maxHp)
               }
             >
-              {purchasing ? 'Comprando...' : 'Comprar'}
+              {purchasing ? 'Comprando...' : 'Comprar com Ouro'}
+            </button>
+
+            <button
+              onClick={() => buyWithPi(item)}
+              className="buy-button"
+              disabled={purchasing}
+            >
+              {purchasing ? 'Processando...' : 'Comprar com Pi'}
             </button>
           </div>
         ))}
