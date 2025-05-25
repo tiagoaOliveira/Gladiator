@@ -4,6 +4,14 @@ import { generatePlayerStats } from '../utils/player';
 // API base URL
 const API_URL = 'http://localhost:4000/api';
 
+// Importar os tipos de personagem
+const characterTypes = [
+  { id: 'gladiator', maxAttackSpeed: 3, critMultiplier: 2 },
+  { id: 'assassin', maxAttackSpeed: 5, critMultiplier: 2 },
+  { id: 'guardian', maxAttackSpeed: 3, critMultiplier: 2 },
+  { id: 'berserker', maxAttackSpeed: 3, critMultiplier: 3 }
+];
+
 // Create the context
 const GameContext = createContext();
 
@@ -38,7 +46,7 @@ const availableMissions = [
     difficulty: "Médio",
     icon: "⚔️"
   },
-    {
+  {
     id: 3,
     title: "Caçador de Dragões",
     description: "Derrote 5 Dragões Vermelhos",
@@ -147,7 +155,7 @@ export function GameProvider({ children }) {
   // Carregar progresso das missões do banco de dados
   const loadPlayerMissions = async () => {
     if (!player) return;
-    
+
     try {
       const response = await fetch(`${API_URL}/players/${player.id}/missions`);
       if (response.ok) {
@@ -250,7 +258,7 @@ export function GameProvider({ children }) {
       if (updatedMissions[mission.id]?.completed) return;
 
       let applies = false;
-      
+
       // Verificar se a missão se aplica à batalha
       if (mission.target === "any") {
         applies = true;
@@ -260,12 +268,12 @@ export function GameProvider({ children }) {
         const normalizedEnemy = normalizeEnemyName(enemyName);
         applies = normalizedTarget === normalizedEnemy;
       }
-      
+
       if (applies) {
         if (!updatedMissions[mission.id]) {
           updatedMissions[mission.id] = { progress: 0, completed: false, claimed: false };
         }
-        
+
         updatedMissions[mission.id].progress += 1;
         hasUpdates = true;
 
@@ -291,7 +299,7 @@ export function GameProvider({ children }) {
   const claimMissionReward = async (missionId) => {
     const mission = availableMissions.find(m => m.id === missionId);
     const missionProgress = playerMissions[missionId];
-    
+
     if (!mission || !missionProgress?.completed || missionProgress.claimed) return false;
 
     try {
@@ -305,17 +313,17 @@ export function GameProvider({ children }) {
       const updatedMissions = { ...playerMissions };
       updatedMissions[missionId].claimed = true;
       setPlayerMissions(updatedMissions);
-      
+
       // Salvar no servidor
       await saveSingleMissionToServer(missionId, updatedMissions[missionId]);
       // Backup no localStorage
       saveMissionsToLocalStorage(updatedMissions);
 
       showNotification(
-        `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`, 
+        `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`,
         'success'
       );
-      
+
       return true;
     } catch (error) {
       console.error('Erro ao coletar recompensa:', error);
@@ -370,31 +378,55 @@ export function GameProvider({ children }) {
 
   // Converter formato do banco para o formato usado pelo frontend
   const formatPlayerData = (dbPlayer) => {
+    // 1) Puxa os stats base para nível e tipo vindos do banco
+    console.log('DBG formatPlayerData titles raw:', dbPlayer.titles);
+    const base = generatePlayerStats(dbPlayer.level, dbPlayer.characterType);
+    let titles = [];
+    try {
+      titles = JSON.parse(dbPlayer.titles || '[]');
+    } catch (e) {
+    console.error('Failed to parse titles JSON:', dbPlayer.titles);}
+
     return {
       id: dbPlayer.id,
       name: dbPlayer.name,
       level: dbPlayer.level,
       xp: dbPlayer.xp,
       gold: dbPlayer.gold,
-      hp: dbPlayer.hp,
-      maxHp: dbPlayer.maxHp,
-      attack: dbPlayer.attack,
-      critChance: dbPlayer.critChance,
-      attackSpeed: dbPlayer.attackSpeed,
-      physicalDefense: dbPlayer.physicalDefense,
-      magicPower: dbPlayer.magicPower || 0,
-      magicResistance: dbPlayer.magicResistance || 0,
+      characterType: dbPlayer.characterType || 'gladiator',
+
+      hp: dbPlayer.hp !== undefined ? dbPlayer.hp : base.hp,
+      maxHp: base.hp,
+      attack: dbPlayer.attack != null ? dbPlayer.attack : base.attack,
+      critChance: dbPlayer.critChance != null ? dbPlayer.critChance : base.critChance,
+      attackSpeed: dbPlayer.attackSpeed != null ? dbPlayer.attackSpeed : base.attackSpeed,
+      physicalDefense: dbPlayer.physicalDefense != null
+        ? dbPlayer.physicalDefense
+        : base.physicalDefense,
       xpToNextLevel: dbPlayer.xpToNextLevel,
       attributePoints: dbPlayer.attributePoints,
-      rankedPoints: dbPlayer.rankedPoints || 0
+      rankedPoints: dbPlayer.rankedPoints || 0,
+      titles
     };
   };
 
   // Converter formato do frontend para o formato do banco
   const formatPlayerForDB = (frontendPlayer) => {
-    const { id, ...playerData } = frontendPlayer;
-    return playerData;
+  // Se veio um array de titles, stringify—caso contrário, use o que veio
+  let titlesField;
+  if (Array.isArray(frontendPlayer.titles)) {
+    titlesField = JSON.stringify(frontendPlayer.titles);
+  } else {
+    titlesField = frontendPlayer.titles || '[]';
+  }
+
+  // Extrai id e titles, e devolve os demais campos + titles stringificado
+  const { id, titles, ...playerData } = frontendPlayer;
+  return {
+    ...playerData,
+    titles: Array.isArray(titles) ? JSON.stringify(titles) : titles || '[]'
   };
+};
 
   // Show notification with auto-hide
   const showNotification = (message, type = 'info') => {
@@ -452,37 +484,44 @@ export function GameProvider({ children }) {
   const updatePlayer = async (updates) => {
     if (!player) return null;
 
-    // 1) Limita attackSpeed
-    if (updates.attackSpeed && updates.attackSpeed > 3) {
-      updates.attackSpeed = 3;
+    // Limita attackSpeed pelo characterType
+    if (updates.attackSpeed) {
+      const charDef = characterTypes.find(c => c.id === player.characterType);
+      if (charDef && updates.attackSpeed > charDef.maxAttackSpeed) {
+        updates.attackSpeed = charDef.maxAttackSpeed;
+      }
     }
 
     try {
-      // 2) Mescla corretamente o novo estado
-      const updatedPlayer = { ...player, ...updates };
-      setPlayer(updatedPlayer);
+      // 1) Mescla apenas para enviar ao servidor
+      //const partial = { ...player, ...updates };
+      const body = formatPlayerForDB({ ...player, ...updates });
 
-      // 3) Persiste no servidor e aguarda a resposta
+      // 2) Persiste no servidor e captura a resposta
       const response = await fetch(`${API_URL}/players/${player.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
+        body: JSON.stringify(formatPlayerForDB(body)),
       });
+      if (!response.ok) throw new Error('Falha ao atualizar o jogador no servidor');
 
-      if (!response.ok) {
-        console.error('Erro na resposta do servidor:', response.status);
-        // Em caso de erro, podemos atualizar o estado local com os dados do servidor para consistência
-        throw new Error('Falha ao atualizar o jogador no servidor');
-      }
+      const dbPlayer = await response.json();
 
-      return updatedPlayer;
+      // 3) Formata via generatePlayerStats + dbPlayer fields
+      const formatted = formatPlayerData(dbPlayer);
+
+      // 4) Atualiza o contexto com todos os stats recalculados
+      setPlayer(formatted);
+
+      return formatted;
     } catch (err) {
       console.error('Erro ao atualizar no servidor', err);
-      // No caso de um erro, podemos tentar buscar o estado atual do servidor
+      // em caso de falha, recarrega do servidor
       fetchPlayerById(player.id);
       throw err;
     }
   };
+
 
   // Resetar atributos do jogador com base no nível atual
   const resetStats = () => {
@@ -588,8 +627,7 @@ export function GameProvider({ children }) {
 
         // Verificar acerto crítico (dobro de dano)
         const playerCrit = Math.random() * 100 < playerClone.critChance;
-        const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
-
+        const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * (characterTypes.find(c => c.id === (player.characterType || 'gladiator'))?.critMultiplier || 2)) : playerDamage;
         enemyClone.currentHp -= finalPlayerDamage;
 
         combatLog.push({
@@ -656,7 +694,7 @@ export function GameProvider({ children }) {
     // Combat result
     let result;
     const isVictory = playerClone.currentHp > 0;
-    
+
     if (!isVictory) {
       // Player defeated
       result = {
@@ -670,7 +708,7 @@ export function GameProvider({ children }) {
     } else {
       // Player won - atualizar progresso das missões
       updateMissionProgress(enemy.name, true);
-      
+
       const newXP = player.xp + enemy.rewardXP;
       let newLevel = player.level;
       let newXpToNext = player.xpToNextLevel;
