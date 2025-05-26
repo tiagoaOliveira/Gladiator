@@ -2,11 +2,94 @@ import React from 'react';
 import { useGame } from '../context/GameContext';
 import './Missoes.css';
 
+// Lista de missões disponíveis no jogo
+export const availableMissions = [
+  {
+    id: 1,
+    title: "Caçador de Goblins",
+    description: "Derrote 50 Goblins na arena",
+    target: "Goblin Berserker",
+    targetCount: 50,
+    rewards: { xp: 5000, gold: 2500 },
+    difficulty: "Fácil",
+    icon: "🏹"
+  },
+  {
+    id: 2,
+    title: "Exterminador de Orcs",
+    description: "Derrote 20 Orcs Guerreiros",
+    target: "Orc Selvagem",
+    targetCount: 20,
+    rewards: { xp: 8000, gold: 4000 },
+    difficulty: "Médio",
+    icon: "⚔️"
+  },
+  {
+    id: 3,
+    title: "Caçador de Dragões",
+    description: "Derrote 5 Dragões Vermelhos",
+    target: "Dragão Ancião",
+    targetCount: 5,
+    rewards: { xp: 20000, gold: 10000 },
+    difficulty: "Extremo",
+    icon: "🐉"
+  },
+  {
+    id: 4,
+    title: "Domador de Trolls",
+    description: "Derrote 10 Trolls das Cavernas",
+    target: "Guarda Real",
+    targetCount: 10,
+    rewards: { xp: 12000, gold: 6000 },
+    difficulty: "Difícil",
+    icon: "🛡️"
+  },
+  {
+    id: 5,
+    title: "Assassino de Esqueletos",
+    description: "Derrote 30 Esqueletos Guerreiros",
+    target: "Esqueleto Guerreiro",
+    targetCount: 30,
+    rewards: { xp: 6000, gold: 3000 },
+    difficulty: "Médio",
+    icon: "💀"
+  },
+  {
+    id: 6,
+    title: "Conquistador do Minotauro",
+    description: "Derrote 8 Minotauros",
+    target: "Minotauro",
+    targetCount: 8,
+    rewards: { xp: 15000, gold: 7500 },
+    difficulty: "Difícil",
+    icon: "🐂"
+  },
+  {
+    id: 7,
+    title: "Sobrevivente Iniciante",
+    description: "Vença 100 batalhas na arena",
+    target: "any",
+    targetCount: 100,
+    rewards: { xp: 3000, gold: 1500 },
+    difficulty: "Fácil",
+    icon: "🏆"
+  },
+  {
+    id: 8,
+    title: "Gladiador Veterano",
+    description: "Vença 500 batalhas na arena",
+    target: "any",
+    targetCount: 500,
+    rewards: { xp: 25000, gold: 15000 },
+    difficulty: "Extremo",
+    icon: "👑"
+  }
+];
+
 export default function Missões() {
   const { 
     player, 
     playerMissions, 
-    availableMissions, 
     claimMissionReward, 
     getActiveMissions, 
     getCompletedMissions 

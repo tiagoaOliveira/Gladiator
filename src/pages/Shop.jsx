@@ -13,7 +13,7 @@ export default function Shop() {
   if (!player) return <p>Carregando...</p>;
 
   // Cálculo do preço para comprar um nível
-  const levelUpPrice = Math.floor(10 * Math.pow(1.2, player.level - 1));
+  const levelUpPrice = Math.floor(50 * Math.pow(1.2, player.level - 1));
 
   const items = [
     { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera todo HP", action: () => healPlayer() },

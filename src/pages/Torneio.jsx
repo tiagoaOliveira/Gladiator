@@ -5,7 +5,7 @@ import CombatModal from '../components/CombatModal';
 import './Torneio.css';
 
 export default function Torneio() {
-  const { player, updatePlayer, handleBattle } = useGame();
+  const { player, updatePlayer } = useGame();
   const [rankingVisible, setRankingVisible] = useState(false);
   const [ranking, setRanking] = useState([]);
   const [playerPosition, setPlayerPosition] = useState(null);

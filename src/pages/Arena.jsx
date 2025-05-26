@@ -205,7 +205,7 @@ export default function Arena() {
 
       <div className="enemy-rewards">
         <h3>Recompensas</h3>
-        <p>🌟XP: {selectedEnemy.rewardXP} 💰Ouro: ~{selectedEnemy.level * 10 * selectedEnemy.rewardGoldMultiplier}</p>
+        <p>🌟XP: {selectedEnemy.rewardXP} 💰Ouro: ~{selectedEnemy.level * 4 * selectedEnemy.rewardGoldMultiplier}</p>
       </div>
 
       {autoBattleActive && (
