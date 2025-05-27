@@ -202,7 +202,7 @@ export function GameProvider({ children }) {
       if (updatedMissions[mission.id]?.completed) return;
 
       let applies = false;
-      
+
       // Verifica se a missão é "qualquer inimigo" ou se o nome bate
       if (mission.target === "any") {
         applies = true;
@@ -211,13 +211,13 @@ export function GameProvider({ children }) {
         const normalizedEnemy = normalizeEnemyName(enemyName);
         applies = normalizedTarget === normalizedEnemy;
       }
-      
+
       if (applies) {
         // Se não houver entrada para a missão, inicializa
         if (!updatedMissions[mission.id]) {
           updatedMissions[mission.id] = { progress: 0, completed: false, claimed: false };
         }
-        
+
         // Incrementa progresso
         updatedMissions[mission.id].progress += 1;
         hasUpdates = true;
@@ -248,7 +248,7 @@ export function GameProvider({ children }) {
   const claimMissionReward = async (missionId) => {
     const mission = availableMissions.find(m => m.id === missionId);
     const missionProgress = playerMissions[missionId];
-    
+
     // Só segue se a missão existir, estiver completada e não tiver sido reivindicada ainda
     if (!mission || !missionProgress?.completed || missionProgress.claimed) return false;
 
@@ -263,16 +263,16 @@ export function GameProvider({ children }) {
       const updatedMissions = { ...playerMissions };
       updatedMissions[missionId].claimed = true;
       setPlayerMissions(updatedMissions);
-      
+
       // Salva no servidor e localStorage
       await saveSingleMissionToServer(missionId, updatedMissions[missionId]);
       saveMissionsToLocalStorage(updatedMissions);
 
       showNotification(
-        `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`, 
+        `💰 Recompensa coletada: +${mission.rewards.xp} XP, +${mission.rewards.gold} Ouro!`,
         'success'
       );
-      
+
       return true;
     } catch (error) {
       console.error('Erro ao coletar recompensa:', error);
@@ -357,7 +357,10 @@ export function GameProvider({ children }) {
     magicResistance: dbPlayer.magicResistance || 0,
     xpToNextLevel: dbPlayer.xpToNextLevel,
     attributePoints: dbPlayer.attributePoints,
-    rankedPoints: dbPlayer.rankedPoints || 0
+    rankedPoints: dbPlayer.rankedPoints || 0,
+    reflect: !!dbPlayer.reflect,
+    criticalX3: !!dbPlayer.criticalX3,
+    speedBoost: !!dbPlayer.speedBoost
   });
 
   /**
@@ -366,9 +369,22 @@ export function GameProvider({ children }) {
    * @returns {object} Objeto para enviar à API.
    */
   const formatPlayerForDB = (frontendPlayer) => {
-    const { id, ...playerData } = frontendPlayer;
-    return playerData;
+    const {
+      id,
+      reflect = false,
+      criticalX3 = false,
+      speedBoost = false,
+      ...playerData
+    } = frontendPlayer;
+
+    return {
+      ...playerData,
+      reflect: reflect ? 1 : 0,
+      criticalX3: criticalX3 ? 1 : 0,
+      speedBoost: speedBoost ? 1 : 0
+    };
   };
+
 
   /**
    * Cria ou faz login de um jogador com base no nome.
@@ -415,8 +431,7 @@ export function GameProvider({ children }) {
   };
 
   /**
-   * Atualiza campos do jogador (stats, nível, etc.) e persiste no servidor.
-   * Se atualizar attackSpeed acima de 3, limita para 3.
+   * Se atualizar attackSpeed, considera o limite baseado no speedBoost.
    * Retorna o jogador atualizado.
    * @param {object} updates - Campos a modificar no jogador (pode conter xp, gold, hp etc.).
    * @returns {Promise<object|null>}
@@ -424,9 +439,13 @@ export function GameProvider({ children }) {
   const updatePlayer = async (updates) => {
     if (!player) return null;
 
-    // Limita attackSpeed para valor máximo
-    if (updates.attackSpeed && updates.attackSpeed > 3) {
-      updates.attackSpeed = 3;
+    // Limita attackSpeed baseado no speedBoost
+    if (updates.attackSpeed !== undefined) {
+      const currentPlayer = { ...player, ...updates };
+      const maxSpeed = currentPlayer.speedBoost ? 4 : 3;
+      if (updates.attackSpeed > maxSpeed) {
+        updates.attackSpeed = maxSpeed;
+      }
     }
 
     try {
@@ -503,7 +522,7 @@ export function GameProvider({ children }) {
     if (!player) return;
 
     const newLevel = player.level + 1;
-    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.1);
+    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.05);
 
     try {
       const updatedPlayer = await updatePlayer({
@@ -537,6 +556,10 @@ export function GameProvider({ children }) {
     // Cria clones para evitar mutação direta dos objetos originais
     const enemyClone = { ...enemy, currentHp: enemy.hp };
     const playerClone = { ...player, currentHp: player.hp };
+    if (player.speedBoost) {
+      playerClone.attackSpeed = Math.min(4, playerClone.attackSpeed + 1);
+    }
+
 
     const combatLog = [];
     let battleTime = 0;
@@ -564,7 +587,9 @@ export function GameProvider({ children }) {
 
         // Sorteio de crítico (dobra dano)
         const playerCrit = Math.random() * 100 < playerClone.critChance;
-        const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
+        const finalPlayerDamage = playerCrit
+          ? Math.floor(playerDamage * (playerClone.criticalX3 ? 3 : 2))
+          : playerDamage;
 
         enemyClone.currentHp -= finalPlayerDamage;
 
@@ -599,7 +624,7 @@ export function GameProvider({ children }) {
         if (damageReduction > 0) {
           combatLog.push({
             type: 'enemy',
-            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)`,
+            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.)`,
             attackSpeed: enemyClone.attackSpeed
           });
         } else {
@@ -609,6 +634,20 @@ export function GameProvider({ children }) {
             attackSpeed: enemyClone.attackSpeed
           });
         }
+        if (playerClone.reflect && finalEnemyDamage > 0) {
+          const reflected = Math.floor(finalEnemyDamage * 0.2);
+          enemyClone.currentHp -= reflected;
+          combatLog.push({
+            type: 'system',
+            message: `🔥 Você refletiu ${reflected} de dano ao ${enemy.name}.`,
+          });
+
+          if (enemyClone.currentHp <= 0) {
+            combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name} com dano refletido!` });
+            break;
+          }
+        }
+
 
         // Se jogador for derrotado, sai do loop
         if (playerClone.currentHp <= 0) {

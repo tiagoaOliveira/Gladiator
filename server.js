@@ -32,7 +32,7 @@ db.serialize(() => {
     hp INTEGER DEFAULT 150,
     maxHp INTEGER DEFAULT 150,
     attack INTEGER DEFAULT 20,
-    critChance REAL DEFAULT 10,
+    critChance REAL DEFAULT 15,
     attackSpeed REAL DEFAULT 1.0,
     physicalDefense INTEGER DEFAULT 30,
     magicPower INTEGER DEFAULT 0,
@@ -44,7 +44,25 @@ db.serialize(() => {
     last_login DATETIME DEFAULT CURRENT_TIMESTAMP
   )
 `);
+  // Verificar e adicionar colunas dos poderes se não existirem
+  db.all(`PRAGMA table_info(players)`, [], (err, columns) => {
+    if (err) {
+      console.error('Erro ao verificar colunas:', err);
+      return;
+    }
 
+    const columnNames = columns.map(col => col.name);
+
+    if (!columnNames.includes('reflect')) {
+      db.run(`ALTER TABLE players ADD COLUMN reflect BOOLEAN DEFAULT 0`);
+    }
+    if (!columnNames.includes('criticalX3')) {
+      db.run(`ALTER TABLE players ADD COLUMN criticalX3 BOOLEAN DEFAULT 0`);
+    }
+    if (!columnNames.includes('speedBoost')) {
+      db.run(`ALTER TABLE players ADD COLUMN speedBoost BOOLEAN DEFAULT 0`);
+    }
+  });
   // Adicionar coluna rankedPoints se ela não existir
   db.run(`
     PRAGMA table_info(players)
@@ -53,17 +71,17 @@ db.serialize(() => {
       console.error('Erro ao verificar colunas da tabela:', err);
       return;
     }
-    
+
     // Verificar se a coluna rankedPoints já existe
     db.get(`PRAGMA table_info(players)`, [], (err, rows) => {
       if (err) {
         console.error('Erro ao verificar colunas:', err);
         return;
       }
-      
+
       const columns = Array.isArray(rows) ? rows : [];
       const hasRankedPoints = columns.some(col => col.name === 'rankedPoints');
-      
+
       if (!hasRankedPoints) {
         console.log('Adicionando coluna rankedPoints à tabela players...');
         db.run(`ALTER TABLE players ADD COLUMN rankedPoints INTEGER DEFAULT 0`, [], (err) => {
@@ -101,7 +119,7 @@ db.serialize(() => {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  
+
   // Associação torneio ↔ jogadores
   db.run(`
     CREATE TABLE IF NOT EXISTS tournament_players (
@@ -111,7 +129,7 @@ db.serialize(() => {
       FOREIGN KEY(player_id) REFERENCES players(id)
     )
   `);
-  
+
   // Histórico de batalhas de torneio
   db.run(`
     CREATE TABLE IF NOT EXISTS tournament_battles (
@@ -230,14 +248,14 @@ app.get('/api/players/:id', (req, res) => {
 // Buscar missões do jogador
 app.get('/api/players/:id/missions', (req, res) => {
   const playerId = req.params.id;
-  
+
   db.all(`
     SELECT mission_id, progress, completed, claimed, updated_at 
     FROM player_missions 
     WHERE player_id = ?
   `, [playerId], (err, missions) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     // Converter array para formato de objeto que o frontend espera
     const missionsObject = {};
     missions.forEach(mission => {
@@ -248,7 +266,7 @@ app.get('/api/players/:id/missions', (req, res) => {
         updated_at: mission.updated_at
       };
     });
-    
+
     res.json(missionsObject);
   });
 });
@@ -257,21 +275,21 @@ app.get('/api/players/:id/missions', (req, res) => {
 app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
   const { playerId, missionId } = req.params;
   const { progress, completed, claimed } = req.body;
-  
+
   // Verificar se a missão já existe para o jogador
   db.get(`
     SELECT * FROM player_missions 
     WHERE player_id = ? AND mission_id = ?
   `, [playerId, missionId], (err, existingMission) => {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     if (existingMission) {
       // Atualizar missão existente
       db.run(`
         UPDATE player_missions 
         SET progress = ?, completed = ?, claimed = ?, updated_at = CURRENT_TIMESTAMP
         WHERE player_id = ? AND mission_id = ?
-      `, [progress, completed ? 1 : 0, claimed ? 1 : 0, playerId, missionId], function(err) {
+      `, [progress, completed ? 1 : 0, claimed ? 1 : 0, playerId, missionId], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, updated: true });
       });
@@ -280,7 +298,7 @@ app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
       db.run(`
         INSERT INTO player_missions (player_id, mission_id, progress, completed, claimed)
         VALUES (?, ?, ?, ?, ?)
-      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function(err) {
+      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function (err) {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, created: true });
       });
@@ -292,28 +310,28 @@ app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
 app.put('/api/players/:playerId/missions', (req, res) => {
   const playerId = req.params.playerId;
   const missions = req.body; // Objeto com as missões no formato { missionId: { progress, completed, claimed } }
-  
+
   if (!missions || typeof missions !== 'object') {
     return res.status(400).json({ error: 'Invalid missions data' });
   }
-  
+
   // Preparar as queries para inserção/atualização
   const upsertPromises = Object.entries(missions).map(([missionId, missionData]) => {
     return new Promise((resolve, reject) => {
       const { progress, completed, claimed } = missionData;
-      
+
       // Usar INSERT OR REPLACE para upsert
       db.run(`
         INSERT OR REPLACE INTO player_missions 
         (player_id, mission_id, progress, completed, claimed, updated_at)
         VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function(err) {
+      `, [playerId, missionId, progress, completed ? 1 : 0, claimed ? 1 : 0], function (err) {
         if (err) reject(err);
         else resolve();
       });
     });
   });
-  
+
   // Executar todas as queries
   Promise.all(upsertPromises)
     .then(() => {
@@ -328,11 +346,11 @@ app.put('/api/players/:playerId/missions', (req, res) => {
 // Obter um adversário próximo no ranking
 app.get('/api/tournament/opponent/:playerId', (req, res) => {
   const playerId = req.params.playerId;
-  
+
   db.get(`SELECT rankedPoints FROM players WHERE id = ?`, [playerId], (err, player) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!player) return res.status(404).json({ error: 'Player not found' });
-    
+
     // Encontrar jogadores com pontuação próxima (até 13 posições abaixo)
     db.all(`
       SELECT * FROM players 
@@ -341,7 +359,7 @@ app.get('/api/tournament/opponent/:playerId', (req, res) => {
       LIMIT 13
     `, [playerId, player.rankedPoints], (err, opponents) => {
       if (err) return res.status(500).json({ error: err.message });
-      
+
       if (opponents.length === 0) {
         // Se não encontrar oponentes próximos, selecionar qualquer oponente aleatório
         db.all(`SELECT * FROM players WHERE id != ? LIMIT 20`, [playerId], (err, randomOpponents) => {
@@ -349,7 +367,7 @@ app.get('/api/tournament/opponent/:playerId', (req, res) => {
           if (randomOpponents.length === 0) {
             return res.status(404).json({ error: 'No opponents available' });
           }
-          
+
           // Selecionar oponente aleatório
           const randomIndex = Math.floor(Math.random() * randomOpponents.length);
           res.json(randomOpponents[randomIndex]);
@@ -366,18 +384,18 @@ app.get('/api/tournament/opponent/:playerId', (req, res) => {
 // Registrar batalha de torneio
 app.post('/api/tournament/battle', (req, res) => {
   const { player1Id, player2Id, winnerId, battleLog } = req.body;
-  
+
   if (!player1Id || !player2Id) {
     return res.status(400).json({ error: 'Player IDs are required' });
   }
-  
+
   // Adicionar o registro da batalha
   db.run(`
     INSERT INTO tournament_battles (player1_id, player2_id, winner_id, battle_log)
     VALUES (?, ?, ?, ?)
-  `, [player1Id, player2Id, winnerId, JSON.stringify(battleLog)], function(err) {
+  `, [player1Id, player2Id, winnerId, JSON.stringify(battleLog)], function (err) {
     if (err) return res.status(500).json({ error: err.message });
-    
+
     // Atualizar pontuação dos jogadores
     if (winnerId) {
       // Winner ganha 30 pontos
@@ -386,7 +404,7 @@ app.post('/api/tournament/battle', (req, res) => {
         WHERE id = ?
       `, [winnerId], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-        
+
         // Loser perde 10 pontos (mas não fica negativo)
         const loserId = winnerId === player1Id ? player2Id : player1Id;
         db.run(`
@@ -394,9 +412,9 @@ app.post('/api/tournament/battle', (req, res) => {
           WHERE id = ?
         `, [loserId], (err) => {
           if (err) return res.status(500).json({ error: err.message });
-          
-          res.json({ 
-            success: true, 
+
+          res.json({
+            success: true,
             battleId: this.lastID,
             message: `Batalha registrada. ${winnerId} ganhou 30 pontos, ${loserId} perdeu 10 pontos.`
           });
@@ -404,8 +422,8 @@ app.post('/api/tournament/battle', (req, res) => {
       });
     } else {
       // Empate, ninguém ganha ou perde pontos
-      res.json({ 
-        success: true, 
+      res.json({
+        success: true,
         battleId: this.lastID,
         message: "Batalha empatada, nenhum ponto foi alterado."
       });

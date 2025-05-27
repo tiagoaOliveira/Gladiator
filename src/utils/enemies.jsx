@@ -14,7 +14,7 @@ export const enemies = [
     attackSpeed: 1,
     image: goblin,
     rewardXP: 150,
-    rewardGoldMultiplier: 1
+    rewardGoldMultiplier: 100
   },
   {
     id: 2,

@@ -8,9 +8,8 @@ export default function Character() {
 
   if (!player) return <p>Carregando...</p>;
 
-  // Função para aumentar atributos (flexível para 1x ou 10x)
+  // ─── Função para aumentar atributos ───
   const handleStatIncrease = (statName, amount = 1) => {
-    // Verificar pontos disponíveis
     if (player.attributePoints < amount) {
       showNotification(`Você precisa de ${amount} pontos de atributo disponíveis!`, "error");
       return;
@@ -32,34 +31,32 @@ export default function Character() {
       case 'critChance':
         updatedStats.critChance = player.critChance + (1 * amount);
         break;
-      case 'attackSpeed':
-        // Calcular nova velocidade de ataque
-        let newAttackSpeed = player.attackSpeed;
-        let pointsUsed = 0;
-        
-        for (let i = 0; i < amount; i++) {
-          const maxSpeed = player.speedBoost ? 4 : 3;
-          
-          if (newAttackSpeed >= maxSpeed) {
-            showNotification("Velocidade de ataque máxima atingida!", "info");
-            break;
-          }
-          
-          newAttackSpeed += 0.1;
-          pointsUsed++;
-          
-          // Se atingir o limite máximo, interrompe o loop
-          if (newAttackSpeed >= maxSpeed) {
-            newAttackSpeed = maxSpeed;
-            showNotification("Velocidade de ataque máxima atingida!", "info");
-            break;
-          }
+      case 'attackSpeed': {
+        const maxSpeed = player.speedBoost ? 4 : 3;
+        const velocidadeAtual = Number(player.attackSpeed);
+
+        // Verifica se já está no máximo
+        if (velocidadeAtual >= maxSpeed) {
+          showNotification("Velocidade de ataque máxima atingida!", "info");
+          return;
         }
 
-        // Retornar os pontos não usados
-        updatedStats.attributePoints = player.attributePoints - pointsUsed;
-        updatedStats.attackSpeed = parseFloat(newAttackSpeed.toFixed(2));
+        // Calcula quanto pode aumentar (cada ponto = +0.1)
+        const espacoRestante = maxSpeed - velocidadeAtual;
+        const incrementosMaximos = Math.floor(espacoRestante * 10); // *10 porque cada 0.1 = 1 incremento
+        const pontosParaGastar = Math.min(amount, incrementosMaximos);
+
+        if (pontosParaGastar <= 0) {
+          showNotification("Velocidade de ataque máxima atingida!", "info");
+          return;
+        }
+
+        const novaVelocidade = velocidadeAtual + (pontosParaGastar * 0.1);
+        updatedStats.attackSpeed = Math.min(Number(novaVelocidade.toFixed(1)), maxSpeed);
+        updatedStats.attributePoints = player.attributePoints - pontosParaGastar;
         break;
+      }
+
       default:
         return;
     }
@@ -67,45 +64,43 @@ export default function Character() {
     updatePlayer(updatedStats);
   };
 
-  const buyPower = (powerName, cost) => {
-    if (player.attributePoints < cost) {
-      showNotification(`Você precisa de ${cost} pontos!`, "error");
-      return;
-    }
+    const selectPower = (powerName) => {
+    // Se já está selecionado, não faz nada
+    if (player[powerName]) return;
 
-    const updates = { attributePoints: player.attributePoints - cost };
+    // Inicializa estado base
+    const updates = {
+      reflect: false,
+      criticalX3: false,
+      speedBoost: false,
+    };
 
-    switch (powerName) {
-      case 'reflect':
-        if (player.reflect) {
-          showNotification("Você já possui este poder!", "error");
-          return;
-        }
-        updates.reflect = true;
-        break;
-      case 'criticalX3':
-        if (player.criticalX3) {
-          showNotification("Você já possui este poder!", "error");
-          return;
-        }
-        updates.criticalX3 = true;
-        break;
-      case 'speedBoost':
-        if (player.speedBoost) {
-          showNotification("Você já possui este poder!", "error");
-          return;
-        }
-        updates.speedBoost = true;
-        updates.attackSpeed = Math.min(4, player.attackSpeed + 1);
-        break;
+    const velocidadeAtual = Number(player.attackSpeed);
+    const tinhaSpeedBoost = player.speedBoost;
+
+    // Marca o novo poder selecionado
+    updates[powerName] = true;
+
+    // Lógica específica para speedBoost
+    if (powerName === 'speedBoost') {
+      // Ativando speedBoost: +1 velocidade (máx 4)
+      updates.attackSpeed = Math.min(velocidadeAtual + 1, 4);
+    } else if (tinhaSpeedBoost) {
+      // Desativando speedBoost: -1 velocidade, mas respeita o novo máximo (3)
+      const novaVelocidade = velocidadeAtual - 1;
+      updates.attackSpeed = Math.min(Math.max(novaVelocidade, 1), 3);
     }
 
     updatePlayer(updates);
   };
 
-  // Novo cálculo de redução de dano: cada ponto de defesa reduz 0,1% do dano
-  const damageReduction = Math.min(30, (player.physicalDefense * 0.1).toFixed(1));
+  // ─── Cálculos do teto e do percentual para a barra de velocidade ───
+  const maxSpeed = player.speedBoost ? 4 : 3;
+  const velocidadeAtual = Number(player.attackSpeed);
+  const speedPercent = Math.min((velocidadeAtual / maxSpeed) * 100, 100);
+  const isSpeedMaxed = velocidadeAtual >= maxSpeed;
 
+  // ─── HTML/JSX do componente ───────────────────────────────────────────────────────────────
   return (
     <div className="character-container">
       <div className="character-header">
@@ -113,8 +108,6 @@ export default function Character() {
         <p className="level-display">Nível: {player.level}</p>
         <div className="character-visual">
           <img className="player-img" src={character} alt="Gladiador" />
-          <div className="character-description">
-          </div>
         </div>
       </div>
 
@@ -129,7 +122,13 @@ export default function Character() {
                 <h3>HP</h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill" style={{ width: `${(player.hp / player.maxHp) * 100}%`, backgroundColor: "#f44336" }}></div>
+                <div
+                  className="stat-fill"
+                  style={{
+                    width: `${(player.hp / player.maxHp) * 100}%`,
+                    backgroundColor: "#f44336"
+                  }}
+                ></div>
                 <div className="stat-value-inside">{player.hp} / {player.maxHp}</div>
               </div>
               <div className="stat-buttons">
@@ -138,17 +137,13 @@ export default function Character() {
                   onClick={() => handleStatIncrease('maxHp', 1)}
                   disabled={player.attributePoints < 1}
                   title="Aumentar 1 ponto"
-                >
-                  1x
-                </button>
+                >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('maxHp', 10)}
                   disabled={player.attributePoints < 10}
                   title="Aumentar 10 pontos"
-                >
-                  10x
-                </button>
+                >10x</button>
               </div>
             </div>
           </div>
@@ -157,12 +152,13 @@ export default function Character() {
           <div className="stat-block">
             <div className="stat-bar-wrapper">
               <div className="stat-header">
-                <h3>
-                  Ataque
-                </h3>
+                <h3>Ataque</h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill attack-fill" style={{ width: `${Math.min(100, player.attack / 2)}%` }}></div>
+                <div
+                  className="stat-fill attack-fill"
+                  style={{ width: `${Math.min(100, player.attack / 2)}%` }}
+                ></div>
                 <div className="stat-value-inside">{player.attack}</div>
               </div>
               <div className="stat-buttons">
@@ -171,17 +167,13 @@ export default function Character() {
                   onClick={() => handleStatIncrease('attack', 1)}
                   disabled={player.attributePoints < 1}
                   title="Aumentar 1 ponto"
-                >
-                  1x
-                </button>
+                >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('attack', 10)}
                   disabled={player.attributePoints < 10}
                   title="Aumentar 10 pontos"
-                >
-                  10x
-                </button>
+                >10x</button>
               </div>
             </div>
           </div>
@@ -196,7 +188,10 @@ export default function Character() {
                 </h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill defense-fill" style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}></div>
+                <div
+                  className="stat-fill defense-fill"
+                  style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}
+                ></div>
                 <div className="stat-value-inside">{player.physicalDefense}</div>
               </div>
               <div className="stat-buttons">
@@ -205,17 +200,13 @@ export default function Character() {
                   onClick={() => handleStatIncrease('physicalDefense', 1)}
                   disabled={player.attributePoints < 1}
                   title="Aumentar 1 ponto"
-                >
-                  1x
-                </button>
+                >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('physicalDefense', 10)}
                   disabled={player.attributePoints < 10}
                   title="Aumentar 10 pontos"
-                >
-                  10x
-                </button>
+                >10x</button>
               </div>
             </div>
           </div>
@@ -224,13 +215,16 @@ export default function Character() {
           <div className="stat-block">
             <div className="stat-bar-wrapper">
               <div className="stat-header">
-                <h3>Crítico
-                  <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ
-                  </span>
+                <h3>
+                  Crítico
+                  <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ</span>
                 </h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill crit-fill" style={{ width: `${Math.min(100, player.critChance)}%` }}></div>
+                <div
+                  className="stat-fill crit-fill"
+                  style={{ width: `${Math.min(100, player.critChance)}%` }}
+                ></div>
                 <div className="stat-value-inside">{player.critChance?.toFixed(1)}%</div>
               </div>
               <div className="stat-buttons">
@@ -239,17 +233,13 @@ export default function Character() {
                   onClick={() => handleStatIncrease('critChance', 1)}
                   disabled={player.attributePoints < 1}
                   title="Aumentar 1 ponto"
-                >
-                  1x
-                </button>
+                >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('critChance', 10)}
                   disabled={player.attributePoints < 10}
                   title="Aumentar 10 pontos"
-                >
-                  10x
-                </button>
+                >10x</button>
               </div>
             </div>
           </div>
@@ -258,34 +248,37 @@ export default function Character() {
           <div className="stat-block">
             <div className="stat-bar-wrapper">
               <div className="stat-header">
-                <h3>Vel. Ataq</h3>
+                <h3>
+                  Vel. Ataq {isSpeedMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
+                </h3>
               </div>
               <div className="stat-bar">
-                <div className="stat-fill speed-fill" style={{ width: `${Math.min(100, player.attackSpeed * 33.33)}%` }}></div>
-                <div className="stat-value-inside">{player.attackSpeed?.toFixed(2)}</div>
+                <div
+                  className="stat-fill speed-fill"
+                  style={{ width: `${speedPercent}%` }}
+                ></div>
+                <div className="stat-value-inside">
+                  {velocidadeAtual.toFixed(1)}
+                </div>
               </div>
               <div className="stat-buttons">
                 <button
                   className="increase-stat-btn btn-1x"
                   onClick={() => handleStatIncrease('attackSpeed', 1)}
-                  disabled={player.attributePoints < 1 || player.attackSpeed >= (player.speedBoost ? 4 : 3)}
+                  disabled={player.attributePoints < 1 || isSpeedMaxed}
                   title="Aumentar 1 ponto"
-                >
-                  1x
-                </button>
+                >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('attackSpeed', 10)}
-                  disabled={player.attributePoints < 10 || player.attackSpeed >= (player.speedBoost ? 4 : 3)}
+                  disabled={player.attributePoints < 10 || isSpeedMaxed}
                   title="Aumentar 10 pontos"
-                >
-                  10x
-                </button>
+                >10x</button>
               </div>
             </div>
           </div>
 
-          {/*resetStats */}
+          {/* Botão de reset de atributos */}
           <div className="reset-button-wrapper">
             <button
               onClick={resetStats}
@@ -296,36 +289,32 @@ export default function Character() {
             </button>
           </div>
         </div>
-        <div>
-          <div className="powers-section">
-            <h2>Poderes Especiais</h2>
 
-            <button
-              onClick={() => buyPower('reflect', 50)}
-              disabled={player.reflect || player.attributePoints < 50}
-              className={`power-btn ${player.reflect ? 'owned' : ''}`}
-            >
-              Reflect {player.reflect ? '✓' : `(50 pts)`}
-            </button>
+        {/* ─── Seção de Poderes ──────────────────────────────────────────────────────────── */}
+        <div className="powers-section">
+          <h2>Poderes Especiais</h2>
 
-            <button
-              onClick={() => buyPower('criticalX3', 75)}
-              disabled={player.criticalX3 || player.attributePoints < 75}
-              className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
-            >
-              Crítico x3 {player.criticalX3 ? '✓' : `(75 pts)`}
-            </button>
+          <button
+            onClick={() => selectPower('reflect')}
+            className={`power-btn ${player.reflect ? 'owned' : ''}`}
+          >
+            Reflect {player.reflect ? '✓' : ''}
+          </button>
 
-            <button
-              onClick={() => buyPower('speedBoost', 100)}
-              disabled={player.speedBoost || player.attributePoints < 100}
-              className={`power-btn ${player.speedBoost ? 'owned' : ''}`}
-            >
-              +1 Velocidade {player.speedBoost ? '✓' : `(100 pts)`}
-            </button>
-          </div>
+          <button
+            onClick={() => selectPower('criticalX3')}
+            className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
+          >
+            Crítico x3 {player.criticalX3 ? '✓' : ''}
+          </button>
+
+          <button
+            onClick={() => selectPower('speedBoost')}
+            className={`power-btn ${player.speedBoost ? 'owned' : ''}`}
+          >
+            +1 Velocidade {player.speedBoost ? '✓' : ''}
+          </button>
         </div>
-
       </div>
     </div>
   );

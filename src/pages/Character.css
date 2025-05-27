@@ -256,6 +256,12 @@
   gap: 20px;
 }
 
+.power-btn.owned {
+  background-color: #4caf50;
+  color: white;
+}
+
+
 /* Responsivo */
 @media (max-width: 768px) {
   .character-content {
