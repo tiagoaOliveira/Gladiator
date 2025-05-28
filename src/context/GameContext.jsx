@@ -489,19 +489,38 @@ export function GameProvider({ children }) {
     // Garante que HP atual não exceda o novo maxHp
     const adjustedHp = Math.min(currentHp, newMaxHp);
 
-    let newAttackSpeed = Math.min(3, baseStats.attackSpeed);
+    // ─── Defense base ───
+    let defParaAtualizar = baseStats.physicalDefense;
+    // Se o jogador tiver Reflect ativo, adiciona +50
+    if (player.reflect) {
+      defParaAtualizar = baseStats.physicalDefense + 50;
+    }
 
+    // ─── AttackSpeed ───
+
+    let newAttackSpeed = Math.min(3, baseStats.attackSpeed);
     if (player.speedBoost) {
       newAttackSpeed = Math.min(newAttackSpeed + 0.5, 3.5);
+    }
+
+    // Se Critical x3 está ativo, adiciona +10% ao critChance base
+    let critParaAtualizar = baseStats.critChance;
+    if (player.criticalX3) {
+      critParaAtualizar = Math.min(critParaAtualizar + 10, 100);
+    }
+    // AttackSpeed: manter +0.5 se speedBoost ativo
+    let atkSpeedParaAtualizar = Math.min(baseStats.attackSpeed, 3);
+    if (player.speedBoost) {
+      atkSpeedParaAtualizar = Math.min(atkSpeedParaAtualizar + 0.5, 4);
     }
 
     updatePlayer({
       maxHp: newMaxHp,
       hp: adjustedHp,
       attack: baseStats.attack,
-      physicalDefense: baseStats.physicalDefense,
-      critChance: baseStats.critChance,
-      attackSpeed: newAttackSpeed,
+      physicalDefense: defParaAtualizar,
+      critChance: critParaAtualizar,
+      attackSpeed: atkSpeedParaAtualizar,
       attributePoints: 3 * player.level
     });
 
@@ -528,7 +547,7 @@ export function GameProvider({ children }) {
     if (!player) return;
 
     const newLevel = player.level + 1;
-    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.05);
+    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.02);
 
     try {
       const updatedPlayer = await updatePlayer({

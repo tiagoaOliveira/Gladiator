@@ -219,23 +219,16 @@ export default function Torneio() {
           critMessage = playerClone.criticalX3 ? ' (crítico x3!)' : ' (crítico!)';
         }
 
-        combatLog.push({
-          type: 'player',
-          message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemy.name}.`,
-          attackSpeed: playerClone.attackSpeed
-        });
-
-        // ─── Reflect do inimigo ───
         if (enemyClone.reflect) {
-          // Se o inimigo tiver Reflect, ele devolve 20% do finalPlayerDamage de imediato
           const reflectDamage = Math.floor(finalPlayerDamage * 0.2);
           playerClone.currentHp -= reflectDamage;
+
           combatLog.push({
-            type: 'enemy',
-            message: `🔥 ${enemy.name} refletiu ${reflectDamage} de dano a você.`
+            type: 'player',
+            message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemy.name} e recebeu 🔥 ${reflectDamage} de dano refletido.`,
+            attackSpeed: playerClone.attackSpeed
           });
 
-          // Se esse reflexo matou o jogador, encerra imediatamente
           if (playerClone.currentHp <= 0) {
             combatLog.push({
               type: 'enemy',
@@ -243,7 +236,14 @@ export default function Torneio() {
             });
             break;
           }
+        } else {
+          combatLog.push({
+            type: 'player',
+            message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemy.name}.`,
+            attackSpeed: playerClone.attackSpeed
+          });
         }
+
 
         // Check if enemy is defeated
         if (enemyClone.currentHp <= 0) {
@@ -306,7 +306,7 @@ export default function Torneio() {
 
         // Check if player is defeated
         if (playerClone.currentHp <= 0) {
-          combatLog.push({ type: 'enemy', message: `Você foi derrotado por ${enemy.name}!` });
+          combatLog.push({ type: 'enemy', message: `💀 Você foi derrotado por ${enemy.name}!` });
           break;
         }
       }
@@ -325,7 +325,7 @@ export default function Torneio() {
       result = {
         type: 'defeat',
         title: 'Derrota!',
-        message: `Você foi derrotado por ${enemy.name}. -10 pontos de ranking.`
+        message: `💀 Você foi derrotado por ${enemy.name}. -10 pontos de ranking.`
       };
 
       // Update player HP (minimum 1)

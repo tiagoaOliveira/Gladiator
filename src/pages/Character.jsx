@@ -1,5 +1,6 @@
 import React from 'react';
 import { useGame } from '../context/GameContext';
+import { generatePlayerStats } from '../utils/player';
 import './Character.css';
 import character from '../assets/images/gladiator.jpg';
 
@@ -7,6 +8,13 @@ export default function Character() {
   const { player, updatePlayer, showNotification, resetStats } = useGame();
 
   if (!player) return <p>Carregando...</p>;
+
+  const isCritMaxed = player.critChance >= 100;
+  const baseStats = generatePlayerStats(player.level);
+  const defBase = baseStats.physicalDefense;
+  const defComBonus = player.physicalDefense;
+  const DEFENSE_MAX = 300;
+  const isDefMaxed = defComBonus >= DEFENSE_MAX;
 
   // ─── Função para aumentar atributos ───
   const handleStatIncrease = (statName, amount = 1) => {
@@ -22,15 +30,43 @@ export default function Character() {
         updatedStats.attack = player.attack + (2 * amount);
         break;
       case 'physicalDefense':
-        updatedStats.physicalDefense = player.physicalDefense + (5 * amount);
+        // Verificar se ainda pode aumentar (máximo é 300)
+        if (player.physicalDefense >= DEFENSE_MAX) {
+          showNotification("Defesa física já está no máximo (30% redução)!", "info");
+          return;
+        }
+
+        // Calcular quantos pontos podem ser adicionados sem ultrapassar o máximo
+        const espacoRestanteDefesa = DEFENSE_MAX - player.physicalDefense;
+        const pontosParaAdicionarDefesa = Math.min(amount * 5, espacoRestanteDefesa);
+        const pontosAtributoGastosDefesa = Math.ceil(pontosParaAdicionarDefesa / 5);
+
+        updatedStats.physicalDefense = player.physicalDefense + pontosParaAdicionarDefesa;
+        updatedStats.attributePoints = player.attributePoints - pontosAtributoGastosDefesa;
         break;
       case 'maxHp':
         updatedStats.maxHp = player.maxHp + (10 * amount);
         updatedStats.hp = player.hp + (10 * amount);
         break;
       case 'critChance':
-        updatedStats.critChance = player.critChance + (1 * amount);
+        // Cada ponto equivale a +1% de crit. Não deixa ultrapassar 100%.
+        const espacoRestante = 100 - player.critChance;
+        // Se já estiver no teto, mostra notificação e sai
+        if (espacoRestante <= 0) {
+          showNotification("Chance crítica já está no máximo (100%)!", "info");
+          return;
+        }
+        // Quantos pontos podem ser efetivamente gastos (1 ponto = 1%)
+        const pontosMaximosPossiveis = Math.min(amount, Math.floor(espacoRestante));
+        if (pontosMaximosPossiveis <= 0) {
+          showNotification("Chance crítica já está no máximo (100%)!", "info");
+          return;
+        }
+        updatedStats.critChance = player.critChance + pontosMaximosPossiveis;
+        // Ajusta pontos de atributo gastos
+        updatedStats.attributePoints = player.attributePoints - pontosMaximosPossiveis;
         break;
+
       case 'attackSpeed': {
         const maxSpeed = player.speedBoost ? 3.5 : 3;
         // Converter valores para centésimos (evitar problemas de ponto flutuante)
@@ -74,30 +110,70 @@ export default function Character() {
   };
 
   const selectPower = (powerName) => {
-    // Se já está selecionado, não faz nada
-    if (player[powerName]) return;
+    // Se você clicar no mesmo poder que já está ativo, simplesmente desfaz (deseleciona)
+    if (player[powerName]) {
+      // Se for o crítico, tira os 10% de bônus
+      if (powerName === 'criticalX3') {
+        const novoCrit = Math.max(player.critChance - 10, 0);
+        updatePlayer({ criticalX3: false, critChance: novoCrit });
 
-    // Inicializa estado base
+      } else if (powerName === 'speedBoost') {
+        // Lidar com speedBoost: ao remover, subtrai 0.5 de attackSpeed (mas não abaixo de 1)
+        const novaVelocidade = Math.max(player.attackSpeed - 0.5, 1);
+        updatePlayer({ speedBoost: false, attackSpeed: novaVelocidade });
+      } else if (powerName === 'reflect') {
+        // Remover o bônus de Reflect: subtrai 50 da defesa atual (mínimo é a defesa base)
+        const baseStats = generatePlayerStats(player.level);
+        const novaDefesa = Math.max(player.physicalDefense - 50, baseStats.physicalDefense);
+        updatePlayer({ reflect: false, physicalDefense: novaDefesa });
+      }
+      return;
+    }
+
+    // OK, o poder clicado NÃO está ativo; vamos ativá-lo e remover eventuais outros
+    const tinhaCritical = player.criticalX3;
+    const tinhaSpeedBoost = player.speedBoost;
+    const tinhaReflect = player.reflect;
+
+    // Começamos zerando todas as flags de poder
     const updates = {
       reflect: false,
       criticalX3: false,
       speedBoost: false,
     };
 
-    const velocidadeAtual = Number(player.attackSpeed);
-    const tinhaSpeedBoost = player.speedBoost;
-
-    // Marca o novo poder selecionado
+    // Ativa somente o clique atual
     updates[powerName] = true;
 
-    // Lógica específica para speedBoost
+    // ─── Lógica para Critical X3 ───
+    if (powerName === 'criticalX3') {
+      // Ao ativar, soma 10% de critChance (até no máximo 100%)
+      updates.critChance = Math.min(player.critChance + 10, 100);
+    } else if (tinhaCritical) {
+      // Se estava ativo e clicou em outro poder, remove os 10%
+      const baseStats = generatePlayerStats(player.level);
+      updates.critChance = baseStats.critChance;
+    }
+
+    // ─── Lógica para SpeedBoost ───
     if (powerName === 'speedBoost') {
-      // Ativando speedBoost: +0.5 velocidade (máx 3.5)
-      updates.attackSpeed = Math.min(velocidadeAtual + 0.5, 4);
+      // Ao ativar, soma 0.5 ao attackSpeed (até teto 4)
+      updates.attackSpeed = Math.min(player.attackSpeed + 0.5, 4);
     } else if (tinhaSpeedBoost) {
-      // Desativando speedBoost: -0.5 velocidade, mas respeita o novo máximo (3)
-      const novaVelocidade = velocidadeAtual - 0.5;
-      updates.attackSpeed = Math.min(Math.max(novaVelocidade, 1), 3);
+      // Se removeu o boost, subtrai 0.5 (mantendo ao menos 1)
+      const novaVel = Math.max(player.attackSpeed - 0.5, 1);
+      updates.attackSpeed = novaVel;
+    }
+
+    // ─── Lógica para Reflect ───
+    if (powerName === 'reflect') {
+      // Ao ativar, soma +50 de physicalDefense (máximo 300)
+      updates.physicalDefense = Math.min(player.physicalDefense + 50, 300);
+    } else if (tinhaReflect) {
+      // Se removeu o reflect, subtrai 50 (mínimo é a defesa base)
+      const baseStats = generatePlayerStats(player.level);
+      const novaDefesa = Math.max(player.physicalDefense - 50, baseStats.physicalDefense);
+      updates.physicalDefense = novaDefesa;
     }
 
     updatePlayer(updates);
@@ -192,14 +268,14 @@ export default function Character() {
             <div className="stat-bar-wrapper">
               <div className="stat-header">
                 <h3>
-                  Defesa
+                  Defesa {isDefMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
                   <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%.">ⓘ</span>
                 </h3>
               </div>
               <div className="stat-bar">
                 <div
                   className="stat-fill defense-fill"
-                  style={{ width: `${Math.min(100, player.physicalDefense / 3)}%` }}
+                  style={{ width: `${Math.min(100, defComBonus / 3)}%` }}
                 ></div>
                 <div className="stat-value-inside">{player.physicalDefense}</div>
               </div>
@@ -207,13 +283,13 @@ export default function Character() {
                 <button
                   className="increase-stat-btn btn-1x"
                   onClick={() => handleStatIncrease('physicalDefense', 1)}
-                  disabled={player.attributePoints < 1}
+                  disabled={player.attributePoints < 1 || isDefMaxed}
                   title="Aumentar 1 ponto"
                 >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('physicalDefense', 10)}
-                  disabled={player.attributePoints < 10}
+                  disabled={player.attributePoints < 10 || isDefMaxed}
                   title="Aumentar 10 pontos"
                 >10x</button>
               </div>
@@ -225,7 +301,7 @@ export default function Character() {
             <div className="stat-bar-wrapper">
               <div className="stat-header">
                 <h3>
-                  Crítico
+                  Crítico{isCritMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
                   <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ</span>
                 </h3>
               </div>
@@ -240,13 +316,13 @@ export default function Character() {
                 <button
                   className="increase-stat-btn btn-1x"
                   onClick={() => handleStatIncrease('critChance', 1)}
-                  disabled={player.attributePoints < 1}
+                  disabled={player.attributePoints < 1 || isCritMaxed}
                   title="Aumentar 1 ponto"
                 >1x</button>
                 <button
                   className="increase-stat-btn btn-10x"
                   onClick={() => handleStatIncrease('critChance', 10)}
-                  disabled={player.attributePoints < 10}
+                  disabled={player.attributePoints < 10 || isCritMaxed}
                   title="Aumentar 10 pontos"
                 >10x</button>
               </div>
@@ -307,14 +383,20 @@ export default function Character() {
             onClick={() => selectPower('reflect')}
             className={`power-btn ${player.reflect ? 'owned' : ''}`}
           >
-            20% Reflect {player.reflect ? '✓' : ''}
+            <p>Reflect {player.reflect ? '✓' : ''}</p>
+            <p>reflete 20% do dano tomado e
+               ganha +50 de defesa</p>
           </button>
 
           <button
             onClick={() => selectPower('criticalX3')}
             className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
+            disabled={player.critChance >= 100 && !player.criticalX3}
+            title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}
           >
             Dano Crítico x3 {player.criticalX3 ? '✓' : ''}
+            Dano crítico agora causa 3 vezes de dano de ataque e
+            ganha +10% de chance crítica
           </button>
 
           <button
@@ -324,6 +406,7 @@ export default function Character() {
             +0.5 Velocidade {player.speedBoost ? '✓' : ''}
           </button>
         </div>
+
       </div>
     </div>
   );
