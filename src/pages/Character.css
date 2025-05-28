@@ -251,14 +251,92 @@
 }
 
 .powers-section {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #2a1f16;  /* tom levemente mais escuro que o fundo geral */
+  border-radius: 8px;
+  border: 2px solid #5a3b2b;
 }
 
+.powers-section h2 {
+  grid-column: 1 / -1;         /* título ocupa toda a largura da grid */
+  margin: 0 0 12px;
+  font-size: 20px;
+  color: #ffd54f;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Botão de poder */
+.power-btn {
+  background-color: #6d4c41;   /* marrom escuro */
+  color: #fff;
+  border: 2px solid #5a3b2b;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* Ícones (caso queira adicionar um ícone antes do texto) */
+.power-btn::before {
+  content: none; /* deixe a opção aberta, exemplo: "⚡" para speed, "🛡️" para reflect, etc. */
+  font-size: 18px;
+}
+
+/* Estado “comprado” */
 .power-btn.owned {
-  background-color: #4caf50;
-  color: white;
+  background-color: #4caf50;   /* verde para indicar que já possui */
+  border-color: #357a38;
+}
+
+/* Hover (somente se não estiver comprado) */
+.power-btn:not(.owned):hover {
+  background-color: #8d6e63;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Desabilitado */
+.power-btn:disabled {
+  background-color: #444;
+  color: #777;
+  border-color: #333;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Texto interno do botão */
+.power-btn span {
+  display: inline-block;
+}
+
+/* Responsividade (botões empilham verticalmente em telas pequenas) */
+@media (max-width: 480px) {
+  .powers-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .powers-section h2 {
+    margin-bottom: 16px;
+  }
 }
 
 

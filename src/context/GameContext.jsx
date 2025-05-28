@@ -442,7 +442,7 @@ export function GameProvider({ children }) {
     // Limita attackSpeed baseado no speedBoost
     if (updates.attackSpeed !== undefined) {
       const currentPlayer = { ...player, ...updates };
-      const maxSpeed = currentPlayer.speedBoost ? 4 : 3;
+      const maxSpeed = currentPlayer.speedBoost ? 3.5 : 3;
       if (updates.attackSpeed > maxSpeed) {
         updates.attackSpeed = maxSpeed;
       }
@@ -489,14 +489,20 @@ export function GameProvider({ children }) {
     // Garante que HP atual não exceda o novo maxHp
     const adjustedHp = Math.min(currentHp, newMaxHp);
 
+    let newAttackSpeed = Math.min(3, baseStats.attackSpeed);
+
+    if (player.speedBoost) {
+      newAttackSpeed = Math.min(newAttackSpeed + 0.5, 3.5);
+    }
+
     updatePlayer({
       maxHp: newMaxHp,
       hp: adjustedHp,
       attack: baseStats.attack,
       physicalDefense: baseStats.physicalDefense,
       critChance: baseStats.critChance,
-      attackSpeed: Math.min(3, baseStats.attackSpeed),
-      attributePoints: 3 * player.level // Recalcula pontos de atributo
+      attackSpeed: newAttackSpeed,
+      attributePoints: 3 * player.level
     });
 
     showNotification("Atributos reiniciados!", "info");
@@ -557,7 +563,7 @@ export function GameProvider({ children }) {
     const enemyClone = { ...enemy, currentHp: enemy.hp };
     const playerClone = { ...player, currentHp: player.hp };
     if (player.speedBoost) {
-      playerClone.attackSpeed = Math.min(4, playerClone.attackSpeed + 1);
+      playerClone.attackSpeed = Math.min(3.5, playerClone.attackSpeed + 0.5);
     }
 
 

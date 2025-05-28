@@ -50,17 +50,17 @@ export default function Torneio() {
 
   const findOpponent = async () => {
     if (!player?.id) return;
-    
+
     setLoadingOpponent(true);
     try {
       const response = await fetch(`http://localhost:4000/api/tournament/opponent/${player.id}`);
-      
+
       if (!response.ok) {
         throw new Error('Falha ao buscar oponente');
       }
-      
+
       const opponentData = await response.json();
-      
+
       // Converter para o formato esperado pela batalha
       const formattedOpponent = {
         id: opponentData.id,
@@ -71,12 +71,16 @@ export default function Torneio() {
         defense: opponentData.physicalDefense,
         critChance: opponentData.critChance,
         attackSpeed: opponentData.attackSpeed,
+        // Adicionar poderes especiais do oponente (se existirem)
+        reflect: opponentData.reflect || false,
+        criticalX3: opponentData.criticalX3 || false,
+        speedBoost: opponentData.speedBoost || false,
         // Imagem placeholder
         image: '/api/placeholder/150/150',
         rewardXP: 0, // Sem recompensa de XP em batalhas PVP
         rewardGoldMultiplier: 0 // Sem recompensa de ouro em batalhas PVP
       };
-      
+
       setOpponent(formattedOpponent);
       return formattedOpponent;
     } catch (err) {
@@ -91,13 +95,13 @@ export default function Torneio() {
     // Buscar oponente
     const battleOpponent = await findOpponent();
     if (!battleOpponent) return;
-    
+
     // Iniciar batalha
     const battleResult = handleTournamentBattle(battleOpponent);
     setCombatLog(battleResult.combatLog);
     setCombatResult(battleResult.result);
     setShowCombatModal(true);
-    
+
     // Registrar batalha no servidor
     registerBattleResult(battleResult.success, battleOpponent.id, battleResult.combatLog);
   };
@@ -107,13 +111,13 @@ export default function Torneio() {
     // Buscar novo oponente
     const battleOpponent = await findOpponent();
     if (!battleOpponent) return;
-    
+
     // Iniciar nova batalha
     const battleResult = handleTournamentBattle(battleOpponent);
     setCombatLog(battleResult.combatLog);
     setCombatResult(battleResult.result);
     setShowCombatModal(true);
-    
+
     // Registrar batalha no servidor
     registerBattleResult(battleResult.success, battleOpponent.id, battleResult.combatLog);
   };
@@ -121,7 +125,7 @@ export default function Torneio() {
   const registerBattleResult = async (playerWon, opponentId, battleLog) => {
     try {
       const winnerId = playerWon ? player.id : opponentId;
-      
+
       const response = await fetch('http://localhost:4000/api/tournament/battle', {
         method: 'POST',
         headers: {
@@ -134,21 +138,21 @@ export default function Torneio() {
           battleLog: battleLog
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error('Falha ao registrar resultado da batalha');
       }
-      
+
       // Atualizar pontuação local do jogador para feedback imediato
       const pointsChange = playerWon ? 30 : -10;
       const newRankedPoints = Math.max(0, (player.rankedPoints || 0) + pointsChange);
-      
+
       // Atualiza o estado local do jogador (sem atualizar o servidor, pois já foi feito pelo endpoint)
       // Isso é apenas para atualizar a interface imediatamente
       if (player.rankedPoints !== undefined) {
         player.rankedPoints = newRankedPoints;
       }
-      
+
       // Após a batalha, atualizar o ranking
       if (rankingVisible) {
         fetchRanking();
@@ -164,6 +168,8 @@ export default function Torneio() {
     // Clone the enemy and player for combat
     const enemyClone = { ...enemy, currentHp: enemy.hp };
     const playerClone = { ...player, currentHp: player.hp };
+
+    let lastPlayerDamage = 0;
 
     // Combat log
     const combatLog = [];
@@ -189,20 +195,55 @@ export default function Torneio() {
         // Player attack
         let playerBaseDamage = Math.max(1, playerClone.attack);
         // Usar a mesma lógica percentual para defesa dos inimigos
-const enemyDamageReduction = Math.min(30, enemyClone.defense * 0.1);
-let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100));
+        const enemyDamageReduction = Math.min(30, enemyClone.defense * 0.1);
+        let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100));
 
-        // Verificar acerto crítico (dobro de dano)
+        // Verificar acerto crítico
         const playerCrit = Math.random() * 100 < playerClone.critChance;
-        const finalPlayerDamage = playerCrit ? Math.floor(playerDamage * 2) : playerDamage;
+        let critMultiplier = 2; // Padrão é x2
+
+        // Aplicar poder especial Critical X3
+        if (playerClone.criticalX3 && playerCrit) {
+          critMultiplier = 3;
+        }
+
+        const finalPlayerDamage = playerCrit
+          ? Math.floor(playerDamage * critMultiplier) : playerDamage;
+
+        lastPlayerDamage = finalPlayerDamage;
 
         enemyClone.currentHp -= finalPlayerDamage;
 
+        let critMessage = '';
+        if (playerCrit) {
+          critMessage = playerClone.criticalX3 ? ' (crítico x3!)' : ' (crítico!)';
+        }
+
         combatLog.push({
           type: 'player',
-          message: `Você causou ${finalPlayerDamage} de dano${playerCrit ? ' (crítico!)' : ''} ao ${enemy.name}.`,
+          message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemy.name}.`,
           attackSpeed: playerClone.attackSpeed
         });
+
+        // ─── Reflect do inimigo ───
+        if (enemyClone.reflect) {
+          // Se o inimigo tiver Reflect, ele devolve 20% do finalPlayerDamage de imediato
+          const reflectDamage = Math.floor(finalPlayerDamage * 0.2);
+          playerClone.currentHp -= reflectDamage;
+          combatLog.push({
+            type: 'enemy',
+            message: `🔥 ${enemy.name} refletiu ${reflectDamage} de dano a você.`
+          });
+
+          // Se esse reflexo matou o jogador, encerra imediatamente
+          if (playerClone.currentHp <= 0) {
+            combatLog.push({
+              type: 'enemy',
+              message: `💀 Você foi derrotado pelo Reflect de ${enemy.name}!`
+            });
+            break;
+          }
+        }
 
         // Check if enemy is defeated
         if (enemyClone.currentHp <= 0) {
@@ -224,25 +265,43 @@ let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100
         // Apply percentage damage reduction from defense
         let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
 
-        // Enemy critical hit (1.5x for enemies)
+        // Enemy critical hit
         const enemyCrit = Math.random() * 100 < enemyClone.critChance;
-        const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
+        let enemyCritMultiplier = 1.5; // Padrão para inimigos é x1.5
+
+        // Aplicar poder especial Critical X3 do inimigo
+        if (enemyClone.criticalX3 && enemyCrit) {
+          enemyCritMultiplier = 3;
+        }
+
+        const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * enemyCritMultiplier) : enemyDamage;
 
         playerClone.currentHp -= finalEnemyDamage;
 
-        // Add defense reduction info to combat log if applicable
-        if (damageReduction > 0) {
-          combatLog.push({
-            type: 'enemy',
-            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você. (Redução de dano: ${damageReduction.toFixed(1)}%)`,
-            attackSpeed: enemyClone.attackSpeed
-          });
-        } else {
-          combatLog.push({
-            type: 'enemy',
-            message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCrit ? ' (crítico!)' : ''} a você.`,
-            attackSpeed: enemyClone.attackSpeed
-          });
+        let enemyCritMessage = '';
+        if (enemyCrit) {
+          enemyCritMessage = enemyClone.criticalX3 ? ' (crítico x3!)' : ' (crítico!)';
+        }
+
+        combatLog.push({
+          type: 'enemy',
+          message: `${enemy.name} causou ${finalEnemyDamage} de dano${enemyCritMessage} a você.`,
+          attackSpeed: enemyClone.attackSpeed
+        });
+
+        // Aplicar poder especial Reflect do jogador
+        if (playerClone.reflect && finalEnemyDamage > 0) {
+          const reflectDamage = Math.floor(finalEnemyDamage * 0.2); // 20% do dano refletido
+          enemyClone.currentHp -= reflectDamage;
+
+          const lastLogIndex = combatLog.length - 1;
+          combatLog[lastLogIndex].message += ` 🔥 Você refletiu ${reflectDamage} de dano.`;
+
+          // Verificar se o inimigo foi derrotado pelo reflexo
+          if (enemyClone.currentHp <= 0) {
+            combatLog.push({ type: 'player', message: `${enemy.name} foi derrotado pelo dano refletido!` });
+            break;
+          }
         }
 
         // Check if player is defeated
@@ -343,8 +402,8 @@ let playerDamage = Math.floor(playerBaseDamage * (1 - enemyDamageReduction / 100
         </p>
       </div>
 
-      <button 
-        className="participate-button" 
+      <button
+        className="participate-button"
         onClick={startTournamentBattle}
         disabled={loadingOpponent || player?.hp <= 1}
       >

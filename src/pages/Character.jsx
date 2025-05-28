@@ -32,30 +32,39 @@ export default function Character() {
         updatedStats.critChance = player.critChance + (1 * amount);
         break;
       case 'attackSpeed': {
-        const maxSpeed = player.speedBoost ? 4 : 3;
-        const velocidadeAtual = Number(player.attackSpeed);
+        const maxSpeed = player.speedBoost ? 3.5 : 3;
+        // Converter valores para centésimos (evitar problemas de ponto flutuante)
+        const maxSpeedCents = maxSpeed * 100;
+        const velocidadeAtualCents = Math.round(player.attackSpeed * 100);
 
-        // Verifica se já está no máximo
-        if (velocidadeAtual >= maxSpeed) {
+        if (velocidadeAtualCents >= maxSpeedCents) {
           showNotification("Velocidade de ataque máxima atingida!", "info");
           return;
         }
 
-        // Calcula quanto pode aumentar (cada ponto = +0.1)
-        const espacoRestante = maxSpeed - velocidadeAtual;
-        const incrementosMaximos = Math.floor(espacoRestante * 10); // *10 porque cada 0.1 = 1 incremento
-        const pontosParaGastar = Math.min(amount, incrementosMaximos);
+        // Calcular espaço restante em centésimos
+        const espacoRestanteCents = maxSpeedCents - velocidadeAtualCents;
+        const pontosMaximosPossiveis = Math.floor(espacoRestanteCents / 5); // Cada ponto = 0.05 (5 centésimos)
 
-        if (pontosParaGastar <= 0) {
+        if (pontosMaximosPossiveis <= 0) {
           showNotification("Velocidade de ataque máxima atingida!", "info");
           return;
         }
 
-        const novaVelocidade = velocidadeAtual + (pontosParaGastar * 0.1);
-        updatedStats.attackSpeed = Math.min(Number(novaVelocidade.toFixed(1)), maxSpeed);
+        const pontosParaGastar = Math.min(amount, pontosMaximosPossiveis);
+
+        // Calcular nova velocidade em centésimos
+        const novaVelocidadeCents = velocidadeAtualCents + (pontosParaGastar * 5);
+        let novaVelocidade = novaVelocidadeCents / 100;
+
+        // Garantir que não ultrapasse o máximo
+        if (novaVelocidade > maxSpeed) novaVelocidade = maxSpeed;
+
+        updatedStats.attackSpeed = Number(novaVelocidade.toFixed(2));
         updatedStats.attributePoints = player.attributePoints - pontosParaGastar;
         break;
       }
+
 
       default:
         return;
@@ -64,7 +73,7 @@ export default function Character() {
     updatePlayer(updatedStats);
   };
 
-    const selectPower = (powerName) => {
+  const selectPower = (powerName) => {
     // Se já está selecionado, não faz nada
     if (player[powerName]) return;
 
@@ -83,11 +92,11 @@ export default function Character() {
 
     // Lógica específica para speedBoost
     if (powerName === 'speedBoost') {
-      // Ativando speedBoost: +1 velocidade (máx 4)
-      updates.attackSpeed = Math.min(velocidadeAtual + 1, 4);
+      // Ativando speedBoost: +0.5 velocidade (máx 3.5)
+      updates.attackSpeed = Math.min(velocidadeAtual + 0.5, 4);
     } else if (tinhaSpeedBoost) {
-      // Desativando speedBoost: -1 velocidade, mas respeita o novo máximo (3)
-      const novaVelocidade = velocidadeAtual - 1;
+      // Desativando speedBoost: -0.5 velocidade, mas respeita o novo máximo (3)
+      const novaVelocidade = velocidadeAtual - 0.5;
       updates.attackSpeed = Math.min(Math.max(novaVelocidade, 1), 3);
     }
 
@@ -95,7 +104,7 @@ export default function Character() {
   };
 
   // ─── Cálculos do teto e do percentual para a barra de velocidade ───
-  const maxSpeed = player.speedBoost ? 4 : 3;
+  const maxSpeed = player.speedBoost ? 3.5 : 3;
   const velocidadeAtual = Number(player.attackSpeed);
   const speedPercent = Math.min((velocidadeAtual / maxSpeed) * 100, 100);
   const isSpeedMaxed = velocidadeAtual >= maxSpeed;
@@ -258,7 +267,7 @@ export default function Character() {
                   style={{ width: `${speedPercent}%` }}
                 ></div>
                 <div className="stat-value-inside">
-                  {velocidadeAtual.toFixed(1)}
+                  {velocidadeAtual.toFixed(2)}
                 </div>
               </div>
               <div className="stat-buttons">
@@ -298,21 +307,21 @@ export default function Character() {
             onClick={() => selectPower('reflect')}
             className={`power-btn ${player.reflect ? 'owned' : ''}`}
           >
-            Reflect {player.reflect ? '✓' : ''}
+            20% Reflect {player.reflect ? '✓' : ''}
           </button>
 
           <button
             onClick={() => selectPower('criticalX3')}
             className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
           >
-            Crítico x3 {player.criticalX3 ? '✓' : ''}
+            Dano Crítico x3 {player.criticalX3 ? '✓' : ''}
           </button>
 
           <button
             onClick={() => selectPower('speedBoost')}
             className={`power-btn ${player.speedBoost ? 'owned' : ''}`}
           >
-            +1 Velocidade {player.speedBoost ? '✓' : ''}
+            +0.5 Velocidade {player.speedBoost ? '✓' : ''}
           </button>
         </div>
       </div>
