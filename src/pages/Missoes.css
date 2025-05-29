@@ -3,6 +3,10 @@
   border-radius: 8px;
   padding: 20px;
   min-height: 100vh;
+  /*background-image: url('../assets//images/papiro.png');
+  background-size: cover;
+  background-position: center;
+  height: 100vh;  */
 }
 
 .missions-header {

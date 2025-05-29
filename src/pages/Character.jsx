@@ -4,6 +4,7 @@ import { generatePlayerStats } from '../utils/player';
 import './Character.css';
 import character from '../assets/images/gladiator.jpg';
 
+
 export default function Character() {
   const { player, updatePlayer, showNotification, resetStats } = useGame();
 
