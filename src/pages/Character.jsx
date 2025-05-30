@@ -196,6 +196,40 @@ export default function Character() {
           <img className="player-img" src={character} alt="Gladiador" />
         </div>
       </div>
+      {/* ─── Seção de Poderes ─────────────────── */}
+      <div className="powers-section">
+
+
+        <button
+          onClick={() => selectPower('reflect')}
+          className={`power-btn ${player.reflect ? 'owned' : ''}`}
+        >
+          <div>
+            <p>Reflete 20% de dano {player.reflect ? '✓' : ''}</p>
+            <p>+50 de defesa</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => selectPower('criticalX3')}
+          className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
+          disabled={player.critChance >= 100 && !player.criticalX3}
+          title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}>
+          <div>
+            <p>Dano Crítico x3 {player.criticalX3 ? '✓' : ''}</p>
+            <p>+10% chance crítica</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => selectPower('speedBoost')}
+          className={`power-btn ${player.speedBoost ? 'owned' : ''}`}>
+          <div>
+            <p>+0.5 Velocidade {player.speedBoost ? '✓' : ''}</p>
+            <p>de Ataque</p>
+          </div>
+        </button>
+      </div>
 
       <div className="character-content">
         <div className="character-stats">
@@ -268,9 +302,8 @@ export default function Character() {
           <div className="stat-block">
             <div className="stat-bar-wrapper">
               <div className="stat-header">
-                <h3>
-                  Defesa {isDefMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
-                  <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%.">ⓘ</span>
+                <h3>Def
+                  <span className="info-tooltip" data-tooltip="Reduz 0,1% do dano por ponto, máximo de 30%."> ⓘ</span>
                 </h3>
               </div>
               <div className="stat-bar">
@@ -281,18 +314,26 @@ export default function Character() {
                 <div className="stat-value-inside">{player.physicalDefense}</div>
               </div>
               <div className="stat-buttons">
-                <button
-                  className="increase-stat-btn btn-1x"
-                  onClick={() => handleStatIncrease('physicalDefense', 1)}
-                  disabled={player.attributePoints < 1 || isDefMaxed}
-                  title="Aumentar 1 ponto"
-                >1x</button>
-                <button
-                  className="increase-stat-btn btn-10x"
-                  onClick={() => handleStatIncrease('physicalDefense', 10)}
-                  disabled={player.attributePoints < 10 || isDefMaxed}
-                  title="Aumentar 10 pontos"
-                >10x</button>
+                {!isDefMaxed ? (
+                  <>
+                    <button
+                      className="increase-stat-btn btn-1x"
+                      onClick={() => handleStatIncrease('physicalDefense', 1)}
+                      disabled={player.attributePoints < 1}
+                      title="Aumentar 1 ponto">
+                      1x
+                    </button>
+                    <button
+                      className="increase-stat-btn btn-10x"
+                      onClick={() => handleStatIncrease('physicalDefense', 10)}
+                      disabled={player.attributePoints < 10}
+                      title="Aumentar 10 pontos">
+                      10x
+                    </button>
+                  </>
+                ) : (
+                  <span style={{ color: '#ffd700' }}>(MAX)</span>
+                )}
               </div>
             </div>
           </div>
@@ -302,8 +343,8 @@ export default function Character() {
             <div className="stat-bar-wrapper">
               <div className="stat-header">
                 <h3>
-                  Crítico{isCritMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
-                  <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque.">ⓘ</span>
+                  Crít  
+                  <span className="info-tooltip" data-tooltip="Causa o dobro do valor de ataque."> ⓘ</span>
                 </h3>
               </div>
               <div className="stat-bar">
@@ -314,19 +355,28 @@ export default function Character() {
                 <div className="stat-value-inside">{player.critChance?.toFixed(1)}%</div>
               </div>
               <div className="stat-buttons">
-                <button
-                  className="increase-stat-btn btn-1x"
-                  onClick={() => handleStatIncrease('critChance', 1)}
-                  disabled={player.attributePoints < 1 || isCritMaxed}
-                  title="Aumentar 1 ponto"
-                >1x</button>
-                <button
-                  className="increase-stat-btn btn-10x"
-                  onClick={() => handleStatIncrease('critChance', 10)}
-                  disabled={player.attributePoints < 10 || isCritMaxed}
-                  title="Aumentar 10 pontos"
-                >10x</button>
+                {!isCritMaxed ? (
+                  <>
+                    <button
+                      className="increase-stat-btn btn-1x"
+                      onClick={() => handleStatIncrease('critChance', 1)}
+                      disabled={player.attributePoints < 1}
+                      title="Aumentar 1 ponto">
+                      1x
+                    </button>
+                    <button
+                      className="increase-stat-btn btn-10x"
+                      onClick={() => handleStatIncrease('critChance', 10)}
+                      disabled={player.attributePoints < 10}
+                      title="Aumentar 10 pontos">
+                      10x
+                    </button>
+                  </>
+                ) : (
+                  <span style={{ color: '#ffd700' }}>(MAX)</span>
+                )}
               </div>
+
             </div>
           </div>
 
@@ -335,7 +385,7 @@ export default function Character() {
             <div className="stat-bar-wrapper">
               <div className="stat-header">
                 <h3>
-                  Vel. Ataq {isSpeedMaxed && <span style={{ color: '#ffd700' }}>(MAX)</span>}
+                  Speed
                 </h3>
               </div>
               <div className="stat-bar">
@@ -348,19 +398,28 @@ export default function Character() {
                 </div>
               </div>
               <div className="stat-buttons">
-                <button
-                  className="increase-stat-btn btn-1x"
-                  onClick={() => handleStatIncrease('attackSpeed', 1)}
-                  disabled={player.attributePoints < 1 || isSpeedMaxed}
-                  title="Aumentar 1 ponto"
-                >1x</button>
-                <button
-                  className="increase-stat-btn btn-10x"
-                  onClick={() => handleStatIncrease('attackSpeed', 10)}
-                  disabled={player.attributePoints < 10 || isSpeedMaxed}
-                  title="Aumentar 10 pontos"
-                >10x</button>
+                {!isSpeedMaxed ? (
+                  <>
+                    <button
+                      className="increase-stat-btn btn-1x"
+                      onClick={() => handleStatIncrease('attackSpeed', 1)}
+                      disabled={player.attributePoints < 1}
+                      title="Aumentar 1 ponto">
+                      1x
+                    </button>
+                    <button
+                      className="increase-stat-btn btn-10x"
+                      onClick={() => handleStatIncrease('attackSpeed', 10)}
+                      disabled={player.attributePoints < 10}
+                      title="Aumentar 10 pontos">
+                      10x
+                    </button>
+                  </>
+                ) : (
+                  <span style={{ color: '#ffd700' }}>(MAX)</span>
+                )}
               </div>
+
             </div>
           </div>
 
@@ -376,37 +435,7 @@ export default function Character() {
           </div>
         </div>
 
-        {/* ─── Seção de Poderes ──────────────────────────────────────────────────────────── */}
-        <div className="powers-section">
-          <h2>Poderes Especiais</h2>
 
-          <button
-            onClick={() => selectPower('reflect')}
-            className={`power-btn ${player.reflect ? 'owned' : ''}`}
-          >
-            <p>Reflect {player.reflect ? '✓' : ''}</p>
-            <p>reflete 20% do dano tomado e
-               ganha +50 de defesa</p>
-          </button>
-
-          <button
-            onClick={() => selectPower('criticalX3')}
-            className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
-            disabled={player.critChance >= 100 && !player.criticalX3}
-            title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}
-          >
-            Dano Crítico x3 {player.criticalX3 ? '✓' : ''}
-            Dano crítico agora causa 3 vezes de dano de ataque e
-            ganha +10% de chance crítica
-          </button>
-
-          <button
-            onClick={() => selectPower('speedBoost')}
-            className={`power-btn ${player.speedBoost ? 'owned' : ''}`}
-          >
-            +0.5 Velocidade {player.speedBoost ? '✓' : ''}
-          </button>
-        </div>
 
       </div>
     </div>

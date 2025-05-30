@@ -11,9 +11,13 @@
     "lint": "eslint .",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
-    
     "start": "node server.js",
-    "dev:back": "nodemon server.js"
+    "dev:back": "nodemon server.js",
+
+
+    
+    "dev": "vite --host",
+    "serve": "vite preview"
   },
   "dependencies": {
     "body-parser": "^2.2.0",

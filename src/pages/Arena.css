@@ -12,6 +12,7 @@
   display: flex;
   gap: 15px;
   overflow-x: auto;
+  padding-bottom: 10px;
 }
 
 .enemy-option {
@@ -25,6 +26,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .enemy-option.selected {
@@ -107,6 +109,7 @@
   display: flex;
   justify-content: center;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .battle-button {
@@ -131,7 +134,6 @@
   opacity: 0.7;
 }
 
-/* Estilos para batalha automática */
 .auto-battle-button {
   padding: 12px 24px;
   background-color: #8b4513;
@@ -195,4 +197,205 @@
 
 .stop-auto-battle-button:hover {
   background-color: #e64a19;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  .arena-container {
+    padding: 10px 15px;
+    margin: 10px;
+    border-radius: 6px;
+  }
+
+  .enemy-selector h2 {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
+
+  .enemy-list {
+    gap: 10px;
+    padding: 0 5px;
+  }
+
+  .enemy-option {
+    min-width: 120px;
+    padding: 8px;
+  }
+
+  .enemy-thumbnail {
+    width: 80px;
+    height: 80px;
+  }
+
+  .enemy-option-info h3 {
+    font-size: 14px;
+  }
+
+  .enemy-option-info p {
+    font-size: 12px;
+  }
+
+  .enemy-container {
+    flex-direction: column;
+    gap: 15px;
+    padding: 12px;
+  }
+
+  .enemy-stats {
+    min-width: 100%;
+    order: 2;
+  }
+
+  .enemy-stats h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .enemy-stats p {
+    font-size: 14px;
+    margin: 5px 0;
+  }
+
+  .enemy-visual {
+    order: 1;
+    width: 100%;
+  }
+
+  .enemy-image {
+    max-width: 200px;
+  }
+
+  .enemy-rewards {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .enemy-rewards h3 {
+    font-size: 16px;
+  }
+
+  .enemy-rewards p {
+    font-size: 14px;
+  }
+
+  .arena-actions {
+    gap: 10px;
+    margin-top: 15px;
+  }
+
+  .battle-button,
+  .auto-battle-button {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-width: 140px;
+  }
+
+  .auto-battle-progress {
+    padding: 12px;
+    margin: 15px 0;
+  }
+
+  .auto-battle-progress h3 {
+    font-size: 16px;
+  }
+
+  .auto-battle-progress p {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .stop-auto-battle-button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .arena-container {
+    padding: 8px 10px;
+    margin: 5px;
+  }
+
+  .enemy-selector h2 {
+    font-size: 16px;
+  }
+
+  .enemy-list {
+    gap: 8px;
+  }
+
+  .enemy-option {
+    min-width: 100px;
+    padding: 6px;
+  }
+
+  .enemy-thumbnail {
+    width: 70px;
+    height: 70px;
+  }
+
+  .enemy-option-info h3 {
+    font-size: 13px;
+  }
+
+  .enemy-option-info p {
+    font-size: 11px;
+  }
+
+  .enemy-container {
+    padding: 10px;
+  }
+
+  .enemy-stats h2 {
+    font-size: 18px;
+  }
+
+  .enemy-stats p {
+    font-size: 13px;
+  }
+
+  .enemy-image {
+    max-width: 180px;
+  }
+
+  .arena-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .battle-button,
+  .auto-battle-button {
+    width: 100%;
+    max-width: 280px;
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+
+  .auto-battle-progress p {
+    font-size: 12px;
+    word-break: break-word;
+  }
+}
+
+/* Landscape orientation on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+  .enemy-container {
+    flex-direction: row;
+  }
+
+  .enemy-stats {
+    order: 1;
+    min-width: 50%;
+  }
+
+  .enemy-visual {
+    order: 2;
+    width: 50%;
+  }
+
+  .enemy-image {
+    max-width: 150px;
+  }
 }

@@ -1,47 +1,86 @@
+/* ---------------------------------------------------------------------------------
+   CHARACTER.CSS (RESPONSIVO PARA 360×640 E DEMAIS TELAS)
+   --------------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------
+   1. RESET/SANITY (opçional, mas garante comportamento mais previsível)
+   ------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* -------------------------------------------------------------------
+   2. CONTAINER PRINCIPAL DO PERSONAGEM
+   - width: 90vw (90% da largura da viewport)
+   - max-width: 600px (não fica enorme em telas maiores)
+   - margin auto para centralizar
+   ------------------------------------------------------------------- */
 .character-container {
   background-color: #3c2b21;
   color: #fff;
-  border-radius: 10px;
-  padding: 30px;
+  border-radius: 0.625rem; /* 10px */
+  padding: 1.5rem;         /* 24px */
   position: relative;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4); /* 4px 12px */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  width: 90vw;
+  max-width: 600px;
+  margin: 0 auto; /* 16px auto vertical */
 }
 
+/* -------------------------------------------------------------------
+   3. CABEÇALHO DO PERSONAGEM
+   - Em telas pequenas: coluna; maior: linha
+   ------------------------------------------------------------------- */
 .character-header {
-  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 1.25rem; /* 20px */
   border-bottom: 2px solid #5a3b2b;
-  padding-bottom: 15px;
+  padding-bottom: 0.75rem; /* 12px */
 }
 
 .character-header h1 {
-  margin: 0;
-  font-size: 28px;
+  font-size: 1.5rem; /* 24px */
+  margin-bottom: 0.5rem; /* 8px */
 }
 
 .level-display {
-  font-size: 18px;
+  font-size: 1rem; /* 16px */
   font-weight: 600;
-  margin-top: 5px;
+  color: #ffd54f;
 }
 
-.points-display {
-  font-size: 16px;
-  color: #ffc107;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
+/* -------------------------------------------------------------------
+   4. CONTEÚDO PRINCIPAL (STATS + VISUAL)
+   - Em telas maiores (≥ 480px): coloca lado a lado.
+   - Em telas < 480px: empilha.
+   ------------------------------------------------------------------- */
 .character-content {
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 30px;
+  flex-direction: column;
+  gap: 1rem; /* 16px */
+}
+
+/* Quando o espaço horizontal permitir, divida em 2 colunas */
+@media (min-width: 480px) {
+  .character-content {
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1.5rem; /* 24px */
+  }
 }
 
 .character-stats {
   flex: 1;
-  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espaço entre cada stat-block */
 }
 
 .character-visual {
@@ -51,101 +90,114 @@
   align-items: center;
 }
 
+/* -------------------------------------------------------------------
+   5. IMAGEM DO PERSONAGEM
+   - Ajusta largura em diferentes tamanhos
+   ------------------------------------------------------------------- */
 .player-img {
-  width: 100%;
-  max-width: 280px;
-  height: auto;
-  border-radius: 10px;
-  margin-bottom: 20px;
+  width: 70vw;
+  max-width: 240px; /* 240px em telas maiores */
+  border-radius: 0.625rem; /* 10px */
+  margin-bottom: 1rem;     /* 16px */
   border: 4px solid #5a3b2b;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.5);
+  object-fit: cover;
 }
 
+@media (min-width: 480px) {
+  .player-img {
+    width: 100%;
+    max-width: 280px;
+  }
+}
+
+/* -------------------------------------------------------------------
+   6. DESCRIÇÃO DO PERSONAGEM (logo abaixo da imagem)
+   ------------------------------------------------------------------- */
 .character-description {
-  text-align: center;
   font-style: italic;
   color: #ddd;
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
+  text-align: center;
 }
 
-.stat-block {
-  margin-bottom: 0px;
-  padding: 15px;
-  /*background-color: #2a1f16;*/
-  border-radius: 8px;
-  transition: background-color 0.3s;
+/* -------------------------------------------------------------------
+   7. BLOCO DE CADA ESTATÍSTICA (stat-block)
+   ------------------------------------------------------------------- */
+
+
+   .points-display {
+    color: #ffc107;
+    padding: 0.75rem 0;
+   }
+/* Layout interno do estat-block: label + barra + botões */
+.stat-bar-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* 12px */
+  position: relative;
 }
 
-.stat-block:hover {
-  background-color: #34261c;
-}
-
+/* -------------------------------------------------------------------
+   8. TÍTULO DA ESTATÍSTICA (stat-header)
+   ------------------------------------------------------------------- */
 .stat-header {
-  width: 100px;
   flex-shrink: 0;
+  width: 4rem; /* 64px */
 }
 
 .stat-header h3 {
+  font-size: 1rem; /* 16px */
   margin: 0;
-  font-size: 18px;
 }
 
-.stat-bar-wrapper {
-  display: flex;
-  align-items: center; /* <-- garante alinhamento vertical */
-  gap: 10px;
-  position: relative;
-  min-height: 36px; /* previne "colapso" da altura se botão for maior */
-}
-
-
+/* -------------------------------------------------------------------
+   9. BARRA DE PROGRESSO DE ESTATÍSTICA
+   ------------------------------------------------------------------- */
 .stat-bar {
-  position: relative;
   flex: 1;
-  height: 22px;
+  height: 1.25rem; /* 20px */
   background-color: #444;
-  border-radius: 12px;
+  border-radius: 0.625rem; /* 10px */
   overflow: hidden;
+  position: relative;
 }
 
 .stat-fill {
   height: 100%;
   transition: width 0.4s ease-in-out;
-  border-radius: 12px 0 0 12px;
 }
 
 .stat-value-inside {
   position: absolute;
-  width: 100%;
-  text-align: center;
   top: 50%;
-  left: 0;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem; /* 12px */
   font-weight: bold;
-  font-size: 14px;
   color: #fff;
   pointer-events: none;
 }
 
+/* Gradientes de cor */
 .attack-fill {
-  background: linear-gradient(to right, #f44336, #d32f2f);
+  background: linear-gradient(to right, #f81808, #880606);
 }
-
 .defense-fill {
-  background: linear-gradient(to right, #2196f3, #1565c0);
+  background: linear-gradient(to right, #0277d6, #013e85);
 }
-
 .crit-fill {
-  background: linear-gradient(to right, #ffc107, #ff8f00);
+  background: linear-gradient(to right, #c79605, #754c00);
 }
-
 .speed-fill {
-  background: linear-gradient(to right, #4caf50, #2e7d32);
+  background: linear-gradient(to right, #03e40b, #025a06);
 }
 
+/* -------------------------------------------------------------------
+   10. BOTÕES DE AUMENTAR ESTATÍSTICA
+   ------------------------------------------------------------------- */
 .stat-buttons {
   display: flex;
-  gap: 5px;
 }
 
 .increase-stat-btn {
@@ -154,88 +206,55 @@
   color: #ffc107;
   font-weight: bold;
   cursor: pointer;
-  flex-shrink: 0;
-  padding: 0 5px;
-  height: 30px;
+  padding: 0.25rem 0.5rem; /* 4px 8px */
+  border-radius: 0.375rem; /* 6px */
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.875rem; /* 14px */
+  height: 1.5rem; /* 24px */
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s ease;
 }
 
 .increase-stat-btn:hover:not(:disabled) {
   background-color: rgba(255, 193, 7, 0.2);
-  color: #ffd54f;
+  transform: translateY(-1px);
 }
 
 .increase-stat-btn:disabled {
   color: #777;
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .increase-stat-btn.btn-1x {
-  font-size: 16px;
+  font-size: 1rem; /* 16px */
+  padding: 0.25rem 0.5rem;
 }
 
 .increase-stat-btn.btn-10x {
-  font-size: 14px;
+  font-size: 0.875rem; /* 14px */
+  padding: 0.25rem 0.5rem;
 }
 
-.stat-description {
-  font-size: 13px;
-  color: #aaa;
-  font-style: italic;
-  margin-top: 4px;
-}
-
-/* Tooltip de informações (ícone de info ao lado de títulos) */
-.info-tooltip {
-  margin-left: 8px;
-  color: #bbb;
-  font-size: 16px;
-  cursor: help;
-  position: relative;
-}
-
-.info-tooltip::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  bottom: 120%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: #2a1f16;
-  color: #fff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  font-size: 12px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
-  z-index: 10;
-}
-
-.info-tooltip:hover::after {
-  opacity: 1;
-}
-
-/*Reset Button*/
+/* -------------------------------------------------------------------
+    11. RESET DE ESTATÍSTICA
+   ------------------------------------------------------------------- */
 .reset-button-wrapper {
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin: 2rem 0; /* 16px */
 }
 
 .reset-button {
   background-color: #6d4c41;
   color: #fff;
   border: none;
-  padding: 10px 64px; 
-  border-radius: 6px;
+  padding: 0.5rem 1.5rem; /* 8px 24px */
+  border-radius: 0.375rem; /* 6px */
   font-weight: bold;
   cursor: pointer;
+  font-size: 1rem; /* 16px */
   transition: background-color 0.3s ease;
 }
 
@@ -249,69 +268,63 @@
   opacity: 0.6;
 }
 
+/* -------------------------------------------------------------------
+    12. SEÇÃO DE PODERES ESPECIAIS (powers-section)
+   ------------------------------------------------------------------- */
 .powers-section {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 30px;
-  padding: 20px;
-  background-color: #2a1f16;  /* tom levemente mais escuro que o fundo geral */
-  border-radius: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1rem; /* 16px */
+  margin-top: 1.5rem; /* 24px */
+  padding: 1rem; /* 16px */
+  background-color: #2a1f16;
+  border-radius: 0.5rem; /* 8px */
   border: 2px solid #5a3b2b;
+  width: 100%;      /* ocupa 100% do container */
+  max-width: 100%;  /* não ultrapassa container */
+  margin-left: auto;
+  margin-right: auto;
 }
 
-
 .powers-section h2 {
-  grid-column: 1 / -1;         /* título ocupa toda a largura da grid */
-  margin: 0 0 12px;
-  font-size: 20px;
+  width: 100%;
+  margin-bottom: 0.75rem; /* 12px */
+  font-size: 1.25rem; /* 20px */
   color: #ffd54f;
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
-/* Botão de poder */
 .power-btn {
-  max-width: 300px;
-  background-color: #6d4c41;   /* marrom escuro */
+  flex: 1 1 calc(50% - 1rem); /* 2 colunas com gap de 1rem */
+  background-color: #6d4c41;
   color: #fff;
   border: 2px solid #5a3b2b;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 16px;
+  border-radius: 0.5rem; /* 8px */
+  padding: 0.5rem 1rem; /* 8px 16px */
+  font-size: 1rem;     /* 16px */
   font-weight: 600;
   cursor: pointer;
-  transition: 
-    background-color 0.2s ease,
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 0.5rem; /* 8px entre ícone e texto, se houver */
 }
 
-/* Ícones (caso queira adicionar um ícone antes do texto) */
-.power-btn::before {
-  content: none; /* deixe a opção aberta, exemplo: "⚡" para speed, "🛡️" para reflect, etc. */
-  font-size: 18px;
-}
-
-/* Estado “comprado” */
 .power-btn.owned {
-  background-color: #4caf50;   /* verde para indicar que já possui */
+  background-color: #4caf50;
   border-color: #357a38;
 }
 
-/* Hover (somente se não estiver comprado) */
 .power-btn:not(.owned):hover {
   background-color: #8d6e63;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
 }
 
-/* Desabilitado */
 .power-btn:disabled {
   background-color: #444;
   color: #777;
@@ -322,32 +335,79 @@
   box-shadow: none;
 }
 
-/* Texto interno do botão */
 .power-btn span {
   display: inline-block;
+  font-size: 1rem;
 }
 
-/* Responsividade (botões empilham verticalmente em telas pequenas) */
+/* -------------------------------------------------------------------
+   13. RESPONSIVIDADE EXTRA (TELAS < 480px)
+   ------------------------------------------------------------------- */
 @media (max-width: 480px) {
+  /* Container ainda centralizado, mas com padding reduzido */
+  .character-container {
+    width: 100vw;
+    border-radius: 0;
+    padding: 1rem; /* 16px */
+  }
+
+  /* Cabeçalho e fontes menores */
+  .character-header h1 {
+    font-size: 1.25rem; /* 20px */
+  }
+  .level-display {
+    font-size: 0.875rem; /* 14px */
+  }
+
+  /* Ajusta imagem para caber bem em 360px */
+  .player-img {
+    max-width: 160px; /* 160px em vez de 240px */
+    width: 50vw;      /* 50% da tela em portrait */
+  }
+
+  /* Estatísticas: reduz tamanhos de fonte e barra */
+  .stat-header {
+    width: 3.5rem; /* 56px */
+  }
+  .stat-header h3 {
+    font-size: 0.875rem; /* 14px */
+  }
+  .stat-bar {
+    height: 1rem; /* 16px */
+  }
+  .stat-value-inside {
+    font-size: 0.625rem; /* 10px */
+  }
+
+  /* Botões 1x/10x menores */
+  .increase-stat-btn {
+    padding: 0.2rem 0.4rem; /* 3px 6px */
+    height: 1.25rem;       /* 20px */
+    font-size: 0.75rem;    /* 12px */
+  }
+
+  /* Reset button ocupa largura total do container */
+  .reset-button-wrapper {
+    margin-top: 0.75rem; /* 12px */
+  }
+  .reset-button {
+    width: 100%;
+    padding: 0.5rem 0; /* 8px vertical */
+    font-size: 0.875rem; /* 14px */
+  }
+
+  /* Powers-section empilha itens em coluna única */
   .powers-section {
-    display: flex;
     flex-direction: column;
-    align-items: stretch;
+    gap: 0.75rem; /* 12px */
+    padding: 0.75rem; /* 12px */
   }
-
-  .powers-section h2 {
-    margin-bottom: 16px;
+  .power-btn {
+    flex: 1 1 100%;
+    font-size: 0.875rem; /* 14px */
+    padding: 0.5rem;     /* 8px */
   }
-}
-
-
-/* Responsivo */
-@media (max-width: 768px) {
-  .character-content {
-    flex-direction: column-reverse;
-  }
-
-  .character-visual {
-    margin-bottom: 25px;
+  .power-btn span {
+    font-size: 0.875rem; /* 14px */
   }
 }

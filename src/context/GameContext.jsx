@@ -7,7 +7,8 @@ import { availableMissions } from '../pages/Missoes';
 // -----------------------------------------------------------------------------
 
 // URL base da API (pode mudar para produção ou outro ambiente)
-const API_URL = 'http://localhost:4000/api';
+//const API_URL = 'http://localhost:4000/api';
+ const API_URL = 'http://192.168.20.109:4000/api';
 
 // -----------------------------------------------------------------------------
 // Criação do contexto e hook personalizado
