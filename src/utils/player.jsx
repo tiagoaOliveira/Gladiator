@@ -2,7 +2,7 @@ export function generatePlayerStats(level = 1) {
   const safeLevel = Number(level) || 1;
 
   return {
-    hp: Math.floor(150),
+    hp: Math.floor(250),
     attack: Math.floor(20),
     critChance: parseFloat((15)),
     attackSpeed: parseFloat((1)),

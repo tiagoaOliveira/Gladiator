@@ -17,7 +17,7 @@
   border-radius: 8px;
   width: 90%;
   max-width: 700px;
-  max-height: 80vh;
+  max-height: 90vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -33,15 +33,6 @@
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.combat-modal h2 {
-  background-color: #6d4c41;
-  color: white;
-  margin: 0;
-  padding: 5px;
-  text-align: center;
-  border-bottom: 2px solid #5a3b2b;
 }
 
 /* Battle visualization section */
@@ -112,7 +103,6 @@
   flex: 1;
   overflow-y: auto;
   padding: 15px;
-  min-height: 300px;
 }
 
 .log-entry {
@@ -136,7 +126,7 @@
 
 .combat-result {
   padding: 15px;
-  margin: 20px 50px;
+  margin: 15px 30px;
   border-radius: 8px;
   text-align: center;
 }
@@ -236,4 +226,12 @@
 
 .hp-value {
   color: #f44336;
+}
+
+@media (max-width: 768px) and (orientation: portrait) {
+  .combat-modal {
+    width: 95%;
+    max-height: 95vh;
+    margin: 10px;
+  }
 }

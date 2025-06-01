@@ -20,80 +20,73 @@ const dbFile = path.resolve(__dirname, 'tournament.db');
 const sqlite = sqlite3.verbose();
 const db = new sqlite.Database(dbFile);
 
-db.serialize(() => {
-  // Jogadores - Adicionado o campo rankedPoints
-  db.run(`
-  CREATE TABLE IF NOT EXISTS players (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL UNIQUE,
-    level INTEGER DEFAULT 1,
-    xp INTEGER DEFAULT 0,
-    gold INTEGER DEFAULT 50,
-    hp INTEGER DEFAULT 150,
-    maxHp INTEGER DEFAULT 150,
-    attack INTEGER DEFAULT 20,
-    critChance REAL DEFAULT 15,
-    attackSpeed REAL DEFAULT 1.0,
-    physicalDefense INTEGER DEFAULT 30,
-    magicPower INTEGER DEFAULT 0,
-    magicResistance INTEGER DEFAULT 0,
-    xpToNextLevel INTEGER DEFAULT 300,
-    attributePoints INTEGER DEFAULT 3,
-    rankedPoints INTEGER DEFAULT 0,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_login DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
-  // Verificar e adicionar colunas dos poderes se não existirem
-  db.all(`PRAGMA table_info(players)`, [], (err, columns) => {
-    if (err) {
-      console.error('Erro ao verificar colunas:', err);
-      return;
-    }
-
-    const columnNames = columns.map(col => col.name);
-
-    if (!columnNames.includes('reflect')) {
-      db.run(`ALTER TABLE players ADD COLUMN reflect BOOLEAN DEFAULT 0`);
-    }
-    if (!columnNames.includes('criticalX3')) {
-      db.run(`ALTER TABLE players ADD COLUMN criticalX3 BOOLEAN DEFAULT 0`);
-    }
-    if (!columnNames.includes('speedBoost')) {
-      db.run(`ALTER TABLE players ADD COLUMN speedBoost BOOLEAN DEFAULT 0`);
-    }
-  });
-  // Adicionar coluna rankedPoints se ela não existir
-  db.run(`
-    PRAGMA table_info(players)
-  `, [], (err, rows) => {
-    if (err) {
-      console.error('Erro ao verificar colunas da tabela:', err);
-      return;
-    }
-
-    // Verificar se a coluna rankedPoints já existe
-    db.get(`PRAGMA table_info(players)`, [], (err, rows) => {
+// Função auxiliar para verificar se uma coluna existe
+function columnExists(tableName, columnName) {
+  return new Promise((resolve, reject) => {
+    db.all(`PRAGMA table_info(${tableName})`, [], (err, columns) => {
       if (err) {
-        console.error('Erro ao verificar colunas:', err);
+        reject(err);
         return;
       }
-
-      const columns = Array.isArray(rows) ? rows : [];
-      const hasRankedPoints = columns.some(col => col.name === 'rankedPoints');
-
-      if (!hasRankedPoints) {
-        console.log('Adicionando coluna rankedPoints à tabela players...');
-        db.run(`ALTER TABLE players ADD COLUMN rankedPoints INTEGER DEFAULT 0`, [], (err) => {
-          if (err) {
-            console.error('Erro ao adicionar coluna rankedPoints:', err);
-          } else {
-            console.log('Coluna rankedPoints adicionada com sucesso!');
-          }
-        });
-      }
+      const exists = columns.some(col => col.name === columnName);
+      resolve(exists);
     });
   });
+}
+
+// Função auxiliar para adicionar coluna se não existir
+async function addColumnIfNotExists(tableName, columnName, columnDefinition) {
+  try {
+    const exists = await columnExists(tableName, columnName);
+    if (!exists) {
+      return new Promise((resolve, reject) => {
+        db.run(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`, [], (err) => {
+          if (err) {
+            reject(err);
+          } else {
+            console.log(`Coluna ${columnName} adicionada com sucesso à tabela ${tableName}!`);
+            resolve();
+          }
+        });
+      });
+    } else {
+      console.log(`Coluna ${columnName} já existe na tabela ${tableName}.`);
+    }
+  } catch (error) {
+    console.error(`Erro ao verificar/adicionar coluna ${columnName}:`, error);
+  }
+}
+
+// Inicialização do banco de dados
+db.serialize(async () => {
+  // Jogadores - Tabela principal
+  db.run(`
+    CREATE TABLE IF NOT EXISTS players (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      level INTEGER DEFAULT 1,
+      xp INTEGER DEFAULT 0,
+      gold INTEGER DEFAULT 50,
+      hp INTEGER DEFAULT 250,
+      maxHp INTEGER DEFAULT 250,
+      attack INTEGER DEFAULT 20,
+      critChance REAL DEFAULT 15,
+      attackSpeed REAL DEFAULT 1.0,
+      physicalDefense INTEGER DEFAULT 30,
+      magicPower INTEGER DEFAULT 0,
+      magicResistance INTEGER DEFAULT 0,
+      xpToNextLevel INTEGER DEFAULT 300,
+      attributePoints INTEGER DEFAULT 3,
+      rankedPoints INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      last_login DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  // Adicionar colunas de poderes se não existirem
+  await addColumnIfNotExists('players', 'reflect', 'BOOLEAN DEFAULT 0');
+  await addColumnIfNotExists('players', 'criticalX3', 'BOOLEAN DEFAULT 0');
+  await addColumnIfNotExists('players', 'speedBoost', 'BOOLEAN DEFAULT 0');
 
   // Tabela de missões do jogador
   db.run(`
@@ -146,6 +139,8 @@ db.serialize(() => {
       FOREIGN KEY(winner_id) REFERENCES players(id)
     )
   `);
+
+  console.log('Banco de dados inicializado com sucesso!');
 });
 
 // Modificar para ordenar por pontos de ranking, não por nível

@@ -180,7 +180,6 @@ export default function CombatModal({
   return (
     <div className="modal-overlay">
       <div className="combat-modal">
-        <h2>Batalha contra {enemyName}</h2>
 
         <div className="battle-visualization">
           <div className="combatant player-combatant">

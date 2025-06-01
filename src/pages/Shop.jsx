@@ -115,7 +115,8 @@ export default function Shop() {
             <p className="item-effect">{item.effect}</p>
             <p className="item-price">🪙 {item.price}</p>
 
-            <button
+            <div className='buy-button-container'>
+              <button
               onClick={() => buyItem(item)}
               className="buy-button"
               disabled={
@@ -134,6 +135,7 @@ export default function Shop() {
             >
               {purchasing ? 'Processando...' : 'Comprar com Pi'}
             </button>
+            </div>
           </div>
         ))}
       </div>

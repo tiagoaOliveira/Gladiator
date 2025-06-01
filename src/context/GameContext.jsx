@@ -627,7 +627,6 @@ export function GameProvider({ children }) {
 
         // Se inimigo for derrotado, sai do loop
         if (enemyClone.currentHp <= 0) {
-          combatLog.push({ type: 'player', message: `Você derrotou o ${enemy.name}!` });
           break;
         }
       }
@@ -728,21 +727,21 @@ export function GameProvider({ children }) {
         newHp = player.maxHp;
         result = {
           type: 'victory',
-          title: 'Vitória! Subiu de Nível!',
-          message: `Você derrotou ${enemy.name}, subiu para o nível ${newLevel}, ganhou ${attributePointsGained} pontos de atributo`
+          title: 'Vitória!',
+          message: `Subiu para o nível ${newLevel}: `
         };
       } else {
         result = {
           type: 'victory',
           title: 'Vitória!',
-          message: `Você derrotou ${enemy.name}, ganhou ${enemy.rewardXP} XP`
+          message: ` Ganhou ${enemy.rewardXP} XP`
         };
       }
 
       // Cálculo de ouro baseado no nível do inimigo e modificadores
       const goldMultiplier = enemy.rewardGoldMultiplier || 1;
       const rewardGold = Math.floor(enemy.level * 4 * (1 + Math.random() * 0.5) * goldMultiplier);
-      result.message += ` e mais ${rewardGold} de ouro!`;
+      result.message += ` +${rewardGold} de ouro!`;
 
       // Aplica todas as atualizações ao jogador de uma só vez
       updatePlayer({

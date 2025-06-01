@@ -180,7 +180,6 @@ export default function Arena() {
               <img src={enemy.image} alt={enemy.name} className="enemy-thumbnail" />
               <div className="enemy-option-info">
                 <h3>{enemy.name}</h3>
-                <p>Nível: {enemy.level}</p>
               </div>
             </div>
           ))}
@@ -195,17 +194,15 @@ export default function Arena() {
           <p>🗡️ Ataque: {selectedEnemy.attack}</p>
           <p>🛡️ Defesa: {selectedEnemy.defense}</p>
           <p>⚡ Crítico: {selectedEnemy.critChance}%</p>
-          <p>🎯 Vel. de Ataque: {selectedEnemy.attackSpeed}</p>
+          <p>🎯 Velocidade: {selectedEnemy.attackSpeed}</p>
+          <p>🌟XP: {selectedEnemy.rewardXP}</p>
+          <p>💰Ouro: ~{selectedEnemy.level * 4 * selectedEnemy.rewardGoldMultiplier}</p>
         </div>
 
         <div className="enemy-visual">
+
           <img src={selectedEnemy.image} alt={selectedEnemy.name} className="enemy-image" />
         </div>
-      </div>
-
-      <div className="enemy-rewards">
-        <h3>Recompensas</h3>
-        <p>🌟XP: {selectedEnemy.rewardXP} 💰Ouro: ~{selectedEnemy.level * 4 * selectedEnemy.rewardGoldMultiplier}</p>
       </div>
 
       {autoBattleActive && (
