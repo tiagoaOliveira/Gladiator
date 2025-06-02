@@ -6,7 +6,7 @@ export const enemies = [
   {
     id: 1,
     name: 'Goblin Berserk',
-    level: 1,
+    level: 3,
     hp: 140,
     attack: 25,
     defense: 30,
@@ -19,7 +19,7 @@ export const enemies = [
   {
     id: 2,
     name: 'Orc Selvagem',
-    level: 2,
+    level: 15,
     hp: 280,           
     attack: 45,       
     defense: 60,       
@@ -32,11 +32,11 @@ export const enemies = [
   {
     id: 3,
     name: 'Dragão Ancião',
-    level: 4,
+    level: 30,
     hp: 560,           
     attack: 90,       
     defense: 120,       
-    critChance: 40,    
+    critChance: 30,    
     attackSpeed: 2,    
     image: dragao, 
     rewardXP: 600,     
@@ -45,14 +45,14 @@ export const enemies = [
    {
     id: 4,
     name: 'Guarda Real',
-    level: 8,
+    level: 50,
     hp: 1300,           
     attack: 200,       
-    defense: 200,       
-    critChance: 50,    
+    defense: 150,       
+    critChance: 40,    
     attackSpeed: 3,    
     image: dragao, 
-    rewardXP: 2000,     
+    rewardXP: 200000,     
     rewardGoldMultiplier: 3 
   }
 ];

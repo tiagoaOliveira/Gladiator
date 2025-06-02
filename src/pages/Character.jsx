@@ -28,7 +28,7 @@ export default function Character() {
 
     switch (statName) {
       case 'attack':
-        updatedStats.attack = player.attack + (2 * amount);
+        updatedStats.attack = player.attack + (4 * amount);
         break;
       case 'physicalDefense':
         // Verificar se ainda pode aumentar (máximo é 300)
@@ -46,8 +46,8 @@ export default function Character() {
         updatedStats.attributePoints = player.attributePoints - pontosAtributoGastosDefesa;
         break;
       case 'maxHp':
-        updatedStats.maxHp = player.maxHp + (10 * amount);
-        updatedStats.hp = player.hp + (10 * amount);
+        updatedStats.maxHp = player.maxHp + (20 * amount);
+        updatedStats.hp = player.hp + (20 * amount);
         break;
       case 'critChance':
         // Cada ponto equivale a +1% de crit. Não deixa ultrapassar 100%.
@@ -205,7 +205,7 @@ export default function Character() {
           className={`power-btn ${player.reflect ? 'owned' : ''}`}
         >
           <div>
-            <p>Reflete 20% de dano {player.reflect ? '✓' : ''}</p>
+            <p>Reflete 100% do dano reduzido {player.reflect ? '✓' : ''}</p>
             <p>+50 de defesa</p>
           </div>
         </button>

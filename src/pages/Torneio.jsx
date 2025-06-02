@@ -13,7 +13,7 @@ const TIERS = [
   { name: 'Mestre', min: 1400, max: Infinity, color: '#ff4500' }
 ];
 
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = 'http://192.168.20.109:4000/api';
 const VICTORY_POINTS = 30;
 const DEFEAT_POINTS = -10;
 const TOP_N = 5;
@@ -256,7 +256,15 @@ export default function Torneio() {
 
     const playerCrit = Math.random() * 100 < playerClone.critChance;
     const critMultiplier = (playerClone.criticalX3 && playerCrit) ? 3 : (playerCrit ? 2 : 1);
-    const finalPlayerDamage = Math.floor(playerDamage * critMultiplier);
+    
+    // Calculamos o dano total com crítico
+    const totalDamageWithCrit = Math.floor(playerBaseDamage * critMultiplier);
+    
+    // Calculamos o dano reduzido pela defesa (considerando o crítico)
+    const finalPlayerDamage = Math.floor(totalDamageWithCrit * (1 - enemyDamageReduction / 100));
+    
+    // O dano que foi "absorvido" pela defesa
+    const absorbedDamage = totalDamageWithCrit - finalPlayerDamage;
 
     enemyClone.currentHp -= finalPlayerDamage;
 
@@ -265,12 +273,11 @@ export default function Torneio() {
       critMessage = playerClone.criticalX3 ? ' (crítico x3!)' : ' (crítico!)';
     }
 
-    if (enemyClone.reflect) {
-      const reflectDamage = Math.floor(finalPlayerDamage * 0.2);
-      playerClone.currentHp -= reflectDamage;
+    if (enemyClone.reflect && absorbedDamage > 0) {
+      playerClone.currentHp -= absorbedDamage;
       logs.push({
         type: 'player',
-        message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemyName} e recebeu 🔥 ${reflectDamage} de dano refletido.`
+        message: `Você causou ${finalPlayerDamage} de dano${critMessage} ao ${enemyName} e recebeu 🔥 ${absorbedDamage} de dano refletido.`
       });
 
       if (playerClone.currentHp <= 0) {
@@ -301,11 +308,18 @@ export default function Torneio() {
     const logs = [];
     const enemyBaseDamage = Math.max(1, enemyClone.attack);
     const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
-    let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
 
     const enemyCrit = Math.random() * 100 < enemyClone.critChance;
     const critMultiplier = (enemyClone.criticalX3 && enemyCrit) ? 3 : (enemyCrit ? 1.5 : 1);
-    const finalEnemyDamage = Math.floor(enemyDamage * critMultiplier);
+    
+    // Calculamos o dano total com crítico
+    const totalDamageWithCrit = Math.floor(enemyBaseDamage * critMultiplier);
+    
+    // Calculamos o dano reduzido pela defesa (considerando o crítico)
+    const finalEnemyDamage = Math.floor(totalDamageWithCrit * (1 - damageReduction / 100));
+    
+    // O dano que foi "absorvido" pela defesa
+    const absorbedDamage = totalDamageWithCrit - finalEnemyDamage;
 
     playerClone.currentHp -= finalEnemyDamage;
 
@@ -316,10 +330,9 @@ export default function Torneio() {
 
     let message = `${enemyName} causou ${finalEnemyDamage} de dano${critMessage} a você.`;
 
-    if (playerClone.reflect && finalEnemyDamage > 0) {
-      const reflectDamage = Math.floor(finalEnemyDamage * 0.2);
-      enemyClone.currentHp -= reflectDamage;
-      message += ` 🔥 Você refletiu ${reflectDamage} de dano.`;
+    if (playerClone.reflect && absorbedDamage > 0) {
+      enemyClone.currentHp -= absorbedDamage;
+      message += ` 🔥 Você refletiu ${absorbedDamage} de dano.`;
 
       if (enemyClone.currentHp <= 0) {
         logs.push({ type: 'enemy', message });

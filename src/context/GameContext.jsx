@@ -29,7 +29,7 @@ export function GameProvider({ children }) {
   const [player, setPlayer] = useState(null);              // Dados do jogador logado
   const [playerMissions, setPlayerMissions] = useState({}); // Progresso das missões do jogador
 
-  // Notificação (tipo “toast”): show controla visibilidade, message é texto e type é css (info, success, error)
+  // Notificação (tipo "toast"): show controla visibilidade, message é texto e type é css (info, success, error)
   const [notification, setNotification] = useState({
     show: false,
     message: '',
@@ -637,11 +637,14 @@ export function GameProvider({ children }) {
 
         const enemyBaseDamage = Math.max(1, enemyClone.attack);
         const damageReduction = Math.min(30, playerClone.physicalDefense * 0.1);
-        let enemyDamage = Math.floor(enemyBaseDamage * (1 - damageReduction / 100));
 
-        // Crítico do inimigo (1.5x)
+        // Crítico do inimigo (aplicado no dano base)
         const enemyCrit = Math.random() * 100 < enemyClone.critChance;
-        const finalEnemyDamage = enemyCrit ? Math.floor(enemyDamage * 1.5) : enemyDamage;
+        const rawDamage = enemyCrit ? Math.floor(enemyBaseDamage * 2) : enemyBaseDamage;
+        
+        // Aplica redução de defesa no dano total (incluindo crítico)
+        const finalEnemyDamage = Math.floor(rawDamage * (1 - damageReduction / 100));
+        const damageReduced = rawDamage - finalEnemyDamage; // Quantidade total de dano reduzida
 
         playerClone.currentHp -= finalEnemyDamage;
 
@@ -659,8 +662,10 @@ export function GameProvider({ children }) {
             attackSpeed: enemyClone.attackSpeed
           });
         }
-        if (playerClone.reflect && finalEnemyDamage > 0) {
-          const reflected = Math.floor(finalEnemyDamage * 0.2);
+        
+        // Reflect agora devolve o dano que foi reduzido pela defesa (incluindo crítico)
+        if (playerClone.reflect && damageReduced > 0) {
+          const reflected = Math.floor(damageReduced);
           enemyClone.currentHp -= reflected;
           combatLog.push({
             type: 'system',
@@ -672,7 +677,6 @@ export function GameProvider({ children }) {
             break;
           }
         }
-
 
         // Se jogador for derrotado, sai do loop
         if (playerClone.currentHp <= 0) {
