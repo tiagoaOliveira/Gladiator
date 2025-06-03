@@ -100,10 +100,6 @@
    Estilização para Mobile (≤ 768px)
 ------------------------------------------------------------ */
 @media (max-width: 768px) {
-  /*.content {
-    max-width: 350px;
-  }*/
-
   /* Container não centraliza para 1080px, ocupa 100% */
   .container {
     padding: 0px;
