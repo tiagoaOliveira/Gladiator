@@ -133,7 +133,7 @@ export default function Torneio() {
   };
 
   // Função para registrar resultado da batalha
-  const registerBattleResult = async (playerWon, opponentId, battleLog) => {
+  const registerBattleResult = async (playerWon, opponentId, battleLog, finalHp) => {
     try {
       const winnerId = playerWon ? player.id : opponentId;
 
@@ -160,8 +160,12 @@ export default function Torneio() {
         console.error('Erro ao buscar jogador para atualizar pontos:', playerResponse.status);
       } else {
         const updatedPlayerData = await playerResponse.json();
+        const currentPlayerHp = player.hp;
         // 3) Atualizamos apenas rankedPoints no contexto React
-        updatePlayer({ rankedPoints: updatedPlayerData.rankedPoints });
+        updatePlayer({
+          rankedPoints: updatedPlayerData.rankedPoints,
+          hp: finalHp
+        });
       }
     } catch (err) {
       console.error('Erro ao registrar batalha:', err);
@@ -180,8 +184,10 @@ export default function Torneio() {
     setCombatResult(battleResult.result);
     setShowCombatModal(true);
 
-    // Registrar resultado no servidor
-    await registerBattleResult(battleResult.success, battleOpponent.id, battleResult.combatLog);
+    await updatePlayer({ hp: Math.max(1, battleResult.playerFinalHp) });
+
+    // Registrar resultado no servidor - FIXED: Use battleResult.playerFinalHp instead of playerClone.currentHp
+    await registerBattleResult(battleResult.success, battleOpponent.id, battleResult.combatLog, Math.max(1, battleResult.playerFinalHp));
   };
 
   // Lógica de combate
@@ -238,12 +244,13 @@ export default function Torneio() {
     const result = createBattleResult(playerWon, enemy.name);
 
     // Atualizar HP do jogador
-    updatePlayer({ hp: Math.max(1, playerClone.currentHp) });
+    //updatePlayer({ hp: Math.max(1, playerClone.currentHp) });
 
     return {
       success: playerWon,
       combatLog,
-      result
+      result, 
+      playerFinalHp: playerClone.currentHp
     };
   };
 
@@ -256,13 +263,13 @@ export default function Torneio() {
 
     const playerCrit = Math.random() * 100 < playerClone.critChance;
     const critMultiplier = (playerClone.criticalX3 && playerCrit) ? 3 : (playerCrit ? 2 : 1);
-    
+
     // Calculamos o dano total com crítico
     const totalDamageWithCrit = Math.floor(playerBaseDamage * critMultiplier);
-    
+
     // Calculamos o dano reduzido pela defesa (considerando o crítico)
     const finalPlayerDamage = Math.floor(totalDamageWithCrit * (1 - enemyDamageReduction / 100));
-    
+
     // O dano que foi "absorvido" pela defesa
     const absorbedDamage = totalDamageWithCrit - finalPlayerDamage;
 
@@ -311,13 +318,13 @@ export default function Torneio() {
 
     const enemyCrit = Math.random() * 100 < enemyClone.critChance;
     const critMultiplier = (enemyClone.criticalX3 && enemyCrit) ? 3 : (enemyCrit ? 1.5 : 1);
-    
+
     // Calculamos o dano total com crítico
     const totalDamageWithCrit = Math.floor(enemyBaseDamage * critMultiplier);
-    
+
     // Calculamos o dano reduzido pela defesa (considerando o crítico)
     const finalEnemyDamage = Math.floor(totalDamageWithCrit * (1 - damageReduction / 100));
-    
+
     // O dano que foi "absorvido" pela defesa
     const absorbedDamage = totalDamageWithCrit - finalEnemyDamage;
 
