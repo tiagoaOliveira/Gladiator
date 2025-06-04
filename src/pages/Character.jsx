@@ -195,11 +195,11 @@ export default function Character() {
     <div className="character-container">
       <div className="character-header">
         <h1>{player.name}</h1>
-        <p className="level-display">Nível: {player.level}</p>
+        <p className="level-display">{player.level}</p>
         <div className="character-visual">
           <img className="player-img" src={character} alt="Gladiador" />
         </div>
-        
+
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
           ⚙️ Atributos e Poderes
@@ -208,11 +208,10 @@ export default function Character() {
 
       {/* Modal com poderes e atributos */}
       {isModalOpen && (
-        <div className="modal-overlay" onClick={closeModal}>
+        <div className="modal-overlay-character" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Atributos e Poderes</h2>
-              <button className="close-modal-btn" onClick={closeModal}>×</button>
             </div>
 
             {/* ─── Seção de Poderes ─────────────────── */}
@@ -359,7 +358,7 @@ export default function Character() {
                   <div className="stat-bar-wrapper">
                     <div className="stat-header">
                       <h3>
-                        Crítico 
+                        Crítico
                       </h3>
                     </div>
                     <div className="stat-bar">
@@ -443,6 +442,8 @@ export default function Character() {
                   >
                     Reset Stats
                   </button>
+                  <button className="close-modal-btn" onClick={closeModal}>X</button>
+
                 </div>
               </div>
             </div>

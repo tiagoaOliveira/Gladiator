@@ -39,7 +39,7 @@ export default function Layout({ children }) {
         <nav className={`navigation ${menuOpen ? 'open' : ''}`}>
           {/* Ícone de “hamburger” apenas em mobile */}
           <button className="mobile-toggle-btn" onClick={toggleMenu}>
-            ☰
+            +
           </button>
 
           {/* Links de navegação */}

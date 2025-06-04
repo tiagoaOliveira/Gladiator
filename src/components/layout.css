@@ -1,15 +1,10 @@
-/* src/components/Layout.css */
-
 .container {
   max-width: 1100px;
   margin-left: auto;
   margin-right: auto;
-  padding: 20px;
   min-height: 100vh;
   color: white;
   position: relative;
-  padding-top: 60px; /* Espaço para a navegação fixa no topo */
-  padding-bottom: 100px; /* Espaço para o rodapé com duas barras */
 }
 
 /* ------------------------------------------------------------
@@ -33,7 +28,6 @@
 /* Links e botões de navegação */
 .navigation .nav-links {
   display: flex;
-  gap: 20px;
 }
 
 .navigation a,
@@ -50,10 +44,9 @@
 .navigation a:hover,
 .navigation button:hover {
   transform: scale(1.1);
-  transition: transform 0.1s ease-in-out;
 }
 
-/* Botão “☰” escondido em desktop */
+/* Botão + escondido em desktop */
 .mobile-toggle-btn {
   display: none;
   background: none;
@@ -68,8 +61,8 @@
    Conteúdo principal
 ------------------------------------------------------------ */
 .content {
-  padding-bottom: 20px;
   min-width: 350px;
+  min-height: 100vh;
 }
 
 /* ------------------------------------------------------------
@@ -86,56 +79,75 @@
   background-color: transparent;
 }
 
-.health-bar-container {
-  margin-bottom: 8px;
-}
-
 .xp-bar-container {
   margin-bottom: 5px;
+  max-width: 85%;
 }
-
-
 
 /* ------------------------------------------------------------
    Estilização para Mobile (≤ 768px)
 ------------------------------------------------------------ */
 @media (max-width: 768px) {
-  /* Container não centraliza para 1080px, ocupa 100% */
-  .container {
-    padding: 0px;
-    padding-top: 57px;  /* menor espaçamento para navbar móvel */
- /* espaço maior para rodapé móvel */
-  }
-
-  /* Navegação torna-se ocultável */
+  /* ------------------------------------------------------------
+     Ajusta .navigation para Mobile
+  ------------------------------------------------------------ */
   .navigation {
-    width: 100%;
-    padding: 4px;
-    flex-direction: row; /* deixa botão e ícone na mesma linha */
-    justify-content: space-between;
+    position: relative;      /* não mais fixed */
+    top: auto;               /* zera o top */
+    left: 0;                 /* zera o left */
+    transform: none;         /* remove o translateX */
+    width: 100%;             /* ocupa 100% da tela */
+    padding: 0;              /* retiramos padding de desktop */
+    height: auto;            /* altura automática (só o botão “+”) */
+    display: flex;
+    align-items: center;     /* alinha o botão verticalmente */
+    background-color: #6d4c41;
+    border-bottom: 2px solid #3c2b21;
+    z-index: 1000;
   }
 
-  /* Mostra o botão hamburger */
+  /* Mostra o botão “+” em Mobile */
   .mobile-toggle-btn {
-    display: block;
+    display: block;          /* agora é exibido */
+    position: absolute;      /* posição absoluta dentro do .navigation */
+    top: 4px;
+    left: 10px;
+    z-index: 1001;
+    background-color: #6d4c41;
+    color: #fff;
+    font-size: 24px;
+    padding: 4px 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
   }
 
-  /* Links escondidos por padrão em mobile */
+  /* Gira o “+” para virar “X” quando aberto */
+  .navigation.open .mobile-toggle-btn {
+    transform: rotate(45deg);
+  }
+
+  /* Links escondidos por padrão em mobile (fora da tela à esquerda) */
   .navigation .nav-links {
-    display: none;
+    position: absolute;
+    top: 40px;
+    left: 1px;
+    width: 90%;
     flex-direction: column;
     background-color: #6d4c41;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
     border-top: 2px solid #3c2b21;
-    padding: 10px 0;
+    transform: translateX(-100%);
+    opacity: 0;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    pointer-events: none;
   }
 
-  /* Quando a classe .open está presente, exibe os links verticalmente */
+  /* Quando a classe .open estiver presente, traz para dentro da tela */
   .navigation.open .nav-links {
-    display: flex;
+    transform: translateX(0%);
+    opacity: 1;
+    pointer-events: auto;
   }
 
   /* Ajusta aparência dos itens em mobile */
@@ -145,15 +157,11 @@
     text-align: left;
     width: 100%;
     border-bottom: 1px solid #3c2b21;
+    color: #fff;
   }
   .navigation .nav-links a:last-child,
   .navigation .nav-links button:last-child {
     border-bottom: none;
-  }
-
-  /* Barra de navegação fixa ocupa menos espaço visual */
-  .navigation {
-    border-bottom: 2px solid #3c2b21;
   }
 
   /* Ajuste no rodapé para mobile */
