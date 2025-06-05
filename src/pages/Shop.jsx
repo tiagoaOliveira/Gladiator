@@ -17,7 +17,7 @@ export default function Shop() {
 
   const items = [
     { id: 1, name: "Poção de Cura", price: 10, effect: "Recupera todo HP", action: () => healPlayer() },
-    { id: 2, name: "Comprar Nível", price: levelUpPrice, effect: "+1 Nível, +3 Pontos de Atributo", action: () => buyLevel() }
+    { id: 2, name: "Comprar Nível", price: levelUpPrice, effect: "+1 Nível", action: () => buyLevel() }
   ];
 
   function healPlayer() {

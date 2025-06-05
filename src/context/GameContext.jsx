@@ -548,7 +548,7 @@ export function GameProvider({ children }) {
     if (!player) return;
 
     const newLevel = player.level + 1;
-    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.02);
+    const xpToNextLevel = Math.floor(player.xpToNextLevel * 1.01);
 
     try {
       const updatedPlayer = await updatePlayer({
@@ -744,7 +744,7 @@ export function GameProvider({ children }) {
 
       // Cálculo de ouro baseado no nível do inimigo e modificadores
       const goldMultiplier = enemy.rewardGoldMultiplier || 1;
-      const rewardGold = Math.floor(enemy.level * 4 * (1 + Math.random() * 0.5) * goldMultiplier);
+      const rewardGold = Math.floor( 2 * (1 + Math.random() * 0.5) * goldMultiplier);
       result.message += ` +${rewardGold} de ouro!`;
 
       // Aplica todas as atualizações ao jogador de uma só vez
