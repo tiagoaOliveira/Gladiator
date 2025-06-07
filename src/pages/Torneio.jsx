@@ -369,7 +369,7 @@ export default function Torneio() {
       return {
         type: 'victory',
         title: 'Vitória!',
-        message: `Você derrotou ${enemyName} e ganhou ${VICTORY_POINTS} pontos de ranking!`
+        message: `Você derrotou ${enemyName}:  +${VICTORY_POINTS} pontos de ranking!`
       };
     } else {
       return {
@@ -447,7 +447,7 @@ export default function Torneio() {
       )}
 
       <div className="tournament-info">
-        <h2>📜 Sobre o Torneio</h2>
+        <h2>📜 Sobre</h2>
         <p>
           O torneio é uma competição entre todos os gladiadores cadastrados.
           Enfrente oponentes de nível similar e ganhe pontos de ranking para subir na classificação!

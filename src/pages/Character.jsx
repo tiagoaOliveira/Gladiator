@@ -3,7 +3,7 @@ import { useGame } from '../context/GameContext';
 import { generatePlayerStats } from '../utils/player';
 import ProgressBar from '../components/ProgressBar';
 import './Character.css';
-import character from '../assets/images/gladiator.jpg';
+import character from '../assets/images/glad1.png';
 
 export default function Character() {
   const { player, updatePlayer, showNotification, resetStats } = useGame();

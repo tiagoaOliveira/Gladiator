@@ -2,10 +2,13 @@
    PÁGINA PRINCIPAL DO TORNEIO
 ============================================================ */
 .tournament-page {
+  background-image: url('../assets/images/torneio.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
   padding: 2rem;
   text-align: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
 }
 
 .tournament-page h1 {
@@ -71,13 +74,14 @@
 ============================================================ */
 .tournament-info {
   margin: 2rem auto;
-  padding: 1.5rem;
-  max-width: 600px;
+  padding: 1rem 1.5rem;
+  max-width: 650px;
   background: linear-gradient(135deg, #222 0%, #333 100%);
   color: #fff;
   border-radius: 12px;
   border: 1px solid #444;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
 }
 
 .tournament-info h2 {

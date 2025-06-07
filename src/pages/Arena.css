@@ -16,14 +16,35 @@
 }
 
 .enemy-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 20px;
-  padding: 15px 0;
-  max-height: 320px;
-  overflow-y: auto;
-  overflow-x: hidden;
+  display: flex;               /* Usamos flex para listar em linha */
+  flex-direction: row;         /* Itens lado a lado */
+  gap: 10px;                   /* Espaço entre cards */
+  padding: 15px 0;             /* Mantém o padding vertical */
+  overflow-x: auto;            /* Habilita scroll horizontal */
+  overflow-y: hidden;          /* Remove scroll vertical */
+  white-space: nowrap;         /* Garante que não quebre em múltiplas linhas */
+  max-height: 320px;           /* Se quiser manter altura fixa */
 }
+
+/* Se quiser deixar o scroll mais “limpo” (sem barras profundas), você pode opcionalmente: */
+.enemy-list::-webkit-scrollbar {
+  height: 6px;                 /* Agora a barra fica horizontal em vez de vertical */
+}
+
+.enemy-list::-webkit-scrollbar-track {
+  background: rgba(42, 31, 22, 0.3);
+  border-radius: 3px;
+}
+
+.enemy-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #ffc107, #ff9800);
+  border-radius: 3px;
+}
+
+.enemy-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #ff9800, #ffc107);
+}
+
 
 /* Custom scrollbar for enemy list */
 .enemy-list::-webkit-scrollbar {
@@ -45,6 +66,8 @@
 }
 
 .enemy-option {
+  flex: 0 0 auto;
+  width: 125px;
   background: linear-gradient(145deg, #5a3b2b, #4a2f1f);
   border: 3px solid transparent;
   border-radius: 15px;
@@ -268,13 +291,6 @@
     text-align: center;
   }
 
-  .enemy-list {
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    padding: 15px 0;
-    max-height: 300px;
-  }
-
   .enemy-option {
     padding: 12px;
     border-radius: 12px;
@@ -374,12 +390,6 @@
     text-align: center;
   }
 
-  .enemy-list {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 12px;
-    max-height: 200px;
-  }
-
   .enemy-option {
     padding: 10px;
     border-radius: 10px;
@@ -433,11 +443,6 @@
 
 /* Landscape orientation on mobile */
 @media (max-width: 768px) and (orientation: landscape) {
-  .enemy-list {
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    max-height: 200px;
-  }
-
   .enemy-container {
     flex-direction: row;
     gap: 15px;

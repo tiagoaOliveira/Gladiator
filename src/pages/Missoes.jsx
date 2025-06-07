@@ -8,7 +8,7 @@ export const availableMissions = [
     id: 1,
     title: "Caçador de Goblins",
     description: "Derrote 50 Goblins na arena",
-    target: "Goblin Berserker",
+    target: "Goblin Berserk",
     targetCount: 50,
     rewards: { xp: 5000, gold: 2500 },
     difficulty: "Fácil",
@@ -19,7 +19,7 @@ export const availableMissions = [
     title: "Exterminador de Orcs",
     description: "Derrote 20 Orcs Guerreiros",
     target: "Orc Selvagem",
-    targetCount: 20,
+    targetCount: 25,
     rewards: { xp: 8000, gold: 4000 },
     difficulty: "Médio",
     icon: "⚔️"
@@ -27,21 +27,21 @@ export const availableMissions = [
   {
     id: 3,
     title: "Caçador de Dragões",
-    description: "Derrote 5 Dragões Vermelhos",
+    description: "Derrote 10 Dragões Anciões",
     target: "Dragão Ancião",
-    targetCount: 5,
+    targetCount: 10,
     rewards: { xp: 20000, gold: 10000 },
-    difficulty: "Extremo",
+    difficulty: "Difícil",
     icon: "🐉"
   },
   {
     id: 4,
-    title: "Domador de Trolls",
-    description: "Derrote 10 Trolls das Cavernas",
+    title: "Pesadelo Real",
+    description: "Derrote 15 Guardas Reais",
     target: "Guarda Real",
-    targetCount: 10,
+    targetCount: 5,
     rewards: { xp: 12000, gold: 6000 },
-    difficulty: "Difícil",
+    difficulty: "Extremo",
     icon: "🛡️"
   },
   {
