@@ -394,7 +394,7 @@ export default function Torneio() {
 
   return (
     <div className="tournament-page">
-      <h1>🏆 Torneio Gladiador</h1>
+      <h1>🏆Torneio</h1>
 
       <button onClick={openTierModal} className="ranking-button">
         Ver Ranking de Gladiadores

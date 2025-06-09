@@ -196,42 +196,17 @@ export default function Character() {
       <div className="character-header">
         <h1>{player.name}</h1>
         <div>
-          <div className="character-game-footer">
-            <div className="level-circle">
-              {player.level}
-            </div>
-            <div className="health-bar-container">
-              <ProgressBar current={player.hp} max={player.maxHp} type="hp" />
-            </div>
-            <div className="xp-bar-container">
-              <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />
-            </div>
-          </div>
 
         </div>
-        <div className="character-visual">
+        {/*<div className="character-visual">
           <img className="player-img" src={character} alt="Gladiador" />
-        </div>
+        </div>/*}
 
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
-          ⚙️ Atributos e Poderes
+          ⚙️ Atributos 
         </button>
-      </div>
-
-      {/* Modal com poderes e atributos */}
-      <div className='modal-body'>
-        {isModalOpen && (
-          <div className="modal-overlay-character" onClick={closeModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>Atributos e Poderes</h2>
-                <button className="close-modal-btn" onClick={closeModal} title="Fechar">
-                  ×
-                </button>
-              </div>
-
-              {/* ─── Seção de Poderes ─────────────────── */}
+          {/* ─── Seção de Poderes ─────────────────── */}
               <div className="powers-section">
                 <button
                   onClick={() => selectPower('reflect')}
@@ -261,6 +236,19 @@ export default function Character() {
                     <p>+0.5 Velocidade {player.speedBoost ? '✓' : ''}</p>
                     <p>de Ataque</p>
                   </div>
+                </button>
+              </div>
+      </div>
+
+      {/* Modal com poderes e atributos */}
+      <div className='modal-body'>
+        {isModalOpen && (
+          <div className="modal-overlay-character" onClick={closeModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Atributos</h2>
+                <button className="close-modal-btn" onClick={closeModal} title="Fechar">
+                  ×
                 </button>
               </div>
 

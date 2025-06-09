@@ -39,8 +39,8 @@ export const enemies = [
     critChance: 30,    
     attackSpeed: 2,    
     image: dragao, 
-    rewardXP: 600,     
-    rewardGoldMultiplier: 3 
+    rewardXP: 6000,     
+    rewardGoldMultiplier: 2
   },
    {
     id: 4,
@@ -50,9 +50,9 @@ export const enemies = [
     attack: 200,       
     defense: 150,       
     critChance: 40,    
-    attackSpeed: 3,    
+    attackSpeed: 2.5,    
     image: dragao, 
     rewardXP: 200000,     
-    rewardGoldMultiplier: 3.5
+    rewardGoldMultiplier: 2.5
   }
 ];

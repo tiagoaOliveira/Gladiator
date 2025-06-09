@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'Medieval';
-  src: url('/public/assets/MedievalSharp-Regular.ttf') format('truetype');
+  src: url('/assets/MedievalSharp-Regular.ttf') format('truetype');
 }
 
 body {

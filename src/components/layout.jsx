@@ -53,7 +53,22 @@ export default function Layout({ children }) {
               🚪 Sair
             </button>
           </div>
+          {showNavigation && (
+            <div className="character-game-footer">
+              <div className="level-circle">
+                {player.level}
+              </div>
+              <div className="health-bar-container">
+                <ProgressBar current={player.hp} max={player.maxHp} type="hp" />
+              </div>
+              <div className="xp-bar-container">
+                <ProgressBar current={player.xp} max={player.xpToNextLevel} type="xp" />
+              </div>
+            </div>
+          )}
+          <div className='beta'>Beta</div>
         </nav>
+
       )}
 
       <main className="content">{children}</main>

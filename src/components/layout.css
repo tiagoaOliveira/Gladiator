@@ -88,19 +88,28 @@
    Estilização para Mobile (≤ 768px)
 ------------------------------------------------------------ */
 @media (max-width: 768px) {
+
   /* ------------------------------------------------------------
      Ajusta .navigation para Mobile
   ------------------------------------------------------------ */
   .navigation {
-    position: relative;      /* não mais fixed */
-    top: auto;               /* zera o top */
-    left: 0;                 /* zera o left */
-    transform: none;         /* remove o translateX */
-    width: 100%;             /* ocupa 100% da tela */
-    padding: 0;              /* retiramos padding de desktop */
-    height: auto;            /* altura automática (só o botão “+”) */
+    position: relative;
+    /* não mais fixed */
+    top: auto;
+    /* zera o top */
+    left: 0;
+    /* zera o left */
+    transform: none;
+    /* remove o translateX */
+    width: 100%;
+    /* ocupa 100% da tela */
+    padding: 0;
+    /* retiramos padding de desktop */
+    height: auto;
+    /* altura automática (só o botão “+”) */
     display: flex;
-    align-items: center;     /* alinha o botão verticalmente */
+    align-items: center;
+    /* alinha o botão verticalmente */
     background-color: #6d4c41;
     border-bottom: 2px solid #3c2b21;
     z-index: 1000;
@@ -108,8 +117,10 @@
 
   /* Mostra o botão “+” em Mobile */
   .mobile-toggle-btn {
-    display: block;          /* agora é exibido */
-    position: absolute;      /* posição absoluta dentro do .navigation */
+    display: block;
+    /* agora é exibido */
+    position: absolute;
+    /* posição absoluta dentro do .navigation */
     top: 4px;
     left: 10px;
     z-index: 1001;
@@ -131,7 +142,7 @@
   /* Links escondidos por padrão em mobile (fora da tela à esquerda) */
   .navigation .nav-links {
     position: absolute;
-    top: 40px;
+    top: 69px;
     left: 1px;
     width: 90%;
     flex-direction: column;
@@ -159,17 +170,36 @@
     border-bottom: 1px solid #3c2b21;
     color: #fff;
   }
+
   .navigation .nav-links a:last-child,
   .navigation .nav-links button:last-child {
     border-bottom: none;
   }
 
   /* Ajuste no rodapé para mobile */
-  .game-footer {
-    width: 100%;
-    bottom: 0;
-    left: 0;
-    transform: none;
-    padding: 0px;
+  .character-game-footer {
+    position: relative;
+    width: 300px;
+    margin: 0.5rem 0 0.5rem 3rem;
+    padding-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
   }
+}
+
+
+/*BETA*/
+.beta {
+  position: absolute;
+  top: -15px;
+  right: -60px;
+  background: white;
+  color: black;
+  padding: 0 50px;
+  font-weight: bold;
+  font-size: 12px;
+  transform: rotate(45deg);
+  transform-origin: top left;
+  z-index: 1000;
+  pointer-events: none; /* evita interferência em cliques */
 }
