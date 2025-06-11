@@ -114,7 +114,7 @@ export default function Arena() {
     
     if (success) {
       xpGained = selectedEnemy.rewardXP;
-      goldGained = Math.floor(selectedEnemy.level * 10 * selectedEnemy.rewardGoldMultiplier);
+      goldGained = Math.floor(selectedEnemy.level * 1 * selectedEnemy.rewardGoldMultiplier);
     }
 
     // Atualizar resultados acumulados
@@ -196,7 +196,7 @@ export default function Arena() {
           <p>⚡ Crítico: {selectedEnemy.critChance}%</p>
           <p>🎯 Velocidade: {selectedEnemy.attackSpeed}</p>
           <p>🌟XP: {selectedEnemy.rewardXP}</p>
-          <p>💰Ouro: ~{selectedEnemy.level * 4 * selectedEnemy.rewardGoldMultiplier}</p>
+          <p>💰Ouro: ~{selectedEnemy.level * 1 * selectedEnemy.rewardGoldMultiplier}</p>
         </div>
 
         <div className="enemy-visual">

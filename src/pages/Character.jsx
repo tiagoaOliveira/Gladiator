@@ -204,7 +204,7 @@ export default function Character() {
 
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
-          ⚙️ Atributos 
+          📊 Atributos 
         </button>
           {/* ─── Seção de Poderes ─────────────────── */}
               <div className="powers-section">
@@ -213,7 +213,7 @@ export default function Character() {
                   className={`power-btn ${player.reflect ? 'owned' : ''}`}
                 >
                   <div>
-                    <p>Reflete 100% do dano reduzido {player.reflect ? '✓' : ''}</p>
+                    <p>🛡️ Reflete dano </p>
                     <p>+50 de defesa</p>
                   </div>
                 </button>
@@ -224,7 +224,7 @@ export default function Character() {
                   disabled={player.critChance >= 100 && !player.criticalX3}
                   title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}>
                   <div>
-                    <p>Dano Crítico x3 {player.criticalX3 ? '✓' : ''}</p>
+                    <p>💪 Dano Crítico x3</p>
                     <p>+10% chance crítica</p>
                   </div>
                 </button>
@@ -233,7 +233,7 @@ export default function Character() {
                   onClick={() => selectPower('speedBoost')}
                   className={`power-btn ${player.speedBoost ? 'owned' : ''}`}>
                   <div>
-                    <p>+0.5 Velocidade {player.speedBoost ? '✓' : ''}</p>
+                    <p>⚡ +0.5 Velocidade</p>
                     <p>de Ataque</p>
                   </div>
                 </button>
