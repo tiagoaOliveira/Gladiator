@@ -66,7 +66,6 @@ export default function Layout({ children }) {
               </div>
             </div>
           )}
-          <div className='beta'>Beta</div>
         </nav>
 
       )}

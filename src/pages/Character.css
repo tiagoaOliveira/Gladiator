@@ -40,7 +40,6 @@
    2. CONTAINER PRINCIPAL MELHORADO
    ------------------------------------------------------------------- */
 .character-container {
-  background-image: url('../assets/images/warrior.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -53,6 +52,18 @@
   width: 95vw;
   max-width: 1200px;
   overflow: hidden;
+}
+
+.character-container.reflect-active{
+  background-image: url('../assets/images/reflect.png');
+}
+
+.character-container.critical-active{
+  background-image: url('../assets/images/critical.png');
+}
+
+.character-container.speed-active{
+  background-image: url('../assets/images/speed.png');
 }
 
 /* -------------------------------------------------------------------
@@ -125,7 +136,7 @@
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
   text-transform: uppercase;
   letter-spacing: 1px;
-  margin-top: 9rem;
+  margin-top: 11rem;
   position: relative;
   overflow: hidden;
 }
@@ -677,7 +688,7 @@
   .character-container {
     width: 100vw;
     height: 100vh;
-    margin-top: -2rem;
+    margin-top: -1rem;
     border-radius: 0;
     padding: 1.5rem;
   }

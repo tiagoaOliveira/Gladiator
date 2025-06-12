@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './CombatModal.css';
-import character from '../assets/images/gladiator.jpg';
+import perfilc from '../assets/images/perfil-critical.png';
+import perfilr from '../assets/images/perfil-reflect.png'
+import perfils from '../assets/images/perfil-speed.png'
 import { enemies } from '../utils/enemies';
+import { useGame } from '../context/GameContext';
 
 
-export default function CombatModal({ 
-  show, 
-  onClose, 
-  onRetry, 
-  combatLog, 
-  result, 
+export default function CombatModal({
+  show,
+  onClose,
+  onRetry,
+  combatLog,
+  result,
   showRetryButton = true,
   isAutoBattle = false
 }) {
@@ -20,6 +23,21 @@ export default function CombatModal({
   const [enemyName, setEnemyName] = useState('');
   const [battleFinished, setBattleFinished] = useState(false);
   const logEndRef = useRef(null);
+  const { player } = useGame();
+
+  //player image/power
+  const getPlayerImage = () => {
+    if (player?.criticalX3) {
+      return perfilc;
+    }
+    if (player?.reflect) {
+      return perfilr; // ou criticalReflect se for a mesma imagem
+    }
+    if (player?.speedBoost) {
+      return perfils; // ou character se não tiver imagem específica
+    }
+    return character; // Imagem padrão
+  };
 
   // Reset state when modal opens
   useEffect(() => {
@@ -46,7 +64,7 @@ export default function CombatModal({
           }
         }
       }
-      
+
       // Em modo de batalha automática, definir o log como finalizado imediatamente
       if (isAutoBattle) {
         setBattleFinished(true);
@@ -123,7 +141,7 @@ export default function CombatModal({
   const getEnemyImage = () => {
     // In a real implementation, you'd pass the enemy image from Arena.jsx
     // For now we'll return a placeholder if the enemy image isn't set
-    return enemyImage || '/api/placeholder/150/150';
+    return enemyImage;
   };
 
   // Renderização para modo de batalha automática
@@ -183,7 +201,7 @@ export default function CombatModal({
 
         <div className="battle-visualization">
           <div className="combatant player-combatant">
-            <img src={character} alt="Player character" className="combatant-image" />
+            <img src={getPlayerImage()} alt="Player character" className="combatant-image" />
             {enemyDamage && <div className="damage-number player-damage">-{enemyDamage}</div>}
           </div>
 

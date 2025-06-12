@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { generatePlayerStats } from '../utils/player';
-import ProgressBar from '../components/ProgressBar';
 import './Character.css';
-import character from '../assets/images/glad1.png';
 
 export default function Character() {
   const { player, updatePlayer, showNotification, resetStats } = useGame();
@@ -114,20 +112,7 @@ export default function Character() {
     // Se você clicar no mesmo poder que já está ativo, simplesmente desfaz (deseleciona)
     if (player[powerName]) {
       // Se for o crítico, tira os 10% de bônus
-      if (powerName === 'criticalX3') {
-        const novoCrit = Math.max(player.critChance - 10, 0);
-        updatePlayer({ criticalX3: false, critChance: novoCrit });
-
-      } else if (powerName === 'speedBoost') {
-        // Lidar com speedBoost: ao remover, subtrai 0.5 de attackSpeed (mas não abaixo de 1)
-        const novaVelocidade = Math.max(player.attackSpeed - 0.5, 1);
-        updatePlayer({ speedBoost: false, attackSpeed: novaVelocidade });
-      } else if (powerName === 'reflect') {
-        // Remover o bônus de Reflect: subtrai 50 da defesa atual (mínimo é a defesa base)
-        const baseStats = generatePlayerStats(player.level);
-        const novaDefesa = Math.max(player.physicalDefense - 50, baseStats.physicalDefense);
-        updatePlayer({ reflect: false, physicalDefense: novaDefesa });
-      }
+ 
       return;
     }
 
@@ -192,52 +177,51 @@ export default function Character() {
 
   // ─── HTML/JSX do componente ───────────────────────────────────────────────────────────────
   return (
-    <div className="character-container">
+    <div className={`character-container ${player.reflect ? 'reflect-active' :
+        player.criticalX3 ? 'critical-active' :
+          player.speedBoost ? 'speed-active' : ''
+      }`}>
       <div className="character-header">
         <h1>{player.name}</h1>
         <div>
-
         </div>
-        {/*<div className="character-visual">
-          <img className="player-img" src={character} alt="Gladiador" />
-        </div>/*}
 
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
-          📊 Atributos 
+          📊 Atributos
         </button>
-          {/* ─── Seção de Poderes ─────────────────── */}
-              <div className="powers-section">
-                <button
-                  onClick={() => selectPower('reflect')}
-                  className={`power-btn ${player.reflect ? 'owned' : ''}`}
-                >
-                  <div>
-                    <p>🛡️ Reflete dano </p>
-                    <p>+50 de defesa</p>
-                  </div>
-                </button>
+        {/* ─── Seção de Poderes ─────────────────── */}
+        <div className="powers-section">
+          <button
+            onClick={() => selectPower('reflect')}
+            className={`power-btn ${player.reflect ? 'owned' : ''}`}
+          >
+            <div>
+              <p>🛡️ Reflete dano </p>
+              <p>+50 de defesa</p>
+            </div>
+          </button>
 
-                <button
-                  onClick={() => selectPower('criticalX3')}
-                  className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
-                  disabled={player.critChance >= 100 && !player.criticalX3}
-                  title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}>
-                  <div>
-                    <p>💪 Dano Crítico x3</p>
-                    <p>+10% chance crítica</p>
-                  </div>
-                </button>
+          <button
+            onClick={() => selectPower('criticalX3')}
+            className={`power-btn ${player.criticalX3 ? 'owned' : ''}`}
+            disabled={player.critChance >= 100 && !player.criticalX3}
+            title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}>
+            <div>
+              <p>💪 Dano Crítico x3</p>
+              <p>+10% chance crítica</p>
+            </div>
+          </button>
 
-                <button
-                  onClick={() => selectPower('speedBoost')}
-                  className={`power-btn ${player.speedBoost ? 'owned' : ''}`}>
-                  <div>
-                    <p>⚡ +0.5 Velocidade</p>
-                    <p>de Ataque</p>
-                  </div>
-                </button>
-              </div>
+          <button
+            onClick={() => selectPower('speedBoost')}
+            className={`power-btn ${player.speedBoost ? 'owned' : ''}`}>
+            <div>
+              <p>⚡ +0.5 Velocidade</p>
+              <p>de Ataque</p>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Modal com poderes e atributos */}
