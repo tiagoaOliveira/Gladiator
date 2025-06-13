@@ -49,6 +49,7 @@ export default function Layout({ children }) {
             <Link to="/Torneio" onClick={closeMenu}>🏆 Torneio</Link>
             <Link to="/shop" onClick={closeMenu}>🏛️ Loja</Link>
             <Link to="/missoes" onClick={closeMenu}>📜 Missões</Link>
+            <Link to="/tutorial" onClick={closeMenu}>📖 Tutorial</Link>
             <button onClick={() => { closeMenu(); handleLogout(); }}>
               🚪 Sair
             </button>

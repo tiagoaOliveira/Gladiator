@@ -13,6 +13,7 @@ import Arena from './pages/Arena';
 import Torneio from './pages/Torneio';
 import Shop from './pages/Shop';
 import Missoes from './pages/Missoes';
+import Tutorial from './pages/Tutorial';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           <Route path='/Torneio' element={<Layout><Torneio/></Layout>}/>
           <Route path="/shop" element={<Layout><Shop /></Layout>} />
           <Route path="/missoes" element={<Layout><Missoes /></Layout>} />
+          <Route path="/tutorial" element={<Layout><Tutorial /></Layout>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>

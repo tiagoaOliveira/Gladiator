@@ -361,7 +361,7 @@ export function GameProvider({ children }) {
     rankedPoints: dbPlayer.rankedPoints || 0,
     reflect: !!dbPlayer.reflect,
     criticalX3: !!dbPlayer.criticalX3,
-    speedBoost: !!dbPlayer.speedBoost
+    speedBoost: !!dbPlayer.speedBoost.API_URL,
   });
 
   /**

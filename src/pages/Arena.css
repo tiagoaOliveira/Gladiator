@@ -375,10 +375,6 @@
 }
 
 @media (max-width: 480px) {
-  .arena-container {
-    padding: 8px 10px;
-  }
-
   .enemy-selector h2 {
     font-size: 16px;
     text-align: center;

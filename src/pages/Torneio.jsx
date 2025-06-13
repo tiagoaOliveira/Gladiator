@@ -449,8 +449,7 @@ export default function Torneio() {
       <div className="tournament-info">
         <h2>📜 Sobre</h2>
         <p>
-          O torneio é uma competição entre todos os gladiadores cadastrados.
-          Enfrente oponentes de nível similar e ganhe pontos de ranking para subir na classificação!
+          Enfrente outros jogadores para subir na classificação.
         </p>
         <p>
           <strong>Vitória:</strong> +{VICTORY_POINTS} pontos de ranking<br />

@@ -40,6 +40,7 @@
    2. CONTAINER PRINCIPAL MELHORADO
    ------------------------------------------------------------------- */
 .character-container {
+  background-image: url('../assets/images/characters.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
@@ -48,7 +49,6 @@
   padding: 2rem;
   position: relative;
   box-shadow: var(--shadow-xl);
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   width: 95vw;
   max-width: 1200px;
   overflow: hidden;
@@ -368,7 +368,7 @@
   color: #f4e4c1;
   border: 2px solid rgba(212, 175, 55, 0.4);
   border-radius: var(--border-radius-lg);
-  padding: 1rem;
+  padding: 0.5rem;
   font-size: 1rem;
   font-weight: 600;
   font-family: 'Cinzel', serif;
@@ -772,7 +772,7 @@
   }
   
   .power-btn {
-    padding: 0.8rem 1rem;
+    padding: 0.5rem 1rem;
     font-size: 0.9rem;
     width: 100%;
   }
