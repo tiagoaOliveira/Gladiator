@@ -18,7 +18,7 @@ export default function Arena() {
     hpLost: 0,
     initialHp: 0
   });
-  
+
   // Recuperar estado de auto-batalha do localStorage
   useEffect(() => {
     const savedAutoBattle = localStorage.getItem('gladiator_auto_battle');
@@ -82,7 +82,7 @@ export default function Arena() {
   const startAutoBattle = () => {
     // Salvar HP inicial para calcular perda total
     const initialHp = player.hp;
-    
+
     setAutoBattleActive(true);
     setAutoBattleResults({
       battles: 0,
@@ -107,11 +107,11 @@ export default function Arena() {
   const processAutoBattle = () => {
     const battleResult = handleBattle(selectedEnemy);
     const success = battleResult.result.type === 'victory';
-    
+
     // Calcular recompensas (apenas para vitórias)
     let xpGained = 0;
     let goldGained = 0;
-    
+
     if (success) {
       xpGained = selectedEnemy.rewardXP;
       goldGained = Math.floor(selectedEnemy.level * 1 * selectedEnemy.rewardGoldMultiplier);
@@ -125,7 +125,7 @@ export default function Arena() {
       hpLost: autoBattleResults.initialHp - player.hp,
       initialHp: autoBattleResults.initialHp
     };
-    
+
     setAutoBattleResults(updatedResults);
 
     // Atualizar localStorage
@@ -148,14 +148,14 @@ export default function Arena() {
   const endAutoBattle = (showResults = false) => {
     setAutoBattleActive(false);
     localStorage.removeItem('gladiator_auto_battle');
-    
+
     if (showResults) {
       // Mostrar resultados no modal
       const summaryLog = [{
         type: 'system',
         message: `Batalha automática contra ${selectedEnemy.name} encerrada!`
       }];
-      
+
       setCombatLog(summaryLog);
       setCombatResult({
         type: 'auto-battle',
@@ -196,7 +196,7 @@ export default function Arena() {
           <p>⚡ Crítico: {selectedEnemy.critChance}%</p>
           <p>🎯 Velocidade: {selectedEnemy.attackSpeed}</p>
           <p>🌟XP: {selectedEnemy.rewardXP}</p>
-          <p>💰Ouro: ~{selectedEnemy.level * 1 * selectedEnemy.rewardGoldMultiplier}</p>
+          <p>💰Ouro: ~{Math.round(selectedEnemy.level * 0.8 * selectedEnemy.rewardGoldMultiplier)}</p>
         </div>
 
         <div className="enemy-visual">
@@ -223,13 +223,13 @@ export default function Arena() {
         >
           Iniciar Batalha
         </button>
-        
+
         <button
           onClick={startAutoBattle}
           className="auto-battle-button"
-          disabled={player.hp <= 1 || autoBattleActive}
+          disabled={player.hp <= 1 || autoBattleActive || !player.premium}
         >
-          Batalha Automática
+          {!player.premium ? 'Premium Necessário' : 'Batalha Automática'}
         </button>
       </div>
 

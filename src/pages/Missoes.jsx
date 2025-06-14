@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGame } from '../context/GameContext';
 import './Missoes.css';
+import NotificationDot from '../components/NotificationDot';
 
 // Lista de missões disponíveis no jogo
 export const availableMissions = [
@@ -9,7 +10,7 @@ export const availableMissions = [
     title: "Caçador de Goblins",
     description: "Derrote 50 Goblins na arena",
     target: "Goblin Berserk",
-    targetCount: 50,
+    targetCount: 8,
     rewards: { xp: 5000, gold: 2500 },
     difficulty: "Fácil",
     icon: "🏹"
@@ -121,7 +122,9 @@ export default function Missões() {
   return (
     <div className="missions-container">
       <div className="missions-header">
-        <h1>📜 Missões</h1>
+        <h1>📜 Missões
+          <NotificationDot show={completedMissions.length > 0} />
+        </h1>
         <p>Complete missões para ganhar XP e ouro extra!</p>
       </div>
 

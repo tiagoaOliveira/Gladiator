@@ -3,6 +3,7 @@ import './CombatModal.css';
 import perfilc from '../assets/images/perfil-critical.png';
 import perfilr from '../assets/images/perfil-reflect.png'
 import perfils from '../assets/images/perfil-speed.png'
+import character from '../assets/images/characters.png'
 import { enemies } from '../utils/enemies';
 import { useGame } from '../context/GameContext';
 

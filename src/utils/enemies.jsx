@@ -1,6 +1,7 @@
 import goblin from '../assets/images/goblin.png'
 import orc from '../assets/images/orc1.png'
 import dragao from '../assets/images/dragao1.png'
+import guarda from '../assets/images/guarda1.png'
 
 export const enemies = [
   {
@@ -51,7 +52,7 @@ export const enemies = [
     defense: 150,       
     critChance: 40,    
     attackSpeed: 2.5,    
-    image: dragao, 
+    image: guarda, 
     rewardXP: 200000,     
     rewardGoldMultiplier: 2.5
   }

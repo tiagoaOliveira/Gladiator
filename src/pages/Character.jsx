@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useGame } from '../context/GameContext';
 import { generatePlayerStats } from '../utils/player';
+import NotificationDot from '../components/NotificationDot';
 import './Character.css';
 
 export default function Character() {
@@ -15,6 +16,9 @@ export default function Character() {
   const defComBonus = player.physicalDefense;
   const DEFENSE_MAX = 300;
   const isDefMaxed = defComBonus >= DEFENSE_MAX;
+
+  // Verifica se há pontos de atributo disponíveis
+  const hasAttributePoints = player.attributePoints > 0;
 
   // ─── Função para aumentar atributos ───
   const handleStatIncrease = (statName, amount = 1) => {
@@ -189,6 +193,7 @@ export default function Character() {
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
           📊 Atributos
+          <NotificationDot show={hasAttributePoints} />
         </button>
         {/* ─── Seção de Poderes ─────────────────── */}
         <div className="powers-section">

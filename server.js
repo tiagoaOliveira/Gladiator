@@ -87,6 +87,9 @@ db.serialize(async () => {
   await addColumnIfNotExists('players', 'reflect', 'BOOLEAN DEFAULT 0');
   await addColumnIfNotExists('players', 'criticalX3', 'BOOLEAN DEFAULT 0');
   await addColumnIfNotExists('players', 'speedBoost', 'BOOLEAN DEFAULT 0');
+  
+  // NOVA COLUNA: Adicionar coluna premium
+  await addColumnIfNotExists('players', 'premium', 'BOOLEAN DEFAULT 0');
 
   // Tabela de missões do jogador
   db.run(`
