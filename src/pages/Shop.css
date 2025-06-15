@@ -84,14 +84,6 @@
   border-radius: 10px 10px 0 0;
 }
 
-.shop-item:hover {
-  transform: translateY(-8px) scale(1.02);
-  border-color: #cd853f;
-  box-shadow:
-    0 8px 16px rgba(0, 0, 0, 0.6),
-    0 0 20px rgba(205, 133, 63, 0.3);
-}
-
 .shop-item h3 {
   color: #ffd700;
   margin-bottom: 0.6rem;
@@ -214,4 +206,9 @@
     opacity: 0.7;
     transform: scale(1.2);
   }
+}
+
+.iconPi {
+  width: 1rem;
+  vertical-align: middle;
 }

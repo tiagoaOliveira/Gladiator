@@ -3,6 +3,7 @@ import { useGame } from '../context/GameContext';
 import usePiNetwork from '../utils/usePiNetwork';
 import NotificationDot from '../components/NotificationDot';
 import './Shop.css';
+import iconPi from  '../assets/images/iconPi.png'
 
 export default function Shop() {
   const { player, updatePlayer, showNotification, levelUp } = useGame();
@@ -24,7 +25,7 @@ export default function Shop() {
   const items = [
     { id: 1, name: "Poção de Cura", price: 10, piPrice: 0.01, effect: "Recupera todo HP", action: () => healPlayer() },
     { id: 2, name: "Comprar Nível", price: levelUpPrice, piPrice: 0.03, effect: "+1 Nível", action: () => buyLevel() },
-    { id: 3, name: "Premium", price: 100, piPrice: 0.1, effect: "Libera o modo automático da arena", action: () => buyPremium(), isPremium: true }
+    { id: 3, name: "Premium", price: 100000, piPrice: 0.1, effect: "Libera o modo automático da arena", action: () => buyPremium(), isPremium: true }
   ];
 
   function healPlayer() {
@@ -220,7 +221,7 @@ export default function Shop() {
     <div className="shop-container">
       <div className='shop-header'>
         <h1>Loja</h1>
-        <p className="gold-display">🪙 Ouro: {player.gold} pi</p>
+        <p className="gold-display">🪙 Ouro: {player.gold}</p>
       </div>
 
       <div className="items-grid">
@@ -252,10 +253,11 @@ export default function Shop() {
                 className="buy-button"
                 disabled={
                   purchasing ||
+                  (item.name === "Poção de Cura" && player.hp >= player.maxHp) ||
                   (item.name === "Premium" && player.premium)
                 }
               >
-                Comprar com Pi ({item.piPrice} <img src="/assets/iconpi.png" alt=""/>)
+                Comprar com Pi ({item.piPrice} <img className='iconPi' src={iconPi} alt="Pi"/>)
               </button>
 
               {item.name === "Comprar Nível" && (
@@ -265,7 +267,7 @@ export default function Shop() {
                     className="buy-button"
                     disabled={purchasing}
                   >
-                    Comprar 10 Níveis (0.25 <img src="/assets/iconpi.png" alt="" />)
+                    Comprar 10 Níveis (0.25 <img className='iconPi' src={iconPi} alt="Pi" />)
                   </button>
                 </>
               )}

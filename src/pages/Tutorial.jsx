@@ -12,7 +12,7 @@ export default function Tutorial() {
   const tutorialSteps = [
     {
       title: "🎮 Bem-vindo!",
-      content: `Olá, ${player.name}! Este é um jogo de RPG onde você batalha contra outros jogadores, completa missões e evolui seu personagem.`
+      content: `Olá, ${player.name}! Este é um jogo de RPG onde você batalha contra outros jogadores, monstros, completa missões e evolui seu personagem.`
     },
     {
       title: "⚡Poderes ",
@@ -32,7 +32,7 @@ export default function Tutorial() {
     },
     {
       title: "🏛️ Loja",
-      content: "Use seu ouro para comprar itens, poções de cura e melhorias para seu personagem."
+      content: "Use seu ouro para comprar poção de cura e melhorias para seu personagem."
     },
     {
       title: "📜 Missões",
