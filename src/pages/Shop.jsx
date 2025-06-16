@@ -23,9 +23,9 @@ export default function Shop() {
   }, 0);
 
   const items = [
-    { id: 1, name: "Poção de Cura", price: 10, piPrice: 0.01, effect: "Recupera todo HP", action: () => healPlayer() },
-    { id: 2, name: "Comprar Nível", price: levelUpPrice, piPrice: 0.03, effect: "+1 Nível", action: () => buyLevel() },
-    { id: 3, name: "Premium", price: 100000, piPrice: 0.1, effect: "Libera o modo automático da arena", action: () => buyPremium(), isPremium: true }
+    { id: 1, name: "Heal Potion", price: 10, piPrice: 0.01, effect: "Restore 100% HP", action: () => healPlayer() },
+    { id: 2, name: "Buy Level", price: levelUpPrice, piPrice: 0.03, effect: "Level Up", action: () => buyLevel() },
+    { id: 3, name: "Premium", price: 100000, piPrice: 0.1, effect: "Unlock Arena Auto Battle", action: () => buyPremium(), isPremium: true }
   ];
 
   function healPlayer() {
@@ -59,11 +59,11 @@ export default function Shop() {
       // Fluxo de compra via ouro
       const newGold = player.gold - item.price;
 
-      if (item.name === "Poção de Cura") {
+      if (item.name === "Heal Potion") {
         await updatePlayer({ gold: newGold, hp: player.maxHp });
         const actualHealing = player.maxHp - player.hp;
         showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
-      } else if (item.name === "Comprar Nível") {
+      } else if (item.name === "Buy Level") {
         const updatedLevel = player.level + 1;
         const updatedAttributePoints = player.attributePoints + 3;
         const updatedXpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
@@ -120,10 +120,10 @@ export default function Shop() {
         hp: player.maxHp,
       });
 
-      showNotification(`Você comprou 10 níveis! Agora está no nível ${currentLevel}!`, 'success');
+      showNotification(`You've buy 10 levels! Now you're at ${currentLevel}!`, 'success');
     } catch (err) {
       console.error(err);
-      showNotification("Erro ao comprar 10 níveis com ouro", 'error');
+      showNotification("Error buy 10 levels", 'error');
     } finally {
       setPurchasing(false);
     }
@@ -138,7 +138,7 @@ export default function Shop() {
       // Garante autenticação
       const user = await loginWithPi();
       if (!user) {
-        showNotification("Falha na autenticação Pi.", 'error');
+        showNotification("Fail Authentication Pi.", 'error');
         return;
       }
 
@@ -147,11 +147,11 @@ export default function Shop() {
       console.log("Pagamento Pi simulado:", payment);
 
       // Aplica o efeito do item após pagamento Pi bem-sucedido
-      if (item.name === "Poção de Cura") {
+      if (item.name === "Heal Potion") {
         await updatePlayer({ hp: player.maxHp });
         const actualHealing = player.maxHp - player.hp;
-        showNotification(`Você recuperou ${actualHealing} pontos de vida!`, 'success');
-      } else if (item.name === "Comprar Nível") {
+        showNotification(`${actualHealing} !`, 'success');
+      } else if (item.name === "Buy Level") {
         const updatedLevel = player.level + 1;
         const updatedAttributePoints = player.attributePoints + 3;
         const updatedXpToNextLevel = Math.floor(player.xpToNextLevel * 1.2);
@@ -220,8 +220,8 @@ export default function Shop() {
   return (
     <div className="shop-container">
       <div className='shop-header'>
-        <h1>Loja</h1>
-        <p className="gold-display">🪙 Ouro: {player.gold}</p>
+        <h1>Shop</h1>
+        <p className="gold-display">🪙 Gold: {player.gold}</p>
       </div>
 
       <div className="items-grid">
@@ -229,7 +229,7 @@ export default function Shop() {
           <div key={item.id} className={`shop-item ${item.isPremium ? 'premium-item' : ''}`}>
             <h3>
               {item.name}
-              {item.name === "Poção de Cura" && <NotificationDot show={hasLowHealth} />}
+              {item.name === "Heal Potion" && <NotificationDot show={hasLowHealth} />}
             </h3>
             <p className="item-effect">{item.effect}</p>
             {/* O preço em ouro do item principal já é exibido aqui */}
@@ -242,10 +242,10 @@ export default function Shop() {
                 disabled={
                   purchasing ||
                   player.gold < item.price ||
-                  (item.name === "Poção de Cura" && player.hp >= player.maxHp) ||
+                  (item.name === "Heal Potion" && player.hp >= player.maxHp) ||
                   (item.name === "Premium" && player.premium)
                 }>
-                Comprar com Ouro ({item.price} 🪙)
+                Buy with gold ({item.price} 🪙)
               </button>
 
               <button
@@ -253,14 +253,14 @@ export default function Shop() {
                 className="buy-button"
                 disabled={
                   purchasing ||
-                  (item.name === "Poção de Cura" && player.hp >= player.maxHp) ||
+                  (item.name === "Heal Potion" && player.hp >= player.maxHp) ||
                   (item.name === "Premium" && player.premium)
                 }
               >
-                Comprar com Pi ({item.piPrice} <img className='iconPi' src={iconPi} alt="Pi"/>)
+                Buy with Pi ({item.piPrice} <img className='iconPi' src={iconPi} alt="Pi"/>)
               </button>
 
-              {item.name === "Comprar Nível" && (
+              {item.name === "Buy Level" && (
                 <>
                   <button
                     onClick={buyTenLevelsPi}

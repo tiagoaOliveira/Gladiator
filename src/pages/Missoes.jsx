@@ -10,7 +10,7 @@ export const availableMissions = [
     title: "Caçador de Goblins",
     description: "Derrote 50 Goblins na arena",
     target: "Goblin Berserk",
-    targetCount: 8,
+    targetCount: 50,
     rewards: { xp: 5000, gold: 2500 },
     difficulty: "Fácil",
     icon: "🏹"

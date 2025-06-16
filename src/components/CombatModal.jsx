@@ -140,9 +140,7 @@ export default function CombatModal({
 
   // Try to extract enemy image from current enemy if possible
   const getEnemyImage = () => {
-    // In a real implementation, you'd pass the enemy image from Arena.jsx
-    // For now we'll return a placeholder if the enemy image isn't set
-    return enemyImage;
+    return enemyImage || null; // Return null instead of empty string
   };
 
   // Renderização para modo de batalha automática
@@ -209,7 +207,11 @@ export default function CombatModal({
           <div className="battle-vs">VS</div>
 
           <div className="combatant enemy-combatant">
-            <img src={getEnemyImage()} alt={enemyName} className="combatant-image" />
+            {getEnemyImage() ? (
+              <img src={getEnemyImage()} alt={enemyName} className="combatant-image" />
+            ) : (
+              <div className="combatant-placeholder">No Image</div>
+            )}
             {playerDamage && <div className="damage-number enemy-damage">-{playerDamage}</div>}
           </div>
         </div>

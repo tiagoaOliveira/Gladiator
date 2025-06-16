@@ -40,7 +40,6 @@
    2. CONTAINER PRINCIPAL MELHORADO
    ------------------------------------------------------------------- */
 .character-container {
-  background-image: url('../assets/images/characters.png');
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;

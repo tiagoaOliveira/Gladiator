@@ -210,7 +210,7 @@ export default function Arena() {
           <h3>Batalha Automática em Andamento</h3>
           <p>Batalhas: {autoBattleResults.battles} | XP: +{autoBattleResults.totalXpGained} | Ouro: +{autoBattleResults.totalGoldGained} | HP: -{autoBattleResults.hpLost}</p>
           <button onClick={() => endAutoBattle(true)} className="stop-auto-battle-button">
-            Parar Batalha Automática
+            Parar Batalha
           </button>
         </div>
       )}
