@@ -113,12 +113,6 @@ export default function Character() {
   };
 
   const selectPower = (powerName) => {
-    // Se você clicar no mesmo poder que já está ativo, simplesmente desfaz (deseleciona)
-    if (player[powerName]) {
-      // Se for o crítico, tira os 10% de bônus
- 
-      return;
-    }
 
     // OK, o poder clicado NÃO está ativo; vamos ativá-lo e remover eventuais outros
     const tinhaCritical = player.criticalX3;

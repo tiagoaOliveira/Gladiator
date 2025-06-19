@@ -13,7 +13,8 @@ const TIERS = [
   { name: 'Mestre', min: 1400, max: Infinity, color: '#ff4500' }
 ];
 
-const API_BASE_URL = 'http://192.168.20.109:4000/api';
+//const API_BASE_URL = 'http://192.168.20.109:4000/api';
+const API_BASE_URL= 'http://localhost:4000/api';
 const VICTORY_POINTS = 30;
 const DEFEAT_POINTS = -10;
 const TOP_N = 5;

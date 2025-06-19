@@ -13,16 +13,16 @@
     "deploy": "gh-pages -d dist",
     "start": "node server.js",
     "dev:back": "nodemon server.js",
-
-
-    
     "dev": "vite --host",
     "serve": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.10.0",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.5.2",

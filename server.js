@@ -1,19 +1,49 @@
+import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import jwt from 'jsonwebtoken';
+import axios from 'axios';
 
 // __dirname para ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+console.log('DEBUG: JWT_SECRET =', process.env.JWT_SECRET ? '[DEFINIDO]' : '[INDEFINIDO]');
+
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️ JWT_SECRET não definido em .env – verifique o arquivo .env na raiz do backend.');
+}
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-app.use(cors());
+// CORS: permitir apenas frontend confiável
+app.use(cors({ 
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
+  credentials: true 
+}));
 app.use(bodyParser.json());
+
+// Middleware de autenticação JWT
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  if (!token) {
+    return res.status(401).json({ error: 'Token ausente' });
+  }
+  jwt.verify(token, process.env.JWT_SECRET, (err, payload) => {
+    if (err) {
+      return res.status(403).json({ error: 'Token inválido' });
+    }
+    req.userId = payload.sub; // ID interno do jogador
+    next();
+  });
+}
 
 // Banco SQLite
 const dbFile = path.resolve(__dirname, 'tournament.db');
@@ -87,8 +117,7 @@ db.serialize(async () => {
   await addColumnIfNotExists('players', 'reflect', 'BOOLEAN DEFAULT 0');
   await addColumnIfNotExists('players', 'criticalX3', 'BOOLEAN DEFAULT 0');
   await addColumnIfNotExists('players', 'speedBoost', 'BOOLEAN DEFAULT 0');
-  
-  // NOVA COLUNA: Adicionar coluna premium
+  await addColumnIfNotExists('players', 'piUid', 'TEXT UNIQUE');
   await addColumnIfNotExists('players', 'premium', 'BOOLEAN DEFAULT 0');
 
   // Tabela de missões do jogador
@@ -146,7 +175,170 @@ db.serialize(async () => {
   console.log('Banco de dados inicializado com sucesso!');
 });
 
-// Modificar para ordenar por pontos de ranking, não por nível
+// FUNÇÃO AUXILIAR: Validar token Pi Network
+async function validatePiNetworkToken(accessToken) {
+  try {
+    console.log('🔍 Validando token Pi Network...');
+    
+    // Tentar diferentes endpoints da API Pi Network
+    const endpoints = [
+      'https://api.minepi.com/v2/me',
+      'https://api.minepi.com/v1/me'
+    ];
+    
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`📡 Tentando endpoint: ${endpoint}`);
+        
+        const response = await axios.get(endpoint, {
+          headers: { 
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          timeout: 10000 // 10 segundos timeout
+        });
+        
+        console.log('✅ Resposta da API Pi:', response.data);
+        
+        if (response.data && response.data.user) {
+          return response.data.user;
+        } else if (response.data && response.data.uid) {
+          // Formato alternativo da resposta
+          return {
+            uid: response.data.uid,
+            username: response.data.username || response.data.name || `Player_${response.data.uid.substring(0, 8)}`
+          };
+        }
+      } catch (endpointError) {
+        console.log(`❌ Erro no endpoint ${endpoint}:`, endpointError.message);
+        continue;
+      }
+    }
+    
+    throw new Error('Nenhum endpoint Pi Network funcionou');
+    
+  } catch (error) {
+    console.error('🚨 Erro na validação Pi Network:', error.message);
+    throw error;
+  }
+}
+
+// Rota de login via Pi Network - CORRIGIDA
+app.post('/api/auth/pi-login', async (req, res) => {
+  const { accessToken } = req.body;
+  
+  console.log('🚀 Tentativa de login Pi Network');
+  console.log('📝 Access token recebido:', accessToken ? '[PRESENTE]' : '[AUSENTE]');
+  
+  if (!accessToken) {
+    return res.status(400).json({ error: 'Access token é obrigatório' });
+  }
+
+  try {
+    // Validar token junto à API Pi Network
+    const piUser = await validatePiNetworkToken(accessToken);
+    
+    if (!piUser || !piUser.uid) {
+      throw new Error('Resposta inválida da API Pi Network');
+    }
+    
+    const { uid, username } = piUser;
+    console.log('👤 Dados do usuário Pi:', { uid, username });
+
+    // Verificar se já existe usuário com esse piUid
+    db.get('SELECT * FROM players WHERE piUid = ?', [uid], (err, row) => {
+      if (err) {
+        console.error('💥 Erro no banco de dados:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      
+      if (row) {
+        console.log('✅ Usuário existente encontrado:', row.name);
+        // Atualizar last_login
+        db.run('UPDATE players SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [row.id], (uErr) => {
+          if (uErr) console.warn('⚠️ Erro ao atualizar last_login:', uErr);
+          
+          const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+          return res.json({ token });
+        });
+      } else {
+        console.log('🆕 Criando novo usuário:', username);
+        // Criar novo jogador vinculado ao Pi
+        db.run(
+          `INSERT INTO players (name, piUid, created_at, last_login) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+          [username, uid],
+          function (insertErr) {
+            if (insertErr) {
+              console.error('💥 Erro ao criar usuário:', insertErr);
+              return res.status(500).json({ error: insertErr.message });
+            }
+            
+            const newId = this.lastID;
+            console.log('✅ Novo usuário criado com ID:', newId);
+            
+            const token = jwt.sign({ sub: newId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            return res.json({ token });
+          }
+        );
+      }
+    });
+    
+  } catch (error) {
+    console.error('🚨 Erro no login Pi Network:', error.message);
+    return res.status(401).json({ 
+      error: 'Token Pi inválido',
+      details: error.message,
+      suggestion: 'Verifique se o token Pi Network está válido e não expirado'
+    });
+  }
+});
+
+// Rota para retornar dados do jogador autenticado via JWT
+app.get('/api/auth/me', authenticateToken, (req, res) => {
+  const playerId = req.userId;
+  db.get('SELECT * FROM players WHERE id = ?', [playerId], (err, player) => {
+    if (err) {
+      return res.status(500).json({ error: 'Erro no banco de dados' });
+    }
+    if (!player) {
+      return res.status(404).json({ error: 'Jogador não encontrado' });
+    }
+    res.json(player);
+  });
+});
+
+// Endpoint de teste para desenvolvimento (REMOVER EM PRODUÇÃO)
+app.post('/api/auth/test-login', (req, res) => {
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(404).json({ error: 'Endpoint não disponível em produção' });
+  }
+  
+  const { username = 'TestPlayer' } = req.body;
+  
+  // Buscar ou criar usuário de teste
+  db.get('SELECT * FROM players WHERE name = ?', [username], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    
+    if (row) {
+      const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      return res.json({ token });
+    } else {
+      db.run(
+        `INSERT INTO players (name, created_at, last_login) VALUES (?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [username],
+        function (insertErr) {
+          if (insertErr) return res.status(500).json({ error: insertErr.message });
+          
+          const token = jwt.sign({ sub: this.lastID }, process.env.JWT_SECRET, { expiresIn: '7d' });
+          return res.json({ token });
+        }
+      );
+    }
+  });
+});
+
+// Ranking público (pode ficar público)
 app.get('/api/ranking', (req, res) => {
   db.all(
     `SELECT id, name, level, xp, rankedPoints FROM players ORDER BY rankedPoints DESC, level DESC LIMIT 50`,
@@ -158,74 +350,45 @@ app.get('/api/ranking', (req, res) => {
   );
 });
 
-// Endpoints de jogadores
-app.get('/api/players', (req, res) => {
+// Endpoints de jogadores: agora protegidos
+
+// Buscar todos os jogadores (restringir a autenticados)
+app.get('/api/players', authenticateToken, (req, res) => {
   db.all(`SELECT * FROM players`, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json(rows);
   });
 });
 
-// Login ou criação de jogador
-app.post('/api/players/login', (req, res) => {
-  const { name } = req.body;
-  if (!name) return res.status(400).json({ error: 'Name is required' });
-
-  // Primeiro, verificar se o jogador existe
-  db.get(`SELECT * FROM players WHERE name = ?`, [name], (err, player) => {
+// Buscar jogador pelo ID (restringir a autenticados)
+app.get('/api/players/:id', authenticateToken, (req, res) => {
+  const requestedId = Number(req.params.id);
+  db.get(`SELECT * FROM players WHERE id = ?`, [requestedId], (err, player) => {
     if (err) return res.status(500).json({ error: err.message });
-
-    if (player) {
-      // Jogador existe - atualizar last_login e retornar dados
-      db.run(`UPDATE players SET last_login = CURRENT_TIMESTAMP WHERE id = ?`, [player.id], (err) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(player);
-      });
-    } else {
-      // Jogador não existe - criar novo
-      db.run(`
-        INSERT INTO players (name) 
-        VALUES (?)`,
-        [name],
-        function (err) {
-          if (err) return res.status(500).json({ error: err.message });
-
-          // Buscar o jogador recém-criado para retornar todos os valores default
-          db.get(`SELECT * FROM players WHERE id = ?`, [this.lastID], (err, newPlayer) => {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json(newPlayer);
-          });
-        }
-      );
-    }
+    if (!player) return res.status(404).json({ error: 'Player not found' });
+    res.json(player);
   });
 });
 
-// Atualizar jogador
-app.put('/api/players/:id', (req, res) => {
-  const playerId = req.params.id;
+// Atualizar jogador (só próprio)
+app.put('/api/players/:id', authenticateToken, (req, res) => {
+  const playerId = Number(req.params.id);
+  if (req.userId !== playerId) {
+    return res.status(403).json({ error: 'Acesso proibido' });
+  }
   const playerData = req.body;
-
-  // Excluir campos que não devem ser atualizados diretamente
-  const { id, created_at, last_login, ...updateData } = playerData;
-
-  // Construir query dinâmica com os campos a atualizar
+  const { id, created_at, last_login, piUid, name, ...updateData } = playerData;
   const fields = Object.keys(updateData);
   if (fields.length === 0) {
     return res.status(400).json({ error: 'No fields to update' });
   }
-
   const placeholders = fields.map(field => `${field} = ?`).join(', ');
   const values = fields.map(field => updateData[field]);
-  values.push(playerId); // Para o WHERE id = ?
-
+  values.push(playerId);
   const query = `UPDATE players SET ${placeholders} WHERE id = ?`;
-
   db.run(query, values, function (err) {
     if (err) return res.status(500).json({ error: err.message });
     if (this.changes === 0) return res.status(404).json({ error: 'Player not found' });
-
-    // Retornar o jogador atualizado
     db.get(`SELECT * FROM players WHERE id = ?`, [playerId], (err, player) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json(player);
@@ -233,56 +396,44 @@ app.put('/api/players/:id', (req, res) => {
   });
 });
 
-// Buscar jogador pelo ID
-app.get('/api/players/:id', (req, res) => {
-  const playerId = req.params.id;
-  db.get(`SELECT * FROM players WHERE id = ?`, [playerId], (err, player) => {
-    if (err) return res.status(500).json({ error: err.message });
-    if (!player) return res.status(404).json({ error: 'Player not found' });
-    res.json(player);
-  });
-});
-
-// Buscar missões do jogador
-app.get('/api/players/:id/missions', (req, res) => {
-  const playerId = req.params.id;
-
+// Buscar missões do jogador (apenas próprio)
+app.get('/api/players/:id/missions', authenticateToken, (req, res) => {
+  const playerId = Number(req.params.id);
+  if (req.userId !== playerId) {
+    return res.status(403).json({ error: 'Acesso proibido' });
+  }
   db.all(`
     SELECT mission_id, progress, completed, claimed, updated_at 
     FROM player_missions 
     WHERE player_id = ?
   `, [playerId], (err, missions) => {
     if (err) return res.status(500).json({ error: err.message });
-
-    // Converter array para formato de objeto que o frontend espera
     const missionsObject = {};
     missions.forEach(mission => {
       missionsObject[mission.mission_id] = {
         progress: mission.progress,
-        completed: mission.completed === 1, // SQLite retorna 1/0 para boolean
+        completed: mission.completed === 1,
         claimed: mission.claimed === 1,
         updated_at: mission.updated_at
       };
     });
-
     res.json(missionsObject);
   });
 });
 
-// Atualizar progresso de uma missão
-app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
+// Atualizar progresso de uma missão (apenas próprio)
+app.put('/api/players/:playerId/missions/:missionId', authenticateToken, (req, res) => {
   const { playerId, missionId } = req.params;
+  if (req.userId !== Number(playerId)) {
+    return res.status(403).json({ error: 'Acesso proibido' });
+  }
   const { progress, completed, claimed } = req.body;
-
-  // Verificar se a missão já existe para o jogador
   db.get(`
     SELECT * FROM player_missions 
     WHERE player_id = ? AND mission_id = ?
   `, [playerId, missionId], (err, existingMission) => {
     if (err) return res.status(500).json({ error: err.message });
-
     if (existingMission) {
-      // Atualizar missão existente
       db.run(`
         UPDATE player_missions 
         SET progress = ?, completed = ?, claimed = ?, updated_at = CURRENT_TIMESTAMP
@@ -292,7 +443,6 @@ app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
         res.json({ success: true, updated: true });
       });
     } else {
-      // Criar nova entrada de missão
       db.run(`
         INSERT INTO player_missions (player_id, mission_id, progress, completed, claimed)
         VALUES (?, ?, ?, ?, ?)
@@ -304,21 +454,19 @@ app.put('/api/players/:playerId/missions/:missionId', (req, res) => {
   });
 });
 
-// Salvar múltiplas missões de uma vez (batch update)
-app.put('/api/players/:playerId/missions', (req, res) => {
-  const playerId = req.params.playerId;
-  const missions = req.body; // Objeto com as missões no formato { missionId: { progress, completed, claimed } }
-
+// Salvar múltiplas missões de uma vez (batch update) (apenas próprio)
+app.put('/api/players/:playerId/missions', authenticateToken, (req, res) => {
+  const playerId = Number(req.params.playerId);
+  if (req.userId !== playerId) {
+    return res.status(403).json({ error: 'Acesso proibido' });
+  }
+  const missions = req.body;
   if (!missions || typeof missions !== 'object') {
     return res.status(400).json({ error: 'Invalid missions data' });
   }
-
-  // Preparar as queries para inserção/atualização
   const upsertPromises = Object.entries(missions).map(([missionId, missionData]) => {
     return new Promise((resolve, reject) => {
       const { progress, completed, claimed } = missionData;
-
-      // Usar INSERT OR REPLACE para upsert
       db.run(`
         INSERT OR REPLACE INTO player_missions 
         (player_id, mission_id, progress, completed, claimed, updated_at)
@@ -329,8 +477,6 @@ app.put('/api/players/:playerId/missions', (req, res) => {
       });
     });
   });
-
-  // Executar todas as queries
   Promise.all(upsertPromises)
     .then(() => {
       res.json({ success: true, message: 'Missions updated successfully' });
@@ -341,15 +487,15 @@ app.put('/api/players/:playerId/missions', (req, res) => {
     });
 });
 
-// Obter um adversário próximo no ranking
-app.get('/api/tournament/opponent/:playerId', (req, res) => {
-  const playerId = req.params.playerId;
-
+// Obter um adversário próximo no ranking (restringir a autenticados)
+app.get('/api/tournament/opponent/:playerId', authenticateToken, (req, res) => {
+  const playerId = Number(req.params.playerId);
+  if (req.userId !== playerId) {
+    return res.status(403).json({ error: 'Acesso proibido' });
+  }
   db.get(`SELECT rankedPoints FROM players WHERE id = ?`, [playerId], (err, player) => {
     if (err) return res.status(500).json({ error: err.message });
     if (!player) return res.status(404).json({ error: 'Player not found' });
-
-    // Encontrar jogadores com pontuação próxima (até 13 posições abaixo)
     db.all(`
       SELECT * FROM players 
       WHERE id != ? 
@@ -357,21 +503,16 @@ app.get('/api/tournament/opponent/:playerId', (req, res) => {
       LIMIT 13
     `, [playerId, player.rankedPoints], (err, opponents) => {
       if (err) return res.status(500).json({ error: err.message });
-
       if (opponents.length === 0) {
-        // Se não encontrar oponentes próximos, selecionar qualquer oponente aleatório
         db.all(`SELECT * FROM players WHERE id != ? LIMIT 20`, [playerId], (err, randomOpponents) => {
           if (err) return res.status(500).json({ error: err.message });
           if (randomOpponents.length === 0) {
             return res.status(404).json({ error: 'No opponents available' });
           }
-
-          // Selecionar oponente aleatório
           const randomIndex = Math.floor(Math.random() * randomOpponents.length);
           res.json(randomOpponents[randomIndex]);
         });
       } else {
-        // Selecionar um oponente aleatório entre os encontrados
         const randomIndex = Math.floor(Math.random() * opponents.length);
         res.json(opponents[randomIndex]);
       }
@@ -379,38 +520,29 @@ app.get('/api/tournament/opponent/:playerId', (req, res) => {
   });
 });
 
-// Registrar batalha de torneio
-app.post('/api/tournament/battle', (req, res) => {
+// Registrar batalha de torneio (restringir a autenticados)
+app.post('/api/tournament/battle', authenticateToken, (req, res) => {
   const { player1Id, player2Id, winnerId, battleLog } = req.body;
-
   if (!player1Id || !player2Id) {
     return res.status(400).json({ error: 'Player IDs are required' });
   }
-
-  // Adicionar o registro da batalha
   db.run(`
     INSERT INTO tournament_battles (player1_id, player2_id, winner_id, battle_log)
     VALUES (?, ?, ?, ?)
   `, [player1Id, player2Id, winnerId, JSON.stringify(battleLog)], function (err) {
     if (err) return res.status(500).json({ error: err.message });
-
-    // Atualizar pontuação dos jogadores
     if (winnerId) {
-      // Winner ganha 30 pontos
       db.run(`
         UPDATE players SET rankedPoints = rankedPoints + 30
         WHERE id = ?
       `, [winnerId], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-
-        // Loser perde 10 pontos (mas não fica negativo)
         const loserId = winnerId === player1Id ? player2Id : player1Id;
         db.run(`
           UPDATE players SET rankedPoints = MAX(0, rankedPoints - 10)
           WHERE id = ?
         `, [loserId], (err) => {
           if (err) return res.status(500).json({ error: err.message });
-
           res.json({
             success: true,
             battleId: this.lastID,
@@ -419,7 +551,6 @@ app.post('/api/tournament/battle', (req, res) => {
         });
       });
     } else {
-      // Empate, ninguém ganha ou perde pontos
       res.json({
         success: true,
         battleId: this.lastID,
@@ -429,9 +560,8 @@ app.post('/api/tournament/battle', (req, res) => {
   });
 });
 
-// Endpoints de torneio
-// Inicia um novo torneio com lista de playerIds
-app.post('/api/tournaments', (req, res) => {
+// Endpoints de torneio: criação e listagem (restringir a autenticados)
+app.post('/api/tournaments', authenticateToken, (req, res) => {
   const { playerIds } = req.body;
   if (!Array.isArray(playerIds) || playerIds.length < 2) {
     return res.status(400).json({ error: 'At least two players required' });
@@ -446,9 +576,8 @@ app.post('/api/tournaments', (req, res) => {
   });
 });
 
-// Busca jogadores de um torneio
-app.get('/api/tournaments/:id/players', (req, res) => {
-  const tid = req.params.id;
+app.get('/api/tournaments/:id/players', authenticateToken, (req, res) => {
+  const tid = Number(req.params.id);
   db.all(
     `SELECT p.* FROM players p
      JOIN tournament_players tp ON p.id = tp.player_id
@@ -463,4 +592,6 @@ app.get('/api/tournaments/:id/players', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`⚔️  Backend ESM rodando em http://localhost:${PORT}`);
+  console.log(`🔑 JWT_SECRET: ${process.env.JWT_SECRET ? 'CONFIGURADO' : 'NÃO CONFIGURADO'}`);
+  console.log(`🌐 CORS permitido para: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
 });
