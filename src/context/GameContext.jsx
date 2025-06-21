@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { generatePlayerStats } from '../utils/player';
 import { availableMissions } from '../pages/Missoes';
 
-// URL base da API via Vite
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
 
 const GameContext = createContext();
@@ -25,7 +24,6 @@ export function GameProvider({ children }) {
     }, 3000);
   };
 
-  // Ao montar, tenta recuperar o JWT e obter perfil
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     if (token) {
@@ -39,7 +37,6 @@ export function GameProvider({ children }) {
     }
   }, [player]);
 
-  // Função helper para fetch com Authorization
   const authFetch = async (path, options = {}) => {
     const token = localStorage.getItem('jwt');
     const headers = { ...(options.headers || {}), 'Content-Type': 'application/json' };
@@ -58,11 +55,9 @@ export function GameProvider({ children }) {
         const missions = await response.json();
         setPlayerMissions(missions);
       } else {
-        console.error('Erro ao carregar missões do servidor');
         loadPlayerMissionsFromLocalStorage();
       }
     } catch (error) {
-      console.error('Erro ao conectar com o servidor para carregar missões:', error);
       loadPlayerMissionsFromLocalStorage();
     }
   };
@@ -90,11 +85,9 @@ export function GameProvider({ children }) {
         body: JSON.stringify(missions),
       });
       if (!response.ok) {
-        console.error('Erro ao salvar missões no servidor');
         saveMissionsToLocalStorage(missions);
       }
     } catch (error) {
-      console.error('Erro ao conectar com o servidor para salvar missões:', error);
       saveMissionsToLocalStorage(missions);
     }
   };
@@ -112,11 +105,7 @@ export function GameProvider({ children }) {
         method: 'PUT',
         body: JSON.stringify(missionData),
       });
-      if (!response.ok) {
-        console.error('Erro ao salvar missão no servidor');
-      }
     } catch (error) {
-      console.error('Erro ao conectar com o servidor para salvar missão:', error);
     }
   };
 
@@ -175,7 +164,6 @@ export function GameProvider({ children }) {
       );
       return true;
     } catch (error) {
-      console.error('Erro ao coletar recompensa:', error);
       showNotification('Erro ao coletar recompensa da missão', 'error');
       return false;
     }
@@ -193,13 +181,10 @@ export function GameProvider({ children }) {
       return progress?.completed && !progress?.claimed;
     });
 
-  // Apenas a função fetchPlayerByToken corrigida para substituir no seu GameContext.jsx
-
   const fetchPlayerByToken = async (token) => {
-
     try {
       setLoading(true);
-      setPlayer(null); // Limpar player anterior
+      setPlayer(null);
 
       const resp = await fetch(`${API_URL}/api/auth/me`, {
         headers: {
@@ -208,24 +193,18 @@ export function GameProvider({ children }) {
         },
       });
 
-      console.log('GameContext: Resposta da API /auth/me:', resp.status, resp.statusText);
-
       if (!resp.ok) {
-        console.warn('GameContext: Token inválido ou expirado, removendo...');
         localStorage.removeItem('jwt');
         setPlayer(null);
         return null;
       }
 
       const playerData = await resp.json();
-
       const formattedPlayer = formatPlayerData(playerData);
-
       setPlayer(formattedPlayer);
       return formattedPlayer;
 
     } catch (err) {
-      console.error('GameContext: Erro em fetchPlayerByToken:', err);
       localStorage.removeItem('jwt');
       setPlayer(null);
       showNotification('Erro ao carregar dados do jogador', 'error');
@@ -264,7 +243,6 @@ export function GameProvider({ children }) {
       reflect = false,
       criticalX3 = false,
       speedBoost = false,
-      // remove outros campos imutáveis se houver
       ...playerData
     } = frontendPlayer;
     return {
@@ -287,19 +265,15 @@ export function GameProvider({ children }) {
     try {
       const updatedPlayer = { ...player, ...updates };
       setPlayer(updatedPlayer);
-      // Persistir no servidor com authFetch
       const response = await authFetch(`/api/players/${player.id}`, {
         method: 'PUT',
         body: JSON.stringify(formatPlayerForDB(updatedPlayer)),
       });
       if (!response.ok) {
-        console.error('Erro na resposta do servidor:', response.status);
         throw new Error('Falha ao atualizar o jogador no servidor');
       }
       return updatedPlayer;
     } catch (err) {
-      console.error('Erro ao atualizar no servidor', err);
-      // Recarregar dados do servidor para consistência
       fetchPlayerByToken(localStorage.getItem('jwt'));
       throw err;
     }
@@ -313,7 +287,7 @@ export function GameProvider({ children }) {
     const adjustedHp = Math.min(currentHp, newMaxHp);
     let defParaAtualizar = baseStats.physicalDefense;
     if (player.reflect) {
-      defParaAtualizar = baseStats.physicalDefense + 50;
+      defParaAtualizar = baseStats.physicalDefense + 70;
     }
     let newAttackSpeed = Math.min(3, baseStats.attackSpeed);
     if (player.speedBoost) {
@@ -360,7 +334,6 @@ export function GameProvider({ children }) {
       showNotification(`Avançou para o nível ${newLevel}! Ganhou 3 pontos de atributo.`, 'success');
       return updatedPlayer;
     } catch (error) {
-      console.error('Erro ao subir de nível:', error);
       showNotification('Ocorreu um erro ao subir de nível.', 'error');
     }
   };

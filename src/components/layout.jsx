@@ -52,22 +52,22 @@ export default function Layout({ children }) {
           {/* Links de navegação */}
           <div className="nav-links">
             <Link to="/character" onClick={closeMenu}>
-              🏹 Perfil
+              🏹 Profile
               <NotificationDot show={hasAttributePoints} />
             </Link>
             <Link to="/arena" onClick={closeMenu}>⚔️ Arena</Link>
-            <Link to="/Torneio" onClick={closeMenu}>🏆 Torneio</Link>
+            <Link to="/Torneio" onClick={closeMenu}>🏆 Tournament</Link>
             <Link to="/shop" onClick={closeMenu}>
-              🏛️ Loja
+              🏛️ Shop
               <NotificationDot show={hasLowHealth} />
             </Link>
             <Link to="/missoes" onClick={closeMenu}>
-              📜 Missões
+              📜 Missions
               <NotificationDot show={hasCompletedMissions} />
             </Link>
             <Link to="/tutorial" onClick={closeMenu}>📖 Tutorial</Link>
             <button onClick={() => { closeMenu(); handleLogout(); }}>
-              🚪 Sair
+              🚪 Exit
             </button>
           </div>
           {showNavigation && (

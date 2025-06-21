@@ -395,10 +395,10 @@ export default function Torneio() {
 
   return (
     <div className="tournament-page">
-      <h1>🏆Torneio</h1>
+      <h1>🏆 Tournament</h1>
 
       <button onClick={openTierModal} className="ranking-button">
-        Ver Ranking de Gladiadores
+        Gladiators Ranking
       </button>
 
       {/* Modal de Elos */}
@@ -448,13 +448,13 @@ export default function Torneio() {
       )}
 
       <div className="tournament-info">
-        <h2>📜 Sobre</h2>
+        <h2>📜 About</h2>
         <p>
-          Enfrente outros jogadores para subir na classificação.
+          Face off against other players to climb the rankings.
         </p>
         <p>
-          <strong>Vitória:</strong> +{VICTORY_POINTS} pontos de ranking<br />
-          <strong>Derrota:</strong> {DEFEAT_POINTS} pontos de ranking
+          <strong>Victory:</strong> +{VICTORY_POINTS} Ranking Points<br />
+          <strong>Defeat:</strong> {DEFEAT_POINTS} Ranking Points
         </p>
       </div>
       <button
@@ -462,12 +462,12 @@ export default function Torneio() {
         onClick={startTournamentBattle}
         disabled={loadingOpponent || !isPlayerHealthy}
       >
-        {loadingOpponent ? 'Procurando oponente...' : 'Participar do Torneio'}
+        {loadingOpponent ? 'Looking opponent...' : 'Find Opponent'}
       </button>
 
       {!isPlayerHealthy && (
         <p className="health-warning">
-          Você precisa se recuperar antes de batalhar novamente!
+          You need to recover before battling again!
         </p>
       )}
 

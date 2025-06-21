@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Hook para autenticação e pagamento via Pi Network.
- * Em modo de desenvolvimento, faz fallback para simulação.
- */
 export default function usePiNetwork() {
   const [piSDKReady, setPiSDKReady] = useState(false);
 
@@ -14,16 +10,14 @@ export default function usePiNetwork() {
           const isProd = import.meta.env.VITE_ENV === 'production';
           window.Pi.init({
             version: '2.0',
-            sandbox: !isProd, // sandbox = true em dev; false em produção
+            sandbox: true,
           });
           setPiSDKReady(true);
-          console.log('Pi SDK inicializado com sucesso');
         } catch (error) {
           console.error('Erro ao inicializar Pi SDK:', error);
           setPiSDKReady(false);
         }
       } else {
-        console.warn('Pi SDK não está disponível - modo de desenvolvimento');
         setPiSDKReady(false);
       }
     };
@@ -40,22 +34,17 @@ export default function usePiNetwork() {
       setTimeout(() => {
         clearInterval(checkPiSDK);
         if (!window.Pi) {
-          console.warn('Pi SDK não carregou - continuando em modo de desenvolvimento');
           setPiSDKReady(false);
         }
       }, 5000);
     }
   }, []);
 
-  /**
-   * Autentica o usuário via Pi Network ou simula no dev
-   */
   const loginWithPi = async () => {
     if (piSDKReady && window.Pi && typeof window.Pi.authenticate === 'function') {
       try {
         const scopes = ['username', 'payments'];
         const authResult = await window.Pi.authenticate(scopes);
-        console.log('Usuário autenticado via Pi Network:', authResult);
 
         if (!authResult || !authResult.user || !authResult.user.username) {
           throw new Error('Dados de autenticação inválidos');
@@ -74,8 +63,6 @@ export default function usePiNetwork() {
       }
     }
 
-    // Modo simulado
-    console.warn('Pi Network não disponível - usando modo simulado para desenvolvimento');
     await new Promise(resolve => setTimeout(resolve, 1500));
     return {
       username: `dev_user_${Date.now()}`,
@@ -87,9 +74,6 @@ export default function usePiNetwork() {
     };
   };
 
-  /**
-   * Inicia pagamento via Pi Network ou simula no dev
-   */
   const makePayment = async (amount, memo, metadata = {}) => {
     if (piSDKReady && window.Pi && typeof window.Pi.createPayment === 'function') {
       try {
@@ -102,7 +86,6 @@ export default function usePiNetwork() {
             timestamp: new Date().toISOString()
           },
         });
-        console.log('Pagamento Pi Network iniciado:', payment);
         return payment;
       } catch (err) {
         console.error('Erro no pagamento Pi Network:', err);
@@ -110,8 +93,6 @@ export default function usePiNetwork() {
       }
     }
 
-    // Modo simulado
-    console.warn('Pi Network não disponível - simulando pagamento para desenvolvimento');
     await new Promise(resolve => setTimeout(resolve, 2000));
     const fakePayment = {
       identifier: `fake_payment_${Date.now()}`,
@@ -127,13 +108,9 @@ export default function usePiNetwork() {
       created_at: new Date().toISOString(),
       isDevelopment: true
     };
-    console.log('Pagamento simulado para desenvolvimento:', fakePayment);
     return fakePayment;
   };
 
-  /**
-   * Verifica se o usuário pode fazer pagamentos
-   */
   const canMakePayment = () => {
     return piSDKReady || !window.Pi;
   };

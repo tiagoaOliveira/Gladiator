@@ -576,7 +576,7 @@
 /* Responsividade */
 @media (max-width: 768px) {
   .tournament-page h1 {
-    font-size: 2rem;
+    font-size: 1.6rem;
     letter-spacing: 2px;
   }
 

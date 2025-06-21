@@ -7,44 +7,44 @@ import NotificationDot from '../components/NotificationDot';
 export const availableMissions = [
   {
     id: 1,
-    title: "Caçador de Goblins",
-    description: "Derrote 50 Goblins na arena",
+    title: "Goblin Hunter",
+    description: "Defeat 50 Goblins",
     target: "Goblin Berserk",
     targetCount: 50,
     rewards: { xp: 5000, gold: 2500 },
-    difficulty: "Fácil",
+    difficulty: "Easy",
     icon: "🏹"
   },
   {
     id: 2,
-    title: "Exterminador de Orcs",
-    description: "Derrote 20 Orcs Guerreiros",
-    target: "Orc Selvagem",
+    title: "Orc Exterminator",
+    description: "Defeat 25 Wild Orcs",
+    target: "Wild Orc",
     targetCount: 25,
     rewards: { xp: 8000, gold: 4000 },
-    difficulty: "Médio",
+    difficulty: "Normal",
     icon: "⚔️"
   },
   {
     id: 3,
-    title: "Caçador de Dragões",
-    description: "Derrote 10 Dragões Anciões",
-    target: "Dragão Ancião",
+    title: "Dragon Killer",
+    description: "Defeat 10 ancient Dragon",
+    target: "Ancient Dragon",
     targetCount: 10,
     rewards: { xp: 20000, gold: 10000 },
-    difficulty: "Difícil",
+    difficulty: "Hard",
     icon: "🐉"
   },
   {
     id: 4,
-    title: "Pesadelo Real",
-    description: "Derrote 15 Guardas Reais",
-    target: "Guarda Real",
+    title: "Royal Nightmare",
+    description: "Defeat 5 Kings Guard",
+    target: "Kings Guard",
     targetCount: 5,
     rewards: { xp: 12000, gold: 6000 },
-    difficulty: "Extremo",
+    difficulty: "Extreme",
     icon: "🛡️"
-  },
+  },/*
   {
     id: 5,
     title: "Assassino de Esqueletos",
@@ -64,25 +64,25 @@ export const availableMissions = [
     rewards: { xp: 15000, gold: 7500 },
     difficulty: "Difícil",
     icon: "🐂"
-  },
+  },*/
   {
     id: 7,
-    title: "Sobrevivente Iniciante",
-    description: "Vença 100 batalhas na arena",
+    title: "Noob Survivor",
+    description: "Win 100 battle in the arena",
     target: "any",
     targetCount: 100,
     rewards: { xp: 3000, gold: 1500 },
-    difficulty: "Fácil",
+    difficulty: "Normal",
     icon: "🏆"
   },
   {
     id: 8,
-    title: "Gladiador Veterano",
-    description: "Vença 500 batalhas na arena",
+    title: "Veteran Gladiator",
+    description: "Win 500 Batlles in the Arena",
     target: "any",
     targetCount: 500,
     rewards: { xp: 25000, gold: 15000 },
-    difficulty: "Extremo",
+    difficulty: "Hard",
     icon: "👑"
   }
 ];
@@ -113,7 +113,7 @@ export default function Missões() {
     return Math.min((progress / mission.targetCount) * 100, 100);
   };
 
-  if (!player) return <p>Carregando...</p>;
+  if (!player) return <p>Loading...</p>;
 
   // Obter missões ativas do contexto
   const activeMissions = getActiveMissions();
@@ -122,10 +122,10 @@ export default function Missões() {
   return (
     <div className="missions-container">
       <div className="missions-header">
-        <h1>📜 Missões
+        <h1>📜 Missions
           <NotificationDot show={completedMissions.length > 0} />
         </h1>
-        <p>Complete missões para ganhar XP e ouro extra!</p>
+        <p>Complete Missions and Earn XP and Gold!</p>
       </div>
 
       {/* Missões Completadas (prontas para coletar) */}
@@ -133,7 +133,7 @@ export default function Missões() {
         <>
           <div className="missions-section">
             <h2 style={{ color: '#4caf50', marginBottom: '20px', textAlign: 'center' }}>
-              🎯 Missões Completadas - Prontas para Coletar!
+              🎯 Completed Missions - Ready to Collect!
             </h2>
             <div className="missions-grid">
               {completedMissions.map(mission => {
@@ -172,10 +172,10 @@ export default function Missões() {
                     </div>
 
                     <div className="mission-rewards">
-                      <h4>Recompensas:</h4>
+                      <h4>Rewards:</h4>
                       <div className="rewards-list">
                         <span className="reward-item">🌟 {mission.rewards.xp} XP</span>
-                        <span className="reward-item">💰 {mission.rewards.gold} Ouro</span>
+                        <span className="reward-item">💰 {mission.rewards.gold} Gold</span>
                       </div>
                     </div>
 
@@ -183,7 +183,7 @@ export default function Missões() {
                       className="claim-button"
                       onClick={() => claimMissionReward(mission.id)}
                     >
-                      Coletar Recompensa
+                      Claim Reward
                     </button>
                   </div>
                 );
@@ -196,7 +196,7 @@ export default function Missões() {
       {/* Missões Ativas */}
       <div className="missions-section">
         <h2 style={{ color: '#ffc107', marginBottom: '20px', textAlign: 'center' }}>
-          🎯 Missões Ativas
+          🎯 Active Missions
         </h2>
         <div className="missions-grid">
           {activeMissions.map(mission => {
@@ -244,10 +244,10 @@ export default function Missões() {
                 </div>
 
                 <div className="mission-rewards">
-                  <h4>Recompensas:</h4>
+                  <h4>Rewards:</h4>
                   <div className="rewards-list">
                     <span className="reward-item">🌟 {mission.rewards.xp} XP</span>
-                    <span className="reward-item">💰 {mission.rewards.gold} Ouro</span>
+                    <span className="reward-item">💰 {mission.rewards.gold} Gold</span>
                   </div>
                 </div>
 
@@ -261,7 +261,7 @@ export default function Missões() {
                   fontWeight: 'bold'
                 }}>
                   {progressPercentage < 100 ? 
-                    `${progressPercentage.toFixed(1)}% Completo` : 
+                    `${progressPercentage.toFixed(1)}% Complete` : 
                     'Pronto para coletar!'
                   }
                 </div>
@@ -274,8 +274,8 @@ export default function Missões() {
       {/* Mensagem quando não há missões */}
       {activeMissions.length === 0 && completedMissions.length === 0 && (
         <div className="no-missions">
-          <h2>🎉 Parabéns!</h2>
-          <p>Você completou todas as missões disponíveis!</p>
+          <h2>🎉 Congratulations!</h2>
+          <p>You have completed all the available missions.!</p>
         </div>
       )}
 

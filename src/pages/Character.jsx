@@ -151,12 +151,12 @@ export default function Character() {
 
     // ─── Lógica para Reflect ───
     if (powerName === 'reflect') {
-      // Ao ativar, soma +50 de physicalDefense (máximo 300)
-      updates.physicalDefense = Math.min(player.physicalDefense + 50, 300);
+      // Ao ativar, soma +70 de physicalDefense (máximo 300)
+      updates.physicalDefense = Math.min(player.physicalDefense + 70, 300);
     } else if (tinhaReflect) {
-      // Se removeu o reflect, subtrai 50 (mínimo é a defesa base)
+      // Se removeu o reflect, subtrai 70 (mínimo é a defesa base)
       const baseStats = generatePlayerStats(player.level);
-      const novaDefesa = Math.max(player.physicalDefense - 50, baseStats.physicalDefense);
+      const novaDefesa = Math.max(player.physicalDefense - 70, baseStats.physicalDefense);
       updates.physicalDefense = novaDefesa;
     }
 
@@ -186,7 +186,7 @@ export default function Character() {
 
         {/* Botão para abrir o modal */}
         <button className="open-modal-btn" onClick={openModal}>
-          📊 Atributos
+          📊 Attributes
           <NotificationDot show={hasAttributePoints} />
         </button>
         {/* ─── Seção de Poderes ─────────────────── */}
@@ -196,8 +196,8 @@ export default function Character() {
             className={`power-btn ${player.reflect ? 'owned' : ''}`}
           >
             <div>
-              <p>🛡️ Reflete dano </p>
-              <p>+50 de defesa</p>
+              <p>🛡️ Reflect Damage </p>
+              <p>+70 Armor</p>
             </div>
           </button>
 
@@ -207,8 +207,8 @@ export default function Character() {
             disabled={player.critChance >= 100 && !player.criticalX3}
             title={player.critChance >= 100 && !player.criticalX3 ? "CritChance já em 100%" : ""}>
             <div>
-              <p>💪 Dano Crítico x3</p>
-              <p>+10% chance crítica</p>
+              <p>💪 Crit. Damage x3</p>
+              <p>+10% Crit. Chance</p>
             </div>
           </button>
 
@@ -216,8 +216,8 @@ export default function Character() {
             onClick={() => selectPower('speedBoost')}
             className={`power-btn ${player.speedBoost ? 'owned' : ''}`}>
             <div>
-              <p>⚡ +0.5 Velocidade</p>
-              <p>de Ataque</p>
+              <p>⚡ +0.5 Max Speed</p>
+              <p>+0.5 AttackSpeed</p>
             </div>
           </button>
         </div>
@@ -237,13 +237,13 @@ export default function Character() {
 
               <div className="character-content">
                 <div className="character-stats">
-                  <p className="points-display">Pontos de Atributo: {player.attributePoints || 0}</p>
+                  <p className="points-display">Attribute Points: {player.attributePoints || 0}</p>
 
                   {/* HP */}
                   <div className="stat-block">
                     <div className="stat-bar-wrapper">
                       <div className="stat-header">
-                        <h3>Vida</h3>
+                        <h3>Health</h3>
                       </div>
                       <div className="stat-bar">
                         <div
@@ -276,7 +276,7 @@ export default function Character() {
                   <div className="stat-block">
                     <div className="stat-bar-wrapper">
                       <div className="stat-header">
-                        <h3>Ataque</h3>
+                        <h3>Attack</h3>
                       </div>
                       <div className="stat-bar">
                         <div
@@ -306,7 +306,7 @@ export default function Character() {
                   <div className="stat-block">
                     <div className="stat-bar-wrapper">
                       <div className="stat-header">
-                        <h3>Defesa
+                        <h3>Armor
                         </h3>
                       </div>
                       <div className="stat-bar">
@@ -346,7 +346,7 @@ export default function Character() {
                     <div className="stat-bar-wrapper">
                       <div className="stat-header">
                         <h3>
-                          Crítico
+                          Critical
                         </h3>
                       </div>
                       <div className="stat-bar">

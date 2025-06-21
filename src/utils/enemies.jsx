@@ -19,7 +19,7 @@ export const enemies = [
   },
   {
     id: 2,
-    name: 'Orc Selvagem',
+    name: 'Wild Orc',
     level: 15,
     hp: 500,           
     attack: 45,       
@@ -32,7 +32,7 @@ export const enemies = [
   },
   {
     id: 3,
-    name: 'Dragão Ancião',
+    name: 'Ancient Dragon',
     level: 30,
     hp: 1000,           
     attack: 90,       
@@ -45,7 +45,7 @@ export const enemies = [
   },
    {
     id: 4,
-    name: 'Guarda Real',
+    name: 'Kings Guard',
     level: 50,
     hp: 1800,           
     attack: 200,       

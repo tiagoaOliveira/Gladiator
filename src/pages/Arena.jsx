@@ -189,14 +189,14 @@ export default function Arena() {
       <div className="enemy-container">
         <div className="enemy-stats">
           <h2>{selectedEnemy.name}</h2>
-          <p>Nível: {selectedEnemy.level}</p>
-          <p>❤️ HP: {selectedEnemy.hp}</p>
-          <p>🗡️ Ataque: {selectedEnemy.attack}</p>
-          <p>🛡️ Defesa: {selectedEnemy.defense}</p>
-          <p>⚡ Crítico: {selectedEnemy.critChance}%</p>
-          <p>🎯 Velocidade: {selectedEnemy.attackSpeed}</p>
-          <p>🌟XP: {selectedEnemy.rewardXP}</p>
-          <p>💰Ouro: ~{Math.round(selectedEnemy.level * 0.8 * selectedEnemy.rewardGoldMultiplier)}</p>
+          <p>Level: {selectedEnemy.level}</p>
+          <p>❤️ Health: {selectedEnemy.hp}</p>
+          <p>🗡️ Attack: {selectedEnemy.attack}</p>
+          <p>🛡️ Armor: {selectedEnemy.defense}</p>
+          <p>⚡ Critical: {selectedEnemy.critChance}%</p>
+          <p>🎯 Speed: {selectedEnemy.attackSpeed}</p>
+          <p>🌟 XP: {selectedEnemy.rewardXP}</p>
+          <p>💰 Gold: ~{Math.round(selectedEnemy.level * 0.8 * selectedEnemy.rewardGoldMultiplier)}</p>
         </div>
 
         <div className="enemy-visual">
@@ -207,10 +207,10 @@ export default function Arena() {
 
       {autoBattleActive && (
         <div className="auto-battle-progress">
-          <h3>Batalha Automática em Andamento</h3>
-          <p>Batalhas: {autoBattleResults.battles} | XP: +{autoBattleResults.totalXpGained} | Ouro: +{autoBattleResults.totalGoldGained} | HP: -{autoBattleResults.hpLost}</p>
+          <h3>Automatic Battle in Progress</h3>
+          <p>Battles: {autoBattleResults.battles} | XP: +{autoBattleResults.totalXpGained} | Gold: +{autoBattleResults.totalGoldGained} | Health: -{autoBattleResults.hpLost}</p>
           <button onClick={() => endAutoBattle(true)} className="stop-auto-battle-button">
-            Parar Batalha
+            Stop Battle
           </button>
         </div>
       )}
@@ -221,7 +221,7 @@ export default function Arena() {
           className="battle-button"
           disabled={player.hp <= 0 || autoBattleActive}
         >
-          Iniciar Batalha
+          Start Battle
         </button>
 
         <button
@@ -229,7 +229,7 @@ export default function Arena() {
           className="auto-battle-button"
           disabled={player.hp <= 1 || autoBattleActive || !player.premium}
         >
-          {!player.premium ? 'Premium Necessário' : 'Batalha Automática'}
+          {!player.premium ? 'Need to Buy Premium' : 'Auto Battle'}
         </button>
       </div>
 

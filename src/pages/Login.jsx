@@ -14,20 +14,14 @@ export default function Login() {
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     if (token && !player) {
-      // Só chama fetchPlayerByToken se não tiver player carregado
-      console.log('Login.jsx: Token encontrado, carregando dados do player...');
       fetchPlayerByToken(token);
     } else if (player) {
-      // Se já tem player, navega direto
-      console.log('Login.jsx: Player já carregado, navegando para /character');
       navigate('/character');
     }
   }, [navigate, fetchPlayerByToken, player]);
 
-  // Navegar quando o player for carregado
   useEffect(() => {
     if (player && !loading) {
-      console.log('Login.jsx: Player carregado com sucesso:', player);
       navigate('/character');
     }
   }, [player, loading, navigate]);
@@ -37,12 +31,10 @@ export default function Login() {
     setError('');
     
     try {
-      console.log('Login.jsx: Iniciando login Pi Network...');
       const authResult = await loginWithPi();
       
       if (authResult && authResult.accessToken) {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-        console.log('Login.jsx: usando API_URL =', API_URL);
 
         const resp = await fetch(`${API_URL}/api/auth/pi-login`, {
           method: 'POST',
@@ -56,11 +48,8 @@ export default function Login() {
         }
 
         const { token: jwtToken } = await resp.json();
-        console.log('Login.jsx: JWT token recebido, salvando...');
         localStorage.setItem('jwt', jwtToken);
 
-        // Aguardar um pouco antes de carregar os dados do player
-        console.log('Login.jsx: Carregando dados do player...');
         await fetchPlayerByToken(jwtToken);
 
       } else {
@@ -74,7 +63,6 @@ export default function Login() {
     }
   };
 
-  // Mostrar loading se estiver carregando dados do player
   if (loading || (localStorage.getItem('jwt') && !player && !error)) {
     return (
       <div className="login-container">
@@ -88,19 +76,18 @@ export default function Login() {
 
   return (
     <div className="login-container">
-      <h1>Bem-vindo à Arena!</h1>
+      <h1>Welcome to Gladiator!</h1>
       <p className="login-description">
-        Conecte-se via Pi Network para começar sua jornada como gladiador!
+        Connect via Pi Network to start your journey!
       </p>
 
-      {/* Botão de login via Pi Network */}
       <div className="pi-login-section">
         <button
           onClick={handlePiLogin}
           className="pi-login-button"
           disabled={piLoginLoading || loading}
         >
-          {piLoginLoading ? 'Conectando...' : '🥧 Entrar com Pi Network'}
+          {piLoginLoading ? 'Connecting...' : 'Login with Pi Network'}
         </button>
       </div>
 
@@ -108,7 +95,7 @@ export default function Login() {
 
       <div className="login-info">
         <p className="pi-info">
-          <strong>Pi Network:</strong> Conecte-se com sua carteira Pi para autenticação.
+          <strong>Pi Network:</strong> Connect with your Pi wallet for authentication.
         </p>
       </div>
     </div>

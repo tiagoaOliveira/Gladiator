@@ -8,12 +8,10 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
-// __dirname para ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
-console.log('DEBUG: JWT_SECRET =', process.env.JWT_SECRET ? '[DEFINIDO]' : '[INDEFINIDO]');
 
 if (!process.env.JWT_SECRET) {
   console.warn('⚠️ JWT_SECRET não definido em .env – verifique o arquivo .env na raiz do backend.');
@@ -22,14 +20,12 @@ if (!process.env.JWT_SECRET) {
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// CORS: permitir apenas frontend confiável
 app.use(cors({ 
   origin: process.env.FRONTEND_URL || 'http://localhost:3000', 
   credentials: true 
 }));
 app.use(bodyParser.json());
 
-// Middleware de autenticação JWT
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -40,17 +36,15 @@ function authenticateToken(req, res, next) {
     if (err) {
       return res.status(403).json({ error: 'Token inválido' });
     }
-    req.userId = payload.sub; // ID interno do jogador
+    req.userId = payload.sub;
     next();
   });
 }
 
-// Banco SQLite
 const dbFile = path.resolve(__dirname, 'tournament.db');
 const sqlite = sqlite3.verbose();
 const db = new sqlite.Database(dbFile);
 
-// Função auxiliar para verificar se uma coluna existe
 function columnExists(tableName, columnName) {
   return new Promise((resolve, reject) => {
     db.all(`PRAGMA table_info(${tableName})`, [], (err, columns) => {
@@ -64,7 +58,6 @@ function columnExists(tableName, columnName) {
   });
 }
 
-// Função auxiliar para adicionar coluna se não existir
 async function addColumnIfNotExists(tableName, columnName, columnDefinition) {
   try {
     const exists = await columnExists(tableName, columnName);
@@ -74,22 +67,17 @@ async function addColumnIfNotExists(tableName, columnName, columnDefinition) {
           if (err) {
             reject(err);
           } else {
-            console.log(`Coluna ${columnName} adicionada com sucesso à tabela ${tableName}!`);
             resolve();
           }
         });
       });
-    } else {
-      console.log(`Coluna ${columnName} já existe na tabela ${tableName}.`);
     }
   } catch (error) {
     console.error(`Erro ao verificar/adicionar coluna ${columnName}:`, error);
   }
 }
 
-// Inicialização do banco de dados
 db.serialize(async () => {
-  // Jogadores - Tabela principal
   db.run(`
     CREATE TABLE IF NOT EXISTS players (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,14 +101,12 @@ db.serialize(async () => {
     )
   `);
 
-  // Adicionar colunas de poderes se não existirem
   await addColumnIfNotExists('players', 'reflect', 'BOOLEAN DEFAULT 0');
   await addColumnIfNotExists('players', 'criticalX3', 'BOOLEAN DEFAULT 0');
-  await addColumnIfNotExists('players', 'speedBoost', 'BOOLEAN DEFAULT 0');
-  await addColumnIfNotExists('players', 'piUid', 'TEXT UNIQUE');
+  await addColumnIfNotExists('players', 'speedBoost', 'BOOLEAN DEFAULT 1');
+  await addColumnIfNotExists('players', 'piUid', 'TEXT');
   await addColumnIfNotExists('players', 'premium', 'BOOLEAN DEFAULT 0');
 
-  // Tabela de missões do jogador
   db.run(`
     CREATE TABLE IF NOT EXISTS player_missions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -136,7 +122,6 @@ db.serialize(async () => {
     )
   `);
 
-  // Torneios
   db.run(`
     CREATE TABLE IF NOT EXISTS tournaments (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -145,7 +130,6 @@ db.serialize(async () => {
     )
   `);
 
-  // Associação torneio ↔ jogadores
   db.run(`
     CREATE TABLE IF NOT EXISTS tournament_players (
       tournament_id INTEGER,
@@ -155,7 +139,6 @@ db.serialize(async () => {
     )
   `);
 
-  // Histórico de batalhas de torneio
   db.run(`
     CREATE TABLE IF NOT EXISTS tournament_battles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -171,16 +154,10 @@ db.serialize(async () => {
       FOREIGN KEY(winner_id) REFERENCES players(id)
     )
   `);
-
-  console.log('Banco de dados inicializado com sucesso!');
 });
 
-// FUNÇÃO AUXILIAR: Validar token Pi Network
 async function validatePiNetworkToken(accessToken) {
   try {
-    console.log('🔍 Validando token Pi Network...');
-    
-    // Tentar diferentes endpoints da API Pi Network
     const endpoints = [
       'https://api.minepi.com/v2/me',
       'https://api.minepi.com/v1/me'
@@ -188,30 +165,24 @@ async function validatePiNetworkToken(accessToken) {
     
     for (const endpoint of endpoints) {
       try {
-        console.log(`📡 Tentando endpoint: ${endpoint}`);
-        
         const response = await axios.get(endpoint, {
           headers: { 
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
             'Accept': 'application/json'
           },
-          timeout: 10000 // 10 segundos timeout
+          timeout: 10000
         });
-        
-        console.log('✅ Resposta da API Pi:', response.data);
         
         if (response.data && response.data.user) {
           return response.data.user;
         } else if (response.data && response.data.uid) {
-          // Formato alternativo da resposta
           return {
             uid: response.data.uid,
             username: response.data.username || response.data.name || `Player_${response.data.uid.substring(0, 8)}`
           };
         }
       } catch (endpointError) {
-        console.log(`❌ Erro no endpoint ${endpoint}:`, endpointError.message);
         continue;
       }
     }
@@ -219,24 +190,18 @@ async function validatePiNetworkToken(accessToken) {
     throw new Error('Nenhum endpoint Pi Network funcionou');
     
   } catch (error) {
-    console.error('🚨 Erro na validação Pi Network:', error.message);
     throw error;
   }
 }
 
-// Rota de login via Pi Network - CORRIGIDA
 app.post('/api/auth/pi-login', async (req, res) => {
   const { accessToken } = req.body;
-  
-  console.log('🚀 Tentativa de login Pi Network');
-  console.log('📝 Access token recebido:', accessToken ? '[PRESENTE]' : '[AUSENTE]');
   
   if (!accessToken) {
     return res.status(400).json({ error: 'Access token é obrigatório' });
   }
 
   try {
-    // Validar token junto à API Pi Network
     const piUser = await validatePiNetworkToken(accessToken);
     
     if (!piUser || !piUser.uid) {
@@ -244,40 +209,31 @@ app.post('/api/auth/pi-login', async (req, res) => {
     }
     
     const { uid, username } = piUser;
-    console.log('👤 Dados do usuário Pi:', { uid, username });
 
-    // Verificar se já existe usuário com esse piUid
     db.get('SELECT * FROM players WHERE piUid = ?', [uid], (err, row) => {
       if (err) {
-        console.error('💥 Erro no banco de dados:', err);
         return res.status(500).json({ error: err.message });
       }
       
       if (row) {
-        console.log('✅ Usuário existente encontrado:', row.name);
-        // Atualizar last_login
         db.run('UPDATE players SET last_login = CURRENT_TIMESTAMP WHERE id = ?', [row.id], (uErr) => {
           if (uErr) console.warn('⚠️ Erro ao atualizar last_login:', uErr);
           
-          const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+          const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
           return res.json({ token });
         });
       } else {
-        console.log('🆕 Criando novo usuário:', username);
-        // Criar novo jogador vinculado ao Pi
         db.run(
           `INSERT INTO players (name, piUid, created_at, last_login) VALUES (?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
           [username, uid],
           function (insertErr) {
             if (insertErr) {
-              console.error('💥 Erro ao criar usuário:', insertErr);
               return res.status(500).json({ error: insertErr.message });
             }
             
             const newId = this.lastID;
-            console.log('✅ Novo usuário criado com ID:', newId);
             
-            const token = jwt.sign({ sub: newId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+            const token = jwt.sign({ sub: newId }, process.env.JWT_SECRET, { expiresIn: '1d' });
             return res.json({ token });
           }
         );
@@ -285,7 +241,6 @@ app.post('/api/auth/pi-login', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('🚨 Erro no login Pi Network:', error.message);
     return res.status(401).json({ 
       error: 'Token Pi inválido',
       details: error.message,
@@ -294,7 +249,6 @@ app.post('/api/auth/pi-login', async (req, res) => {
   }
 });
 
-// Rota para retornar dados do jogador autenticado via JWT
 app.get('/api/auth/me', authenticateToken, (req, res) => {
   const playerId = req.userId;
   db.get('SELECT * FROM players WHERE id = ?', [playerId], (err, player) => {
@@ -308,7 +262,6 @@ app.get('/api/auth/me', authenticateToken, (req, res) => {
   });
 });
 
-// Endpoint de teste para desenvolvimento (REMOVER EM PRODUÇÃO)
 app.post('/api/auth/test-login', (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(404).json({ error: 'Endpoint não disponível em produção' });
@@ -316,12 +269,11 @@ app.post('/api/auth/test-login', (req, res) => {
   
   const { username = 'TestPlayer' } = req.body;
   
-  // Buscar ou criar usuário de teste
   db.get('SELECT * FROM players WHERE name = ?', [username], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     
     if (row) {
-      const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+      const token = jwt.sign({ sub: row.id }, process.env.JWT_SECRET, { expiresIn: '1d' });
       return res.json({ token });
     } else {
       db.run(
@@ -330,7 +282,7 @@ app.post('/api/auth/test-login', (req, res) => {
         function (insertErr) {
           if (insertErr) return res.status(500).json({ error: insertErr.message });
           
-          const token = jwt.sign({ sub: this.lastID }, process.env.JWT_SECRET, { expiresIn: '7d' });
+          const token = jwt.sign({ sub: this.lastID }, process.env.JWT_SECRET, { expiresIn: '1d' });
           return res.json({ token });
         }
       );
@@ -338,7 +290,6 @@ app.post('/api/auth/test-login', (req, res) => {
   });
 });
 
-// Ranking público (pode ficar público)
 app.get('/api/ranking', (req, res) => {
   db.all(
     `SELECT id, name, level, xp, rankedPoints FROM players ORDER BY rankedPoints DESC, level DESC LIMIT 50`,
@@ -350,9 +301,6 @@ app.get('/api/ranking', (req, res) => {
   );
 });
 
-// Endpoints de jogadores: agora protegidos
-
-// Buscar todos os jogadores (restringir a autenticados)
 app.get('/api/players', authenticateToken, (req, res) => {
   db.all(`SELECT * FROM players`, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -360,7 +308,6 @@ app.get('/api/players', authenticateToken, (req, res) => {
   });
 });
 
-// Buscar jogador pelo ID (restringir a autenticados)
 app.get('/api/players/:id', authenticateToken, (req, res) => {
   const requestedId = Number(req.params.id);
   db.get(`SELECT * FROM players WHERE id = ?`, [requestedId], (err, player) => {
@@ -370,7 +317,6 @@ app.get('/api/players/:id', authenticateToken, (req, res) => {
   });
 });
 
-// Atualizar jogador (só próprio)
 app.put('/api/players/:id', authenticateToken, (req, res) => {
   const playerId = Number(req.params.id);
   if (req.userId !== playerId) {
@@ -396,7 +342,6 @@ app.put('/api/players/:id', authenticateToken, (req, res) => {
   });
 });
 
-// Buscar missões do jogador (apenas próprio)
 app.get('/api/players/:id/missions', authenticateToken, (req, res) => {
   const playerId = Number(req.params.id);
   if (req.userId !== playerId) {
@@ -421,7 +366,6 @@ app.get('/api/players/:id/missions', authenticateToken, (req, res) => {
   });
 });
 
-// Atualizar progresso de uma missão (apenas próprio)
 app.put('/api/players/:playerId/missions/:missionId', authenticateToken, (req, res) => {
   const { playerId, missionId } = req.params;
   if (req.userId !== Number(playerId)) {
@@ -454,7 +398,6 @@ app.put('/api/players/:playerId/missions/:missionId', authenticateToken, (req, r
   });
 });
 
-// Salvar múltiplas missões de uma vez (batch update) (apenas próprio)
 app.put('/api/players/:playerId/missions', authenticateToken, (req, res) => {
   const playerId = Number(req.params.playerId);
   if (req.userId !== playerId) {
@@ -487,7 +430,6 @@ app.put('/api/players/:playerId/missions', authenticateToken, (req, res) => {
     });
 });
 
-// Obter um adversário próximo no ranking (restringir a autenticados)
 app.get('/api/tournament/opponent/:playerId', authenticateToken, (req, res) => {
   const playerId = Number(req.params.playerId);
   if (req.userId !== playerId) {
@@ -520,7 +462,6 @@ app.get('/api/tournament/opponent/:playerId', authenticateToken, (req, res) => {
   });
 });
 
-// Registrar batalha de torneio (restringir a autenticados)
 app.post('/api/tournament/battle', authenticateToken, (req, res) => {
   const { player1Id, player2Id, winnerId, battleLog } = req.body;
   if (!player1Id || !player2Id) {
@@ -560,7 +501,6 @@ app.post('/api/tournament/battle', authenticateToken, (req, res) => {
   });
 });
 
-// Endpoints de torneio: criação e listagem (restringir a autenticados)
 app.post('/api/tournaments', authenticateToken, (req, res) => {
   const { playerIds } = req.body;
   if (!Array.isArray(playerIds) || playerIds.length < 2) {
